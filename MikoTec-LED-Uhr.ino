@@ -139,7 +139,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "0.2";
+const char* firmware_version = "0.3";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -337,31 +337,46 @@ bool isNewerVersion(const String& remoteVersion) {
 }
 
 void checkForUpdate() {
-  if (WiFi.status() != WL_CONNECTED) return;
+  if (WiFi.status() != WL_CONNECTED) {
+    dualOut.println("[OTA] Kein WLAN verbunden, Update-Check uebersprungen.");
+    return;
+  }
   
-  dualOut.println("Pruefe auf Firmware-Update...");
+  dualOut.println("==============================");
+  dualOut.println("[OTA] Pruefe auf Firmware-Update...");
+  dualOut.print("[OTA] Freier Heap: ");
+  dualOut.print(ESP.getFreeHeap());
+  dualOut.println(" Bytes");
+  dualOut.print("[OTA] Abfrage URL: ");
+  dualOut.println(update_version_url);
   
   std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
   client->setInsecure(); // GitHub-Zertifikat nicht pruefen (spart RAM)
   
   HTTPClient http;
   http.begin(*client, update_version_url);
+  http.setTimeout(10000);
   int httpCode = http.GET();
   
   if (httpCode != 200) {
-    dualOut.print("Update-Check fehlgeschlagen, HTTP-Code: ");
+    dualOut.print("[OTA] Update-Check fehlgeschlagen, HTTP-Code: ");
     dualOut.println(httpCode);
     http.end();
+    dualOut.println("==============================");
     return;
   }
   
+  dualOut.println("[OTA] version.json erfolgreich geladen.");
   String payload = http.getString();
   http.end();
+  dualOut.print("[OTA] Inhalt: ");
+  dualOut.println(payload);
   
   // Version aus JSON parsen
   int vStart = payload.indexOf("\"version\"");
   if (vStart == -1) {
-    dualOut.println("version.json ungueltig");
+    dualOut.println("[OTA] FEHLER: version.json ungueltig - kein version-Feld gefunden.");
+    dualOut.println("==============================");
     return;
   }
   vStart = payload.indexOf("\"", vStart + 9) + 1;
@@ -370,23 +385,36 @@ void checkForUpdate() {
   
   // Dateiname aus JSON parsen
   int fStart = payload.indexOf("\"file\"");
+  if (fStart == -1) {
+    dualOut.println("[OTA] FEHLER: version.json ungueltig - kein file-Feld gefunden.");
+    dualOut.println("==============================");
+    return;
+  }
   fStart = payload.indexOf("\"", fStart + 6) + 1;
   int fEnd = payload.indexOf("\"", fStart);
   String remoteFile = payload.substring(fStart, fEnd);
   
-  dualOut.print("Installierte Version: ");
+  dualOut.print("[OTA] Installierte Version: ");
   dualOut.println(firmware_version);
-  dualOut.print("Verfuegbare Version: ");
+  dualOut.print("[OTA] Verfuegbare Version:  ");
   dualOut.println(remoteVersion);
+  dualOut.print("[OTA] Dateiname:            ");
+  dualOut.println(remoteFile);
   
   if (!isNewerVersion(remoteVersion)) {
-    dualOut.println("Firmware ist aktuell.");
+    dualOut.println("[OTA] Firmware ist aktuell. Kein Update noetig.");
+    dualOut.println("==============================");
     return;
   }
   
-  dualOut.println("Neue Version gefunden! Starte Update...");
-  
   String binUrl = String(update_bin_base_url) + remoteFile;
+  dualOut.println("[OTA] *** Neue Version gefunden! ***");
+  dualOut.print("[OTA] Download URL: ");
+  dualOut.println(binUrl);
+  dualOut.print("[OTA] Freier Heap vor Update: ");
+  dualOut.print(ESP.getFreeHeap());
+  dualOut.println(" Bytes");
+  dualOut.println("[OTA] Starte Download und Flash...");
   
   std::unique_ptr<BearSSL::WiFiClientSecure> updateClient(new BearSSL::WiFiClientSecure);
   updateClient->setInsecure();
@@ -396,16 +424,19 @@ void checkForUpdate() {
   
   switch (ret) {
     case HTTP_UPDATE_FAILED:
-      dualOut.print("Update fehlgeschlagen, Fehler: ");
+      dualOut.print("[OTA] FEHLER: Update fehlgeschlagen (");
+      dualOut.print(ESPhttpUpdate.getLastError());
+      dualOut.print("): ");
       dualOut.println(ESPhttpUpdate.getLastErrorString());
       break;
     case HTTP_UPDATE_NO_UPDATES:
-      dualOut.println("Kein Update verfuegbar.");
+      dualOut.println("[OTA] Server meldet: Kein Update verfuegbar.");
       break;
     case HTTP_UPDATE_OK:
-      dualOut.println("Update erfolgreich! Neustart...");
+      dualOut.println("[OTA] Update erfolgreich! Neustart...");
       break;
   }
+  dualOut.println("==============================");
 }
 
 //-----------------------------------standard arduino setup and loop-----------------------------------------------------------------------
@@ -518,6 +549,7 @@ void loop() {
 
   // Einmal taeglich auf Updates pruefen
   if (webMode == 1 && millis() - lastUpdateCheck > updateCheckInterval) {
+    dualOut.println("[OTA] Taeglicher Update-Check wird ausgefuehrt...");
     checkForUpdate();
     lastUpdateCheck = millis();
   }
