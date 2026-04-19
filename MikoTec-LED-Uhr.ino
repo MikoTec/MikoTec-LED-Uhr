@@ -139,7 +139,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "0.3";
+const char* firmware_version = "0.4";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -350,77 +350,111 @@ void checkForUpdate() {
   dualOut.print("[OTA] Abfrage URL: ");
   dualOut.println(update_version_url);
   
-  std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
-  client->setInsecure(); // GitHub-Zertifikat nicht pruefen (spart RAM)
+  // Heap aufraeumen vor HTTPS-Verbindung
+  yield();
   
-  HTTPClient http;
-  http.begin(*client, update_version_url);
-  http.setTimeout(10000);
-  int httpCode = http.GET();
+  String binUrl = ""; // Wird im Block gefuellt und danach weiterverwendet
   
-  if (httpCode != 200) {
-    dualOut.print("[OTA] Update-Check fehlgeschlagen, HTTP-Code: ");
+  {
+    // Block-Scope: Client wird am Ende automatisch freigegeben
+    BearSSL::WiFiClientSecure client;
+    client.setInsecure();
+    client.setBufferSizes(1024, 512); // Kleinere Buffer spart RAM
+    
+    HTTPClient http;
+    http.begin(client, update_version_url);
+    http.setTimeout(15000);
+    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+    
+    dualOut.print("[OTA] Freier Heap vor HTTPS: ");
+    dualOut.print(ESP.getFreeHeap());
+    dualOut.println(" Bytes");
+    dualOut.println("[OTA] Sende HTTPS-Anfrage...");
+    
+    int httpCode = http.GET();
+    
+    dualOut.print("[OTA] HTTP-Antwort: ");
     dualOut.println(httpCode);
+    
+    if (httpCode != 200) {
+      dualOut.print("[OTA] Update-Check fehlgeschlagen, HTTP-Code: ");
+      dualOut.println(httpCode);
+      if (httpCode == -1) {
+        dualOut.println("[OTA] HINWEIS: -1 bedeutet Verbindungsfehler (HTTPS/TLS Problem oder Timeout)");
+        dualOut.print("[OTA] Freier Heap nach Fehler: ");
+        dualOut.print(ESP.getFreeHeap());
+        dualOut.println(" Bytes");
+      }
+      http.end();
+      dualOut.println("==============================");
+      return;
+    }
+    
+    dualOut.println("[OTA] version.json erfolgreich geladen.");
+    String payload = http.getString();
     http.end();
-    dualOut.println("==============================");
-    return;
+    dualOut.print("[OTA] Inhalt: ");
+    dualOut.println(payload);
+    
+    // Version aus JSON parsen
+    int vStart = payload.indexOf("\"version\"");
+    if (vStart == -1) {
+      dualOut.println("[OTA] FEHLER: version.json ungueltig - kein version-Feld gefunden.");
+      dualOut.println("==============================");
+      return;
+    }
+    vStart = payload.indexOf("\"", vStart + 9) + 1;
+    int vEnd = payload.indexOf("\"", vStart);
+    String remoteVersion = payload.substring(vStart, vEnd);
+    
+    // Dateiname aus JSON parsen
+    int fStart = payload.indexOf("\"file\"");
+    if (fStart == -1) {
+      dualOut.println("[OTA] FEHLER: version.json ungueltig - kein file-Feld gefunden.");
+      dualOut.println("==============================");
+      return;
+    }
+    fStart = payload.indexOf("\"", fStart + 6) + 1;
+    int fEnd = payload.indexOf("\"", fStart);
+    String remoteFile = payload.substring(fStart, fEnd);
+    
+    dualOut.print("[OTA] Installierte Version: ");
+    dualOut.println(firmware_version);
+    dualOut.print("[OTA] Verfuegbare Version:  ");
+    dualOut.println(remoteVersion);
+    dualOut.print("[OTA] Dateiname:            ");
+    dualOut.println(remoteFile);
+    
+    if (!isNewerVersion(remoteVersion)) {
+      dualOut.println("[OTA] Firmware ist aktuell. Kein Update noetig.");
+      dualOut.println("==============================");
+      return;
+    }
+    
+    binUrl = String(update_bin_base_url) + remoteFile;
+    dualOut.println("[OTA] *** Neue Version gefunden! ***");
+    dualOut.print("[OTA] Download URL: ");
+    dualOut.println(binUrl);
+    dualOut.print("[OTA] Freier Heap vor Freigabe: ");
+    dualOut.print(ESP.getFreeHeap());
+    dualOut.println(" Bytes");
+    // Client wird hier am Block-Ende freigegeben -> mehr Heap fuer Update
   }
   
-  dualOut.println("[OTA] version.json erfolgreich geladen.");
-  String payload = http.getString();
-  http.end();
-  dualOut.print("[OTA] Inhalt: ");
-  dualOut.println(payload);
-  
-  // Version aus JSON parsen
-  int vStart = payload.indexOf("\"version\"");
-  if (vStart == -1) {
-    dualOut.println("[OTA] FEHLER: version.json ungueltig - kein version-Feld gefunden.");
-    dualOut.println("==============================");
-    return;
-  }
-  vStart = payload.indexOf("\"", vStart + 9) + 1;
-  int vEnd = payload.indexOf("\"", vStart);
-  String remoteVersion = payload.substring(vStart, vEnd);
-  
-  // Dateiname aus JSON parsen
-  int fStart = payload.indexOf("\"file\"");
-  if (fStart == -1) {
-    dualOut.println("[OTA] FEHLER: version.json ungueltig - kein file-Feld gefunden.");
-    dualOut.println("==============================");
-    return;
-  }
-  fStart = payload.indexOf("\"", fStart + 6) + 1;
-  int fEnd = payload.indexOf("\"", fStart);
-  String remoteFile = payload.substring(fStart, fEnd);
-  
-  dualOut.print("[OTA] Installierte Version: ");
-  dualOut.println(firmware_version);
-  dualOut.print("[OTA] Verfuegbare Version:  ");
-  dualOut.println(remoteVersion);
-  dualOut.print("[OTA] Dateiname:            ");
-  dualOut.println(remoteFile);
-  
-  if (!isNewerVersion(remoteVersion)) {
-    dualOut.println("[OTA] Firmware ist aktuell. Kein Update noetig.");
-    dualOut.println("==============================");
-    return;
-  }
-  
-  String binUrl = String(update_bin_base_url) + remoteFile;
-  dualOut.println("[OTA] *** Neue Version gefunden! ***");
-  dualOut.print("[OTA] Download URL: ");
-  dualOut.println(binUrl);
-  dualOut.print("[OTA] Freier Heap vor Update: ");
+  // Jetzt ist der erste SSL-Client freigegeben, mehr RAM verfuegbar
+  yield();
+  dualOut.print("[OTA] Freier Heap nach Freigabe: ");
   dualOut.print(ESP.getFreeHeap());
   dualOut.println(" Bytes");
   dualOut.println("[OTA] Starte Download und Flash...");
   
-  std::unique_ptr<BearSSL::WiFiClientSecure> updateClient(new BearSSL::WiFiClientSecure);
-  updateClient->setInsecure();
+  BearSSL::WiFiClientSecure updateClient;
+  updateClient.setInsecure();
+  updateClient.setBufferSizes(1024, 512);
   
   ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
-  t_httpUpdate_return ret = ESPhttpUpdate.update(*updateClient, binUrl);
+  ESPhttpUpdate.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  t_httpUpdate_return ret = ESPhttpUpdate.update(updateClient, binUrl);
   
   switch (ret) {
     case HTTP_UPDATE_FAILED:
@@ -525,10 +559,11 @@ void setup() {
     mdns.addService("ws", "tcp", 81);
   }
 
-  // Beim Start einmal auf Updates pruefen
+  // Update-Check wird nicht im Setup gemacht sondern verzögert im Loop
+  // (mehr freier Heap nach dem Setup)
   if (webMode == 1) {
-    checkForUpdate();
-    lastUpdateCheck = millis();
+    lastUpdateCheck = millis() - updateCheckInterval + 30000; // Erster Check nach 30 Sekunden
+    dualOut.println("[OTA] Erster Update-Check in 30 Sekunden...");
   }
 
 }
