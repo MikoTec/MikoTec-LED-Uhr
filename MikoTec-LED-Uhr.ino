@@ -32,6 +32,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#include <ntp.h>
 #include <Ticker.h>
 //#include <FastLED.h>
+#include <ESP8266HTTPClient.h>
+#include <ESP8266httpUpdate.h>
+#include <WiFiClientSecureBearSSL.h>
 
 #include "h/settings.h"
 #include "h/root.h"
@@ -136,7 +139,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "0.1";
+const char* firmware_version = "0.2";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -199,6 +202,12 @@ int pulseBrightnessCounter =0;
 Ticker dawntick;//a ticker to establish how far through dawn we are
 int dawnprogress = 0;
 const char* DSTTimeServer = "api.timezonedb.com";
+
+// Auto-Update Konfiguration
+const char* update_version_url = "https://raw.githubusercontent.com/MikoTec/MikoTec-LED-Uhr/main/updates/version.json";
+const char* update_bin_base_url = "https://raw.githubusercontent.com/MikoTec/MikoTec-LED-Uhr/main/updates/";
+unsigned long lastUpdateCheck = 0;
+const unsigned long updateCheckInterval = 86400000; // 24 Stunden in Millisekunden
 
 bool DSTchecked = 0;
 
@@ -313,6 +322,91 @@ int hourofdeath; //saves the time incase of an unplanned reset
 int minuteofdeath; //saves the time incase of an unplanned reset
 
 
+// Vergleicht zwei Versionsnummern (z.B. "0.1" < "0.2")
+// Gibt true zurueck wenn remoteVersion neuer ist als die lokale
+bool isNewerVersion(const String& remoteVersion) {
+  int localMajor = 0, localMinor = 0;
+  int remoteMajor = 0, remoteMinor = 0;
+  
+  sscanf(firmware_version, "%d.%d", &localMajor, &localMinor);
+  sscanf(remoteVersion.c_str(), "%d.%d", &remoteMajor, &remoteMinor);
+  
+  if (remoteMajor > localMajor) return true;
+  if (remoteMajor == localMajor && remoteMinor > localMinor) return true;
+  return false;
+}
+
+void checkForUpdate() {
+  if (WiFi.status() != WL_CONNECTED) return;
+  
+  dualOut.println("Pruefe auf Firmware-Update...");
+  
+  std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
+  client->setInsecure(); // GitHub-Zertifikat nicht pruefen (spart RAM)
+  
+  HTTPClient http;
+  http.begin(*client, update_version_url);
+  int httpCode = http.GET();
+  
+  if (httpCode != 200) {
+    dualOut.print("Update-Check fehlgeschlagen, HTTP-Code: ");
+    dualOut.println(httpCode);
+    http.end();
+    return;
+  }
+  
+  String payload = http.getString();
+  http.end();
+  
+  // Version aus JSON parsen
+  int vStart = payload.indexOf("\"version\"");
+  if (vStart == -1) {
+    dualOut.println("version.json ungueltig");
+    return;
+  }
+  vStart = payload.indexOf("\"", vStart + 9) + 1;
+  int vEnd = payload.indexOf("\"", vStart);
+  String remoteVersion = payload.substring(vStart, vEnd);
+  
+  // Dateiname aus JSON parsen
+  int fStart = payload.indexOf("\"file\"");
+  fStart = payload.indexOf("\"", fStart + 6) + 1;
+  int fEnd = payload.indexOf("\"", fStart);
+  String remoteFile = payload.substring(fStart, fEnd);
+  
+  dualOut.print("Installierte Version: ");
+  dualOut.println(firmware_version);
+  dualOut.print("Verfuegbare Version: ");
+  dualOut.println(remoteVersion);
+  
+  if (!isNewerVersion(remoteVersion)) {
+    dualOut.println("Firmware ist aktuell.");
+    return;
+  }
+  
+  dualOut.println("Neue Version gefunden! Starte Update...");
+  
+  String binUrl = String(update_bin_base_url) + remoteFile;
+  
+  std::unique_ptr<BearSSL::WiFiClientSecure> updateClient(new BearSSL::WiFiClientSecure);
+  updateClient->setInsecure();
+  
+  ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
+  t_httpUpdate_return ret = ESPhttpUpdate.update(*updateClient, binUrl);
+  
+  switch (ret) {
+    case HTTP_UPDATE_FAILED:
+      dualOut.print("Update fehlgeschlagen, Fehler: ");
+      dualOut.println(ESPhttpUpdate.getLastErrorString());
+      break;
+    case HTTP_UPDATE_NO_UPDATES:
+      dualOut.println("Kein Update verfuegbar.");
+      break;
+    case HTTP_UPDATE_OK:
+      dualOut.println("Update erfolgreich! Neustart...");
+      break;
+  }
+}
 
 //-----------------------------------standard arduino setup and loop-----------------------------------------------------------------------
 void setup() {
@@ -400,6 +494,12 @@ void setup() {
     mdns.addService("ws", "tcp", 81);
   }
 
+  // Beim Start einmal auf Updates pruefen
+  if (webMode == 1) {
+    checkForUpdate();
+    lastUpdateCheck = millis();
+  }
+
 }
 
 void loop() {
@@ -415,6 +515,13 @@ void loop() {
   webSocket.loop();
   server.handleClient();
   NTPclient.update();
+
+  // Einmal taeglich auf Updates pruefen
+  if (webMode == 1 && millis() - lastUpdateCheck > updateCheckInterval) {
+    checkForUpdate();
+    lastUpdateCheck = millis();
+  }
+
   delay(50);
   if (second() != prevsecond) {
     if (webMode != 0 && second() == 0 && minute() % 10 == 0) { //only record "time of death" if we're in normal running mode.
