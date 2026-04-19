@@ -4,21 +4,37 @@ const char timezone_html[] PROGMEM = R"=====(
 <head><title>Zeitzone</title>
 <meta name=viewport content="width=device-width, initial-scale=1">
 <meta http-equiv=Content-Type content="text/html; charset=utf-8" />
-<link rel=stylesheet href=http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css>
+<link rel=stylesheet href=https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css>
 <script src=https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js></script>
-<script src=http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js></script>
+<script src=https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js></script>
 <link rel=stylesheet href='clockmenustyle.css'>
+<style>
+.container{max-width:600px;margin:0 auto;padding:15px;}
+.tab-content{padding:15px 0;}
+.nav-tabs{margin-bottom:15px;}
+.nav-tabs li{display:inline-block;}
+.nav-tabs li a{padding:8px 15px;text-decoration:none;border:1px solid #ddd;margin-right:5px;color:#333;}
+.nav-tabs li.active a{background:#fff;border-bottom:1px solid #fff;font-weight:bold;}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+input[type=text]{padding:6px;margin:5px 0;font-size:16px;width:200px;}
+input[type=submit]{padding:8px 16px;margin:10px 0;font-size:14px;cursor:pointer;}
+h2{text-align:center;}
+h3{margin-top:10px;}
+.btn-box{text-align:center;margin-top:15px;}
+.btn{display:inline-block;padding:10px 20px;margin:5px;text-decoration:none;border:1px solid #ccc;color:#333;background:#f5f5f5;text-transform:uppercase;font-size:12px;letter-spacing:1px;}
+</style>
 </head>
 <body class="settings-page">
 <div class=container>
 <h2>Zeitzone einstellen</h2>
-<ul class="nav nav-tabs">
-<li class=active><a data-toggle=tab href=#GPS>GPS</a></li>
-<li><a data-toggle=tab href=#Manual>Manuell</a></li>
-<li><a data-toggle=tab href=#City>Stadt</a></li>
+<ul class="nav nav-tabs" id="tztabs">
+<li class=active><a href="#" onclick="showTab('GPS');return false;">GPS</a></li>
+<li><a href="#" onclick="showTab('Manual');return false;">Manuell</a></li>
+<li><a href="#" onclick="showTab('City');return false;">Stadt</a></li>
 </ul>
 <div class=tab-content>
-<div id=GPS class="tab-pane fade in active">
+<div id=GPS class="tab-pane active">
 <h3>Standort</h3>
 <button type=button onclick=getLocation()>Mein GPS abrufen</button><br>
 <form action=/ method=GET>
@@ -26,12 +42,12 @@ Breitengrad:<input type=text name=latitude id=latitude value=$latitude><br>
 Laengengrad:<input type=text name=longitude id=longitude value=$longitude><br>
 <input type=submit name=submit value='Update Timezone'/></form>
 </div>
-<div id=Manual class="tab-pane fade">
+<div id=Manual class="tab-pane">
 <form action=/ method=GET>
 UTC Versatz <input type=text name=timezone id=timezone value=$timezone><br>
 <input type=submit name=submit value='Update Timezone'/></form>
 </div>
-<div id=City class="tab-pane fade">
+<div id=City class="tab-pane">
 <h3>Stadt waehlen</h3>
 <form action=/ method=GET>
 <select id=citysel onchange="cityChanged()" style="font-size:16px;padding:6px;width:100%;margin:8px 0">
@@ -82,7 +98,13 @@ UTC Versatz <input type=text name=timezone id=timezone value=$timezone><br>
 <a class=btn href=/settings>Einstellungen</a>
 <a class=btn href=/hilfe>Hilfe</a>
 </div>
-<script>var x=document.getElementById("latitude");var y=document.getElementById("longitude");function getLocation(){if(navigator.geolocation){navigator.geolocation.getCurrentPosition(showPosition)}else{alert("Geolocation wird von diesem Browser nicht unterstuetzt.")}}function showPosition(a){console.log("in showPosition");x.value=Math.round(a.coords.latitude*100)/100;y.value=Math.round(a.coords.longitude*100)/100}function cityChanged(){var s=document.getElementById("citysel").value;if(s!=""){var p=s.split(",");document.getElementById("citylat").value=p[0];document.getElementById("citylng").value=p[1];document.getElementById("latitude").value=p[0];document.getElementById("longitude").value=p[1];}}</script>
+<script>
+var x=document.getElementById("latitude");var y=document.getElementById("longitude");
+function getLocation(){if(navigator.geolocation){navigator.geolocation.getCurrentPosition(showPosition)}else{alert("Geolocation wird von diesem Browser nicht unterstuetzt.")}}
+function showPosition(a){x.value=Math.round(a.coords.latitude*100)/100;y.value=Math.round(a.coords.longitude*100)/100}
+function cityChanged(){var s=document.getElementById("citysel").value;if(s!=""){var p=s.split(",");document.getElementById("citylat").value=p[0];document.getElementById("citylng").value=p[1];document.getElementById("latitude").value=p[0];document.getElementById("longitude").value=p[1];}}
+function showTab(id){var panes=document.getElementsByClassName("tab-pane");for(var i=0;i<panes.length;i++){panes[i].className="tab-pane";}document.getElementById(id).className="tab-pane active";var tabs=document.querySelectorAll(".nav-tabs li");for(var i=0;i<tabs.length;i++){tabs[i].className="";}event.target.parentElement.className="active";}
+</script>
 </body>
 </html>
 )=====";
