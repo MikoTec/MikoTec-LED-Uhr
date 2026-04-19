@@ -104,19 +104,41 @@ String getLogContent() {
 }
 
 // Eigene Print-Klasse die Serial UND Ringpuffer beschreibt
+// Fuegt automatisch einen Zeitstempel am Anfang jeder neuen Zeile ein
 class DualPrint : public Print {
+  private:
+    bool newLine = true; // Flag: naechstes Zeichen ist Anfang einer neuen Zeile
+    
+    void printTimestamp() {
+      // Zeitstempel nur ausgeben wenn TimeLib bereits gesetzt ist (year > 2000)
+      if (year() > 2000) {
+        char ts[22];
+        snprintf(ts, sizeof(ts), "[%02d.%02d.%04d %02d:%02d:%02d] ",
+          day(), month(), year(), hour(), minute(), second());
+        // Direkt an Serial und Logbuffer ohne erneuten Timestamp
+        Serial.print(ts);
+        logAppend(ts);
+      }
+    }
+    
   public:
     size_t write(uint8_t c) override {
+      if (newLine && c != '\n' && c != '\r') {
+        printTimestamp();
+        newLine = false;
+      }
+      if (c == '\n') {
+        newLine = true;
+      }
       char buf[2] = {(char)c, 0};
       logAppend(buf);
       return Serial.write(c);
     }
     size_t write(const uint8_t *buffer, size_t size) override {
       for (size_t i = 0; i < size; i++) {
-        char buf[2] = {(char)buffer[i], 0};
-        logAppend(buf);
+        write(buffer[i]);
       }
-      return Serial.write(buffer, size);
+      return size;
     }
 };
 
@@ -139,7 +161,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "0.7";
+const char* firmware_version = "0.8";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
