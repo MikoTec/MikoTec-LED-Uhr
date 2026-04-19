@@ -139,7 +139,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "0.4";
+const char* firmware_version = "0.5";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -773,13 +773,13 @@ void writeInitalConfig() {
   delay(10);
   writeLatLong(175, 51.17); //default to Solingen
   writeLatLong(177, 7.08);//default to Solingen
-  EEPROM.write(179, 10);//timezone default AEST
+  EEPROM.write(179, 1);//timezone default CET (UTC+1) Solingen
   EEPROM.write(180, 0);//default randommode off
   EEPROM.write(181, 0); //default hourmarks to off
   EEPROM.write(182, 22); //default to sleep at 22:00
   EEPROM.write(183, 0);
   EEPROM.write(184, 1); //default to showseconds to yes
-  EEPROM.write(185, 0); //default DSTauto off until user sets lat/long
+  EEPROM.write(185, 1); //default DSTauto on fuer automatische Sommerzeit
   EEPROM.write(186, 0); //default webMode to setup mode off until user sets local wifi
   EEPROM.write(500, 196);//write magic byte to 500 so that system knows its set up.
   EEPROM.write(228, 1);//default sleeptype to 1 (dots)
