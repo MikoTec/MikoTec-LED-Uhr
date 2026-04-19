@@ -139,7 +139,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "0.6";
+const char* firmware_version = "0.7";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -2526,9 +2526,14 @@ void moon() {
     }
   }
 
-  dualOut.print("Mondphase Tag: "); dualOut.print(phase);
-  dualOut.print(" Beleuchtung: "); dualOut.print((int)(illumination * 100));
-  dualOut.print("% LEDs: "); dualOut.println(litLEDs);
+  // Debug nur einmal pro Stunde ausgeben
+  static int lastMoonLogHour = -1;
+  if (hour() != lastMoonLogHour) {
+    lastMoonLogHour = hour();
+    dualOut.print("Mondphase Tag: "); dualOut.print(phase);
+    dualOut.print(" Beleuchtung: "); dualOut.print((int)(illumination * 100));
+    dualOut.print("% LEDs: "); dualOut.println(litLEDs);
+  }
 }
 
 void brighttest() {
