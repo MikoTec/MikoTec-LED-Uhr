@@ -139,7 +139,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "0.5";
+const char* firmware_version = "0.6";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -616,7 +616,10 @@ void loop() {
         }
       }
 
-      //nightCheck();
+      // Jede volle Stunde nightCheck ausfuehren fuer autoSleep Aktualisierung
+      if (minute() == 0) {
+        nightCheck();
+      }
     }
     prevsecond = second();
     updateface();
@@ -1706,15 +1709,25 @@ void nightCheck() {
     int sunriseH, sunriseM, sunsetH, sunsetM;
     calcSunriseSunset(doy, latitude, longitude, tz, sunriseH, sunriseM, sunsetH, sunsetM);
 
-    sleepH = sunsetH;
-    sleepM = sunsetM;
-    wakeH = sunriseH;
-    wakeM = sunriseM;
+    // Globale sleep/wake Variablen aktualisieren
+    sleep = sunsetH;
+    sleepmin = sunsetM;
+    wake = sunriseH;
+    wakemin = sunriseM;
+
+    sleepH = sleep;
+    sleepM = sleepmin;
+    wakeH = wake;
+    wakeM = wakemin;
 
     dualOut.print("Auto-Schlaf Sonnenuntergang: ");
-    dualOut.print(sunsetH); dualOut.print(":"); dualOut.println(sunsetM);
+    dualOut.print(sunsetH); dualOut.print(":"); 
+    if (sunsetM < 10) dualOut.print("0");
+    dualOut.println(sunsetM);
     dualOut.print("Auto-Wach Sonnenaufgang: ");
-    dualOut.print(sunriseH); dualOut.print(":"); dualOut.println(sunriseM);
+    dualOut.print(sunriseH); dualOut.print(":");
+    if (sunriseM < 10) dualOut.print("0");
+    dualOut.println(sunriseM);
   }
 
   int nowMin = hour() * 60 + minute();
@@ -2866,7 +2879,7 @@ void connectToDSTServer() {
     GETString += latitude;
     GETString += "&lng=";
     GETString += longitude;
-    GETString += "&key=N9XTPTVFZJFN HTTP/1.1";
+    GETString += "&key=AX6GA4Y3762L HTTP/1.1";
 
     DSTclient.println(GETString);
     dualOut.println(GETString);
