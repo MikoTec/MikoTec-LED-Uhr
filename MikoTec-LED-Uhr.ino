@@ -107,17 +107,28 @@ String getLogContent() {
 // Fuegt automatisch einen Zeitstempel am Anfang jeder neuen Zeile ein
 class DualPrint : public Print {
   private:
-    bool newLine = true; // Flag: naechstes Zeichen ist Anfang einer neuen Zeile
+    bool newLine = true;
     
     void printTimestamp() {
-      // Zeitstempel nur ausgeben wenn TimeLib bereits gesetzt ist (year > 2000)
       if (year() > 2000) {
         char ts[22];
-        snprintf(ts, sizeof(ts), "[%02d.%02d.%04d %02d:%02d:%02d] ",
-          day(), month(), year(), hour(), minute(), second());
-        // Direkt an Serial und Logbuffer ohne erneuten Timestamp
-        Serial.print(ts);
-        logAppend(ts);
+        int d = day(); int mo = month(); int y = year();
+        int h = hour(); int mi = minute(); int s = second();
+        ts[0] = '[';
+        ts[1] = '0' + d / 10; ts[2] = '0' + d % 10; ts[3] = '.';
+        ts[4] = '0' + mo / 10; ts[5] = '0' + mo % 10; ts[6] = '.';
+        ts[7] = '0' + y / 1000; ts[8] = '0' + (y / 100) % 10;
+        ts[9] = '0' + (y / 10) % 10; ts[10] = '0' + y % 10;
+        ts[11] = ' ';
+        ts[12] = '0' + h / 10; ts[13] = '0' + h % 10; ts[14] = ':';
+        ts[15] = '0' + mi / 10; ts[16] = '0' + mi % 10; ts[17] = ':';
+        ts[18] = '0' + s / 10; ts[19] = '0' + s % 10;
+        ts[20] = ']'; ts[21] = ' ';
+        Serial.write((const uint8_t*)ts, 22);
+        for (int i = 0; i < 22; i++) {
+          char buf[2] = {ts[i], 0};
+          logAppend(buf);
+        }
       }
     }
     
@@ -136,8 +147,18 @@ class DualPrint : public Print {
     }
     size_t write(const uint8_t *buffer, size_t size) override {
       for (size_t i = 0; i < size; i++) {
-        write(buffer[i]);
+        if (newLine && buffer[i] != '\n' && buffer[i] != '\r') {
+          printTimestamp();
+          newLine = false;
+        }
+        if (buffer[i] == '\n') {
+          newLine = true;
+        }
+        char buf[2] = {(char)buffer[i], 0};
+        logAppend(buf);
       }
+      Serial.write(buffer, size);
+      yield();
       return size;
     }
 };
@@ -161,7 +182,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "0.8";
+const char* firmware_version = "0.9";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
