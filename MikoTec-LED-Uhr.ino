@@ -168,10 +168,10 @@ String macString;
 String ipString;
 String netmaskString;
 String gatewayString;
-String clockname = "thelightclock";
+String clockname = "mikotec-led-uhr";
 
 IPAddress dns(8, 8, 8, 8);  //Google dns
-const char* ssid = "The Light Clock"; //The ssid when in AP mode
+const char* ssid = "MikoTec LED Uhr"; //The ssid when in AP mode
 MDNSResponder mdns;
 WebSocketsServer webSocket = WebSocketsServer(81);
 ESP8266WebServer server(80);
@@ -818,14 +818,14 @@ void launchWeb(int webtype) {
       dualOut.printf("Starting SSDP...\n");
       SSDP.setSchemaURL("description.xml");
       SSDP.setHTTPPort(80);
-      SSDP.setName("The Light Clock");
+      SSDP.setName("MikoTec LED Uhr");
       SSDP.setSerialNumber("4");
       SSDP.setURL("index");
-      SSDP.setModelName("The Light Clock v1");
+      SSDP.setModelName("MikoTec LED Uhr v1");
       SSDP.setModelNumber("4");
-      SSDP.setModelURL("http://www.thelightclock.com");
-      SSDP.setManufacturer("Omnino Realis");
-      SSDP.setManufacturerURL("http://www.thelightclock.com");
+      SSDP.setModelURL("http://www.mikotec-led-uhr.de");
+      SSDP.setManufacturer("MikoTec");
+      SSDP.setManufacturerURL("http://www.mikotec-led-uhr.de");
       SSDP.begin();
 
       dualOut.println(WiFi.localIP());
@@ -2661,7 +2661,7 @@ void ssdpResponder() {
   int clockname_len = clockname.length() + 1;
   char clocknamechar[clockname_len];
   clockname.toCharArray(clocknamechar, clockname_len);
-  String str = "<root><specVersion><major>1</major><minor>0</minor></specVersion><URLBase>http://" + ipString + ":80/</URLBase><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>" + clocknamechar + "(" + ipString + ")</friendlyName><manufacturer>Omnino Realis</manufacturer><manufacturerURL>http://www.thelightclock.com</manufacturerURL><modelDescription>The Light Clock v1</modelDescription><modelName>The Light Clock v1</modelName><modelNumber>4</modelNumber><modelURL>http://www.thelightclock.com</modelURL><serialNumber>3</serialNumber><UDN>uuid:3</UDN><presentationURL>index.html</presentationURL><iconList><icon><mimetype>image/png</mimetype><height>48</height><width>48</width><depth>24</depth><url>www.thelightclock.com/clockjshosting/logo.png</url></icon><icon><mimetype>image/png</mimetype><height>120</height><width>120</width><depth>24</depth><url>www.thelightclock.com/clockjshosting/logo.png</url></icon></iconList></device></root>";
+  String str = "<root><specVersion><major>1</major><minor>0</minor></specVersion><URLBase>http://" + ipString + ":80/</URLBase><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>" + clocknamechar + "(" + ipString + ")</friendlyName><manufacturer>MikoTec</manufacturer><manufacturerURL>http://www.mikotec-led-uhr.de</manufacturerURL><modelDescription>MikoTec LED Uhr v1</modelDescription><modelName>MikoTec LED Uhr v1</modelName><modelNumber>4</modelNumber><modelURL>http://www.mikotec-led-uhr.de</modelURL><serialNumber>3</serialNumber><UDN>uuid:3</UDN><presentationURL>index.html</presentationURL></device></root>";
   server.send(200, "text/plain", str);
   dualOut.println("SSDP packet sent");
 
