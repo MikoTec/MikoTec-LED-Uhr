@@ -29,14 +29,18 @@ h3{margin-top:10px;}
 <div class=container>
 <h2>Zeitzone einstellen</h2>
 <ul class="nav nav-tabs" id="tztabs">
-<li class=active><a href="#" onclick="showTab('GPS');return false;">GPS</a></li>
+<li class=active><a href="#" onclick="showTab('GPS');return false;">Suche</a></li>
 <li><a href="#" onclick="showTab('Manual');return false;">Manuell</a></li>
 <li><a href="#" onclick="showTab('City');return false;">Stadt</a></li>
 </ul>
 <div class=tab-content>
 <div id=GPS class="tab-pane active">
 <h3>Standort</h3>
-<button type=button onclick=getLocation()>Mein GPS abrufen</button><br>
+<div style="margin-bottom:10px;">
+<input type=text id=searchAddr placeholder="Adresse oder Stadt eingeben..." style="width:100%;padding:8px;font-size:16px;box-sizing:border-box;">
+<button type=button onclick=searchLocation() style="margin-top:5px;padding:8px 16px;cursor:pointer;">Suchen</button>
+<span id=searchStatus style="margin-left:10px;color:#888;"></span>
+</div>
 <form action=/ method=GET>
 Breitengrad:<input type=text name=latitude id=latitude value=$latitude><br>
 Laengengrad:<input type=text name=longitude id=longitude value=$longitude><br>
@@ -100,8 +104,24 @@ UTC Versatz <input type=text name=timezone id=timezone value=$timezone><br>
 </div>
 <script>
 var x=document.getElementById("latitude");var y=document.getElementById("longitude");
-function getLocation(){if(navigator.geolocation){navigator.geolocation.getCurrentPosition(showPosition)}else{alert("Geolocation wird von diesem Browser nicht unterstuetzt.")}}
-function showPosition(a){x.value=Math.round(a.coords.latitude*100)/100;y.value=Math.round(a.coords.longitude*100)/100}
+function searchLocation(){
+var addr=document.getElementById("searchAddr").value;
+if(!addr){document.getElementById("searchStatus").innerText="Bitte Adresse eingeben";return;}
+document.getElementById("searchStatus").innerText="Suche...";
+var xhr=new XMLHttpRequest();
+xhr.open("GET","https://nominatim.openstreetmap.org/search?q="+encodeURIComponent(addr)+"&format=json&limit=1",true);
+xhr.onreadystatechange=function(){
+if(xhr.readyState==4){
+if(xhr.status==200){
+var res=JSON.parse(xhr.responseText);
+if(res.length>0){
+x.value=Math.round(parseFloat(res[0].lat)*100)/100;
+y.value=Math.round(parseFloat(res[0].lon)*100)/100;
+document.getElementById("searchStatus").innerText="Gefunden: "+res[0].display_name.substring(0,50)+"...";
+}else{document.getElementById("searchStatus").innerText="Nichts gefunden.";}
+}else{document.getElementById("searchStatus").innerText="Fehler bei der Suche.";}
+}};
+xhr.send();}
 function cityChanged(){var s=document.getElementById("citysel").value;if(s!=""){var p=s.split(",");document.getElementById("citylat").value=p[0];document.getElementById("citylng").value=p[1];document.getElementById("latitude").value=p[0];document.getElementById("longitude").value=p[1];}}
 function showTab(id){var panes=document.getElementsByClassName("tab-pane");for(var i=0;i<panes.length;i++){panes[i].className="tab-pane";}document.getElementById(id).className="tab-pane active";var tabs=document.querySelectorAll(".nav-tabs li");for(var i=0;i<tabs.length;i++){tabs[i].className="";}event.target.parentElement.className="active";}
 </script>
