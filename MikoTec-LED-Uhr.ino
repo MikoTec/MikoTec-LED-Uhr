@@ -104,19 +104,76 @@ String getLogContent() {
 }
 
 // Eigene Print-Klasse die Serial UND Ringpuffer beschreibt
+// Zeitstempel wird einmal pro Zeile vorangestellt (Template-basiert)
 class DualPrint : public Print {
+  private:
+    bool needsTimestamp = true;
+    
+    void writeTimestamp() {
+      if (needsTimestamp && year() > 2000) {
+        char ts[23];
+        int d = day(); int mo = month(); int y = year();
+        int h = hour(); int mi = minute(); int s = second();
+        ts[0] = '[';
+        ts[1] = '0' + d / 10; ts[2] = '0' + d % 10; ts[3] = '.';
+        ts[4] = '0' + mo / 10; ts[5] = '0' + mo % 10; ts[6] = '.';
+        ts[7] = '0' + y / 1000; ts[8] = '0' + (y / 100) % 10;
+        ts[9] = '0' + (y / 10) % 10; ts[10] = '0' + y % 10;
+        ts[11] = ' ';
+        ts[12] = '0' + h / 10; ts[13] = '0' + h % 10; ts[14] = ':';
+        ts[15] = '0' + mi / 10; ts[16] = '0' + mi % 10; ts[17] = ':';
+        ts[18] = '0' + s / 10; ts[19] = '0' + s % 10;
+        ts[20] = ']'; ts[21] = ' '; ts[22] = 0;
+        Serial.write((const uint8_t*)ts, 22);
+        logAppend(ts);
+        needsTimestamp = false;
+      }
+    }
+    
   public:
     size_t write(uint8_t c) override {
+      if (c == '\n') {
+        needsTimestamp = true;
+      }
       char buf[2] = {(char)c, 0};
       logAppend(buf);
       return Serial.write(c);
     }
     size_t write(const uint8_t *buffer, size_t size) override {
       for (size_t i = 0; i < size; i++) {
+        if (buffer[i] == '\n') {
+          needsTimestamp = true;
+        }
         char buf[2] = {(char)buffer[i], 0};
         logAppend(buf);
       }
       return Serial.write(buffer, size);
+    }
+    
+    // Template: print/println fuer alle Typen mit Zeitstempel
+    template<typename T>
+    size_t print(T val) {
+      writeTimestamp();
+      return Print::print(val);
+    }
+    template<typename T>
+    size_t println(T val) {
+      writeTimestamp();
+      return Print::println(val);
+    }
+    template<typename T, typename U>
+    size_t print(T val, U fmt) {
+      writeTimestamp();
+      return Print::print(val, fmt);
+    }
+    template<typename T, typename U>
+    size_t println(T val, U fmt) {
+      writeTimestamp();
+      return Print::println(val, fmt);
+    }
+    size_t println(void) {
+      needsTimestamp = true;
+      return Print::println();
     }
 };
 
