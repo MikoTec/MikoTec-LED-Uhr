@@ -169,7 +169,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "1.5";
+const char* firmware_version = "1.6";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -601,11 +601,9 @@ void loop() {
       saveFace(0);
     }
     if (second() == 0) {
-      // Bei autoSleep: nightCheck jede Minute ausfuehren
-      // damit sleep/wake immer auf Sonnenuntergang/Sonnenaufgang stehen
-      if (autoSleep == 1) {
-        // nightCheck nur aufrufen wenn wir NICHT im dawnmode sind
-        // sonst wuerde nightCheck den dawnmode ueberschreiben
+      // Bei autoSleep: nightCheck alle 6 Stunden ausfuehren (0, 6, 12, 18 Uhr)
+      // um Sonnenuntergang/Sonnenaufgang Werte zu aktualisieren
+      if (autoSleep == 1 && minute() == 0 && hour() % 6 == 0) {
         if (clockmode != dawnmode) {
           nightCheck();
         }
@@ -1760,8 +1758,6 @@ void nightCheck() {
       }
     }
   }
-  logTS(); dualOut.print("clockmode ");
-  dualOut.println(clockmode);
 }
 void handleSettings() {
   //  String fontreplace;
