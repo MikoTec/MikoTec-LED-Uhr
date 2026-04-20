@@ -103,7 +103,6 @@ String getLogContent() {
 }
 
 // Eigene Print-Klasse die Serial UND Ringpuffer beschreibt
-// Eigene Print-Klasse die Serial UND Ringpuffer beschreibt
 class DualPrint : public Print {
   public:
     size_t write(uint8_t c) override {
@@ -122,6 +121,28 @@ class DualPrint : public Print {
 
 DualPrint dualOut;
 
+// Zeitstempel direkt in Serial und Ringpuffer schreiben
+// Wird NICHT ueber DualPrint geleitet - kein Crash-Risiko
+void logTS() {
+  if (year() > 2000) {
+    char ts[23];
+    int d = day(); int mo = month(); int y = year();
+    int h = hour(); int mi = minute(); int s = second();
+    ts[0] = '[';
+    ts[1] = '0' + d / 10; ts[2] = '0' + d % 10; ts[3] = '.';
+    ts[4] = '0' + mo / 10; ts[5] = '0' + mo % 10; ts[6] = '.';
+    ts[7] = '0' + y / 1000; ts[8] = '0' + (y / 100) % 10;
+    ts[9] = '0' + (y / 10) % 10; ts[10] = '0' + y % 10;
+    ts[11] = ' ';
+    ts[12] = '0' + h / 10; ts[13] = '0' + h % 10; ts[14] = ':';
+    ts[15] = '0' + mi / 10; ts[16] = '0' + mi % 10; ts[17] = ':';
+    ts[18] = '0' + s / 10; ts[19] = '0' + s % 10;
+    ts[20] = ']'; ts[21] = ' '; ts[22] = 0;
+    Serial.print(ts);
+    logAppend(ts);
+  }
+}
+
 // Typedef fuer NeoPixelBus 2.8.4 - UART1 Methode (WiFi-kompatibel, nutzt GPIO2/D4)
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
@@ -139,7 +160,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "1.3";
+const char* firmware_version = "1.4";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -338,16 +359,16 @@ bool isNewerVersion(const String& remoteVersion) {
 
 void checkForUpdate() {
   if (WiFi.status() != WL_CONNECTED) {
-    dualOut.println("[OTA] Kein WLAN verbunden, Update-Check uebersprungen.");
+    logTS(); dualOut.println("[OTA] Kein WLAN verbunden, Update-Check uebersprungen.");
     return;
   }
   
   dualOut.println("==============================");
-  dualOut.println("[OTA] Pruefe auf Firmware-Update...");
-  dualOut.print("[OTA] Freier Heap: ");
+  logTS(); dualOut.println("[OTA] Pruefe auf Firmware-Update...");
+  logTS(); dualOut.print("[OTA] Freier Heap: ");
   dualOut.print(ESP.getFreeHeap());
   dualOut.println(" Bytes");
-  dualOut.print("[OTA] Abfrage URL: ");
+  logTS(); dualOut.print("[OTA] Abfrage URL: ");
   dualOut.println(update_version_url);
   
   WiFiClient client;
@@ -355,30 +376,30 @@ void checkForUpdate() {
   http.begin(client, update_version_url);
   http.setTimeout(15000);
   
-  dualOut.println("[OTA] Sende HTTP-Anfrage...");
+  logTS(); dualOut.println("[OTA] Sende HTTP-Anfrage...");
   int httpCode = http.GET();
   
-  dualOut.print("[OTA] HTTP-Antwort: ");
+  logTS(); dualOut.print("[OTA] HTTP-Antwort: ");
   dualOut.println(httpCode);
   
   if (httpCode != 200) {
-    dualOut.print("[OTA] Update-Check fehlgeschlagen, HTTP-Code: ");
+    logTS(); dualOut.print("[OTA] Update-Check fehlgeschlagen, HTTP-Code: ");
     dualOut.println(httpCode);
     http.end();
     dualOut.println("==============================");
     return;
   }
   
-  dualOut.println("[OTA] version.json erfolgreich geladen.");
+  logTS(); dualOut.println("[OTA] version.json erfolgreich geladen.");
   String payload = http.getString();
   http.end();
-  dualOut.print("[OTA] Inhalt: ");
+  logTS(); dualOut.print("[OTA] Inhalt: ");
   dualOut.println(payload);
   
   // Version aus JSON parsen
   int vStart = payload.indexOf("\"version\"");
   if (vStart == -1) {
-    dualOut.println("[OTA] FEHLER: version.json ungueltig - kein version-Feld gefunden.");
+    logTS(); dualOut.println("[OTA] FEHLER: version.json ungueltig - kein version-Feld gefunden.");
     dualOut.println("==============================");
     return;
   }
@@ -389,7 +410,7 @@ void checkForUpdate() {
   // Dateiname aus JSON parsen
   int fStart = payload.indexOf("\"file\"");
   if (fStart == -1) {
-    dualOut.println("[OTA] FEHLER: version.json ungueltig - kein file-Feld gefunden.");
+    logTS(); dualOut.println("[OTA] FEHLER: version.json ungueltig - kein file-Feld gefunden.");
     dualOut.println("==============================");
     return;
   }
@@ -397,27 +418,27 @@ void checkForUpdate() {
   int fEnd = payload.indexOf("\"", fStart);
   String remoteFile = payload.substring(fStart, fEnd);
   
-  dualOut.print("[OTA] Installierte Version: ");
+  logTS(); dualOut.print("[OTA] Installierte Version: ");
   dualOut.println(firmware_version);
-  dualOut.print("[OTA] Verfuegbare Version:  ");
+  logTS(); dualOut.print("[OTA] Verfuegbare Version:  ");
   dualOut.println(remoteVersion);
-  dualOut.print("[OTA] Dateiname:            ");
+  logTS(); dualOut.print("[OTA] Dateiname:            ");
   dualOut.println(remoteFile);
   
   if (!isNewerVersion(remoteVersion)) {
-    dualOut.println("[OTA] Firmware ist aktuell. Kein Update noetig.");
+    logTS(); dualOut.println("[OTA] Firmware ist aktuell. Kein Update noetig.");
     dualOut.println("==============================");
     return;
   }
   
   String binUrl = String(update_bin_base_url) + remoteFile;
-  dualOut.println("[OTA] *** Neue Version gefunden! ***");
-  dualOut.print("[OTA] Download URL: ");
+  logTS(); dualOut.println("[OTA] *** Neue Version gefunden! ***");
+  logTS(); dualOut.print("[OTA] Download URL: ");
   dualOut.println(binUrl);
-  dualOut.print("[OTA] Freier Heap vor Update: ");
+  logTS(); dualOut.print("[OTA] Freier Heap vor Update: ");
   dualOut.print(ESP.getFreeHeap());
   dualOut.println(" Bytes");
-  dualOut.println("[OTA] Starte Download und Flash...");
+  logTS(); dualOut.println("[OTA] Starte Download und Flash...");
   
   WiFiClient updateClient;
   ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
@@ -425,16 +446,16 @@ void checkForUpdate() {
   
   switch (ret) {
     case HTTP_UPDATE_FAILED:
-      dualOut.print("[OTA] FEHLER: Update fehlgeschlagen (");
+      logTS(); dualOut.print("[OTA] FEHLER: Update fehlgeschlagen (");
       dualOut.print(ESPhttpUpdate.getLastError());
       dualOut.print("): ");
       dualOut.println(ESPhttpUpdate.getLastErrorString());
       break;
     case HTTP_UPDATE_NO_UPDATES:
-      dualOut.println("[OTA] Server meldet: Kein Update verfuegbar.");
+      logTS(); dualOut.println("[OTA] Server meldet: Kein Update verfuegbar.");
       break;
     case HTTP_UPDATE_OK:
-      dualOut.println("[OTA] Update erfolgreich! Neustart...");
+      logTS(); dualOut.println("[OTA] Update erfolgreich! Neustart...");
       break;
   }
   dualOut.println("==============================");
@@ -446,8 +467,8 @@ void setup() {
   Serial.begin(115200);
   delay(500);
   memset(logBuffer, 0, LOG_BUFFER_SIZE);
-  dualOut.println("");
-  dualOut.println("Light Clock wird gestartet...");
+  logTS(); dualOut.println("");
+  logTS(); dualOut.println("Light Clock wird gestartet...");
 
   // 2. Spielerfarben
   playercolors[0] = RgbColor(255, 0, 0);
@@ -467,14 +488,14 @@ void setup() {
 
   // 4. LEDs initialisieren (nach EEPROM damit pixelCount bekannt)
   if (pixelCount < 1 || pixelCount > 500) pixelCount = 120;
-  dualOut.println("Initialisiere LEDs...");
+  logTS(); dualOut.println("Initialisiere LEDs...");
   if (clockleds) delete clockleds;
   clockleds = new NeoPixelBusType(pixelCount); // UART1 nutzt immer GPIO2 (D4)
   if (clockleds) {
     clockleds->Begin();
     clockleds->ClearTo(RgbColor(0, 0, 0));
     clockleds->Show();
-    dualOut.println("LEDs bereit.");
+    logTS(); dualOut.println("LEDs bereit.");
   }
 
   // 5. Nachtmodus pruefen und Anzeige starten
@@ -496,11 +517,11 @@ void setup() {
     NTPclient.begin();
     NTPclient.forceUpdate();
     time_t ntpTime = NTPclient.getEpochTime();
-    dualOut.print("NTP Erstabfrage: ");
+    logTS(); dualOut.print("NTP Erstabfrage: ");
     dualOut.println(ntpTime);
     if (ntpTime > 1000000) {
       setTime(ntpTime);
-      dualOut.print("Zeit gesetzt auf: ");
+      logTS(); dualOut.print("Zeit gesetzt auf: ");
       dualOut.print(hour());
       dualOut.print(":");
       dualOut.println(minute());
@@ -530,7 +551,7 @@ void setup() {
   // (mehr freier Heap nach dem Setup)
   if (webMode == 1) {
     lastUpdateCheck = millis() - updateCheckInterval + 30000; // Erster Check nach 30 Sekunden
-    dualOut.println("[OTA] Erster Update-Check in 30 Sekunden...");
+    logTS(); dualOut.println("[OTA] Erster Update-Check in 30 Sekunden...");
   }
 
 }
@@ -551,7 +572,7 @@ void loop() {
 
   // Einmal taeglich auf Updates pruefen
   if (webMode == 1 && millis() - lastUpdateCheck > updateCheckInterval) {
-    dualOut.println("[OTA] Taeglicher Update-Check wird ausgefuehrt...");
+    logTS(); dualOut.println("[OTA] Taeglicher Update-Check wird ausgefuehrt...");
     checkForUpdate();
     lastUpdateCheck = millis();
   }
@@ -581,18 +602,18 @@ void loop() {
 
       if (hour() == sleep && minute() == sleepmin) {
         clockmode = night;
-        dualOut.println("Schlafmodus aktiviert");
+        logTS(); dualOut.println("Schlafmodus aktiviert");
       }
       if (hour() == wake && minute() == wakemin) {
         clockmode = normal;
-        dualOut.println("Aufwachmodus aktiviert");
+        logTS(); dualOut.println("Aufwachmodus aktiviert");
       }
       if ((hour() + 25) % 24 == wake && minute() == wakemin) {
         if (dawnbreak) {
           dawnprogress = 0;
           clockmode = dawnmode;
           dawntick.attach(14, dawnadvance);
-          dualOut.println("Sonnenaufgang-Simulation gestartet");
+          logTS(); dualOut.println("Sonnenaufgang-Simulation gestartet");
         }
       }
     }
@@ -640,7 +661,7 @@ void loop() {
 
 //--------------------EEPROM initialisations-----------------------------------------------------
 void loadConfig() {
-  dualOut.println("reading settings from EEPROM");
+  logTS(); dualOut.println("reading settings from EEPROM");
   //Tries to read ssid and password from EEPROM
   EEPROM.begin(512);
   delay(10);
@@ -649,7 +670,7 @@ void loadConfig() {
   {
     esid += char(EEPROM.read(i));
   }
-  dualOut.print("SSID: ");
+  logTS(); dualOut.print("SSID: ");
   dualOut.println(esid);
 
 
@@ -657,7 +678,7 @@ void loadConfig() {
   {
     epass += char(EEPROM.read(i));
   }
-  dualOut.print("PASS: ");
+  logTS(); dualOut.print("PASS: ");
   dualOut.println(epass);
 
   clockname = "";
@@ -666,87 +687,87 @@ void loadConfig() {
     clockname += char(EEPROM.read(i));
   }
   clockname = clockname.c_str();
-  dualOut.print("clockname: ");
+  logTS(); dualOut.print("clockname: ");
   dualOut.println(clockname);
 
 
   loadFace(0);
   latitude = readLatLong(175);
-  dualOut.print("latitude: ");
+  logTS(); dualOut.print("latitude: ");
   dualOut.println(latitude);
   longitude = readLatLong(177);
-  dualOut.print("longitude: ");
+  logTS(); dualOut.print("longitude: ");
   dualOut.println(longitude);
   timezonevalue = EEPROM.read(179);
-  dualOut.print("timezonevalue: ");
+  logTS(); dualOut.print("timezonevalue: ");
   dualOut.println(timezonevalue);
   interpretTimeZone(timezonevalue);
-  dualOut.print("timezone: ");
+  logTS(); dualOut.print("timezone: ");
   dualOut.println(timezone);
   randommode = EEPROM.read(180);
-  dualOut.print("randommode: ");
+  logTS(); dualOut.print("randommode: ");
   dualOut.println(randommode);
   hourmarks = EEPROM.read(181);
-  dualOut.print("hourmarks: ");
+  logTS(); dualOut.print("hourmarks: ");
   dualOut.println(hourmarks);
   sleep = EEPROM.read(182);
-  dualOut.print("sleep: ");
+  logTS(); dualOut.print("sleep: ");
   dualOut.println(sleep);
   sleeptype = EEPROM.read(228);
-  dualOut.print("sleep: ");
+  logTS(); dualOut.print("sleep: ");
   dualOut.println(sleep);
   sleepmin = EEPROM.read(183);
-  dualOut.print("sleepmin: ");
+  logTS(); dualOut.print("sleepmin: ");
   dualOut.println(sleepmin);
   showseconds = EEPROM.read(184);
-  dualOut.print("showseconds: ");
+  logTS(); dualOut.print("showseconds: ");
   dualOut.println(showseconds);
   DSTauto = EEPROM.read(185);
-  dualOut.print("DSTauto: ");
+  logTS(); dualOut.print("DSTauto: ");
   dualOut.println(DSTauto);
   webMode = EEPROM.read(186);
-  dualOut.print("webMode: ");
+  logTS(); dualOut.print("webMode: ");
   dualOut.println(webMode);
   wake = EEPROM.read(189);
-  dualOut.print("wake: ");
+  logTS(); dualOut.print("wake: ");
   dualOut.println(wake);
   wakemin = EEPROM.read(190);
-  dualOut.print("wakemin: ");
+  logTS(); dualOut.print("wakemin: ");
   dualOut.println(wakemin);
   brightness = EEPROM.read(191);
-  dualOut.print("brightness: ");
+  logTS(); dualOut.print("brightness: ");
   dualOut.println(brightness);
   DSTtime = EEPROM.read(192);
-  dualOut.print("DST (true/false): ");
+  logTS(); dualOut.print("DST (true/false): ");
   dualOut.println(DSTtime);
   hourofdeath = EEPROM.read(193);
-  dualOut.print("Hour of Death: ");
+  logTS(); dualOut.print("Hour of Death: ");
   dualOut.println(hourofdeath);
   minuteofdeath = EEPROM.read(194);
-  dualOut.print("minuteofdeath: ");
+  logTS(); dualOut.print("minuteofdeath: ");
   dualOut.println(minuteofdeath);
   setTime(hourofdeath, minuteofdeath, 0, 0, 0, 0);
   dawnbreak = EEPROM.read(229);
   hemisphere = EEPROM.read(232);
   if (hemisphere > 1) hemisphere = 0;
-  dualOut.print("hemisphere: ");
+  logTS(); dualOut.print("hemisphere: ");
   dualOut.println(hemisphere);
   autoSleep = EEPROM.read(233);
   if (autoSleep > 1) autoSleep = 0;
-  dualOut.print("autoSleep: ");
+  logTS(); dualOut.print("autoSleep: ");
   dualOut.println(autoSleep);
-  dualOut.print("dawnbreak: ");
+  logTS(); dualOut.print("dawnbreak: ");
   dualOut.println(dawnbreak);
   pixelCount = EEPROM.read(230);
-  dualOut.print("pixelcount: ");
+  logTS(); dualOut.print("pixelcount: ");
   dualOut.println(pixelCount);
   maxBrightness = EEPROM.read(231);
-  dualOut.print("maxBrightness: ");
+  logTS(); dualOut.print("maxBrightness: ");
   dualOut.println(maxBrightness);
 }
 
 void writeInitalConfig() {
-  dualOut.println("can't find settings so writing defaults");
+  logTS(); dualOut.println("can't find settings so writing defaults");
   EEPROM.begin(512);
   delay(10);
   writeLatLong(175, 51.17); //default to Solingen
@@ -821,7 +842,7 @@ void writeInitalConfig() {
 void initWiFi() {
   dualOut.println();
   dualOut.println();
-  dualOut.println("Startup");
+  logTS(); dualOut.println("Startup");
   esid.trim();
   if (webMode == 2) {
     WiFi.mode(WIFI_AP);
@@ -830,8 +851,8 @@ void initWiFi() {
     //    WiFi.begin((char*) ssid.c_str()); // not sure if need but works
     //dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
     //dnsServer.start(DNS_PORT, "*", apIP);
-    dualOut.println("USP Server started");
-    dualOut.print("Access point started with name ");
+    logTS(); dualOut.println("USP Server started");
+    logTS(); dualOut.print("Access point started with name ");
     dualOut.println(ssid);
     //server.on("/generate_204", handleRoot);  //Android captive
     server.onNotFound(handleRoot);
@@ -844,7 +865,7 @@ void initWiFi() {
     WiFi.disconnect();
     delay(100);
     WiFi.mode(WIFI_STA);
-    dualOut.print("Connecting to WiFi ");
+    logTS(); dualOut.print("Connecting to WiFi ");
     dualOut.println(esid);
     WiFi.begin(esid.c_str(), epass.c_str());
     if ( testWifi() == 20 ) {
@@ -859,16 +880,16 @@ void initWiFi() {
 
 int testWifi(void) {
   int c = 0;
-  dualOut.println("Waiting for Wifi to connect");
+  logTS(); dualOut.println("Waiting for Wifi to connect");
   while ( c < 30 ) {
     if (WiFi.status() == WL_CONNECTED) {
       return (20);
     }
     delay(500);
-    dualOut.print(".");
+    logTS(); dualOut.print(".");
     c++;
   }
-  dualOut.println("Connect timed out, opening AP");
+  logTS(); dualOut.println("Connect timed out, opening AP");
   return (10);
 }
 
@@ -878,24 +899,24 @@ void setupAP(void) {
   WiFi.disconnect();
   delay(100);
   int n = WiFi.scanNetworks();
-  dualOut.println("scan done");
+  logTS(); dualOut.println("scan done");
 
   if (n == 0) {
-    dualOut.println("no networks found");
+    logTS(); dualOut.println("no networks found");
     st = "<label><input type='radio' name='ssid' value='No networks found' onClick='regularssid()'>No networks found</input></label><br>";
   } else {
     dualOut.print(n);
-    dualOut.println("Networks found");
+    logTS(); dualOut.println("Networks found");
     st = "";
     for (int i = 0; i < n; ++i)
     {
       // Print SSID and RSSI for each network found
       dualOut.print(i + 1);
-      dualOut.print(": ");
+      logTS(); dualOut.print(": ");
       dualOut.print(WiFi.SSID(i));
-      dualOut.print(" (");
+      logTS(); dualOut.print(" (");
       dualOut.print(WiFi.RSSI(i));
-      dualOut.print(")");
+      logTS(); dualOut.print(")");
       dualOut.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " (OPEN)" : "*");
 
       // Print to web SSID and RSSI for each network found
@@ -914,7 +935,7 @@ void setupAP(void) {
     }
     //st += "</ul>";
   }
-  dualOut.println("");
+  logTS(); dualOut.println("");
   WiFi.disconnect();
   delay(100);
 
@@ -924,11 +945,11 @@ void setupAP(void) {
   //WiFi.begin((char*) ssid.c_str()); // not sure if need but works
   dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
   dnsServer.start(DNS_PORT, "*", apIP);
-  dualOut.println("USP Server started");
-  dualOut.print("Access point started with name ");
+  logTS(); dualOut.println("USP Server started");
+  logTS(); dualOut.print("Access point started with name ");
   dualOut.println(ssid);
   //WiFi.begin((char*) ssid.c_str()); // not sure if need but works
-  dualOut.print("Access point started with name ");
+  logTS(); dualOut.print("Access point started with name ");
   dualOut.println(ssid);
   launchWeb(0);
 }
@@ -938,8 +959,8 @@ void launchWeb(int webtype) {
   webMode = webtype;
   int clockname_len = clockname.length() + 1;
   char clocknamechar[clockname_len];
-  dualOut.println("");
-  dualOut.println("WiFi connected");
+  logTS(); dualOut.println("");
+  logTS(); dualOut.println("WiFi connected");
   switch (webtype) {
     case 0:
       //set up wifi network to connect to since we are in setup mode.
@@ -961,10 +982,10 @@ void launchWeb(int webtype) {
 
       clockname.toCharArray(clocknamechar, clockname_len);
       if (!mdns.begin(clocknamechar)) {
-        dualOut.println("MDNS Fehler - wird beim Neustart aktiv.");
+        logTS(); dualOut.println("MDNS Fehler - wird beim Neustart aktiv.");
         // kein Endlosloop bei MDNS-Fehler
       } else {
-        dualOut.println("mDNS responder started");
+        logTS(); dualOut.println("mDNS responder started");
       }
 
       dualOut.printf("Starting SSDP...\n");
@@ -1001,7 +1022,7 @@ void launchWeb(int webtype) {
 
   //server.onNotFound(webHandleRoot);
   server.begin();
-  dualOut.println("Web server started");
+  logTS(); dualOut.println("Web server started");
   //Store global to use in loop()
 }
 
@@ -1081,7 +1102,7 @@ void speedup() {
 
 
 void webHandleSwitchWebMode() {
-  dualOut.println("Sending webHandleSwitchWebMode");
+  logTS(); dualOut.println("Sending webHandleSwitchWebMode");
   if ((webMode == 0) || (webMode == 1)) {
     webMode = 2;
     server.send(200, "text/html", "webMode set to 2");
@@ -1104,7 +1125,7 @@ void webHandleSwitchWebMode() {
 
 void webHandleConfig() {
   lastInteraction = millis();
-  dualOut.println("Sending webHandleConfig");
+  logTS(); dualOut.println("Sending webHandleConfig");
   IPAddress ip = WiFi.softAPIP();
   String ipStr = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
   String s;
@@ -1117,7 +1138,7 @@ void webHandleConfig() {
 }
 
 void webHandlePassword() {
-  dualOut.println("Sending webHandlePassword");
+  logTS(); dualOut.println("Sending webHandlePassword");
 
 
   String toSend = FPSTR(password_html);
@@ -1134,19 +1155,19 @@ void webHandlePassword() {
   cleanASCII(qsid);
 
   dualOut.println(qsid);
-  dualOut.println("");
-  dualOut.println("clearing old ssid.");
+  logTS(); dualOut.println("");
+  logTS(); dualOut.println("clearing old ssid.");
   clearssid();
   EEPROM.begin(512);
   delay(10);
-  dualOut.println("writing eeprom ssid.");
+  logTS(); dualOut.println("writing eeprom ssid.");
   //addr += EEPROM.put(addr, qsid);
   for (int i = 0; i < qsid.length(); ++i)
   {
     EEPROM.write(i, qsid[i]);
     dualOut.print(qsid[i]);
   }
-  dualOut.println("");
+  logTS(); dualOut.println("");
   EEPROM.commit();
   delay(1000);
   EEPROM.end();
@@ -1191,7 +1212,7 @@ void cleanASCII(String &input) {
 }
 
 void webHandleTimeZoneSetup() {
-  dualOut.println("Sending webHandleTimeZoneSetup");
+  logTS(); dualOut.println("Sending webHandleTimeZoneSetup");
   String toSend = FPSTR(timezonesetup_html);
   //toSend.replace("$css", css_file);
   toSend.replace("$timezone", String(timezone));
@@ -1200,7 +1221,7 @@ void webHandleTimeZoneSetup() {
 
   server.send(200, "text/html", toSend);
 
-  dualOut.println("clearing old pass.");
+  logTS(); dualOut.println("clearing old pass.");
   clearpass();
 
 
@@ -1208,21 +1229,21 @@ void webHandleTimeZoneSetup() {
   qpass = server.arg("pass");
   cleanASCII(qpass);
   dualOut.println(qpass);
-  dualOut.println("");
+  logTS(); dualOut.println("");
 
   //int addr=0;
   EEPROM.begin(512);
   delay(10);
 
 
-  dualOut.println("writing eeprom pass.");
+  logTS(); dualOut.println("writing eeprom pass.");
   //addr += EEPROM.put(addr, qpass);
   for (int i = 0; i < qpass.length(); ++i)
   {
     EEPROM.write(32 + i, qpass[i]);
     dualOut.print(qpass[i]);
   }
-  dualOut.println("");
+  logTS(); dualOut.println("");
   EEPROM.write(186, 1);
 
   EEPROM.commit();
@@ -1233,7 +1254,7 @@ void webHandleTimeZoneSetup() {
 
 void webHandleConfigSave() {
   lastInteraction = millis();
-  dualOut.println("Sending webHandleConfigSave");
+  logTS(); dualOut.println("Sending webHandleConfigSave");
   // /a?ssid=blahhhh&pass=poooo
   String s;
   s = "<p>Settings saved to memory. Clock will now restart and you can find it on your local WiFi network. <p>Please reconnect your phone to your WiFi network first</p>\r\n\r\n";
@@ -1289,13 +1310,13 @@ void webHandleConfigSave() {
   EEPROM.commit();
   delay(1000);
   EEPROM.end();
-  dualOut.println("Settings written, restarting!");
+  logTS(); dualOut.println("Settings written, restarting!");
   ESP.reset();
 }
 
 void handleNotFound() {
-  dualOut.println("Sending handleNotFound");
-  dualOut.print("\t\t\t\t URI Not Found: ");
+  logTS(); dualOut.println("Sending handleNotFound");
+  logTS(); dualOut.print("\t\t\t\t URI Not Found: ");
   dualOut.println(server.uri());
   server.send ( 200, "text/plain", "URI Not Found" );
 }
@@ -1304,25 +1325,25 @@ void handleCSS() {
   server.send(200, "text/css", css_file);
   //WiFiClient client = server.client();
   //sendProgmem(client, css_file);
-  dualOut.println("Sending CSS");
+  logTS(); dualOut.println("Sending CSS");
 }
 void handlecolourjs() {
   server.send(200, "text/plain", FPSTR(colourjs));
   //WiFiClient client = server.client();
   //sendProgmem(client, colourjs);
-  dualOut.println("Sending colourjs");
+  logTS(); dualOut.println("Sending colourjs");
 }
 void handlespectrumjs() {
   server.send(200, "text/plain", spectrumjs);
   //WiFiClient client = server.client();
   //sendProgmem(client, spectrumjs);
-  dualOut.println("Sending spectrumjs");
+  logTS(); dualOut.println("Sending spectrumjs");
 }
 void handleclockjs() {
   server.send(200, "text/plain", FPSTR(clockjs));
   //WiFiClient client = server.client();
   //sendProgmem(client, clockjs);
-  dualOut.println("Sending clockjs");
+  logTS(); dualOut.println("Sending clockjs");
 }
 
 void handlespectrumCSS() {
@@ -1330,7 +1351,7 @@ void handlespectrumCSS() {
   server.send(200, "text/css", FPSTR(spectrumCSS));
   //WiFiClient client = server.client();
   //sendProgmem(client, spectrumCSS);
-  dualOut.println("Sending spectrumCSS");
+  logTS(); dualOut.println("Sending spectrumCSS");
 }
 
 void handleRoot() {
@@ -1385,7 +1406,7 @@ void handleRoot() {
     alarmSec = alarmSecString.toInt();//atoi(c);  //turn value to number
     alarmprogress = 0;
     alarmtick.detach();
-    dualOut.println("alarm triggered");
+    logTS(); dualOut.println("alarm triggered");
     clockmode = alarm;
 
     alarmtick.attach((alarmHour * 3600 + alarmMin * 60 + alarmSec) / (float)pixelCount, alarmadvance);
@@ -1413,13 +1434,13 @@ void handleRoot() {
 
     String memoryarg = server.arg("submit");
 
-    dualOut.print("Submit: ");
+    logTS(); dualOut.print("Submit: ");
     dualOut.println(memoryarg);
 
     // Deutsche Button-Werte: "Speichern V1", "Laden V1", etc.
     if (memoryarg.startsWith("Speichern V") || memoryarg.startsWith("Laden V")) {
       String location = memoryarg.substring(memoryarg.length() - 1);
-      dualOut.print("Location: ");
+      logTS(); dualOut.print("Location: ");
       dualOut.println(location);
       if (memoryarg.startsWith("Speichern")) {
         saveFace(location.toInt());
@@ -1462,7 +1483,7 @@ void handleRoot() {
   if (server.hasArg("brightness")) {
     String brightnessstring = server.arg("brightness");  //get value from blend slider
     brightness = _max((int)10, (int)brightnessstring.toInt());//atoi(c);  //get value from html5 color element
-    dualOut.print("brightness: ");
+    logTS(); dualOut.print("brightness: ");
     dualOut.println(brightness);
     EEPROM.write(191, brightness);
   }
@@ -1492,12 +1513,12 @@ void handleRoot() {
     EEPROM.write(190, wakemin);
 
     //update sleep/wake to current
-    dualOut.println("");
-    dualOut.print("time: ");
+    logTS(); dualOut.println("");
+    logTS(); dualOut.print("time: ");
     dualOut.println(timeToText(hour(), minute()));
-    dualOut.print("sleep: ");
+    logTS(); dualOut.print("sleep: ");
     dualOut.println(timeToText(sleep, sleepmin));
-    dualOut.print("wake: ");
+    logTS(); dualOut.print("wake: ");
     dualOut.println(timeToText(wake, wakemin));
     nightCheck();
   }
@@ -1532,7 +1553,7 @@ void handleRoot() {
   if (server.hasArg("alarmoff")) {
     nightCheck();
     alarmtick.detach();
-    dualOut.print("alarmoff has triggered");
+    logTS(); dualOut.print("alarmoff has triggered");
   }
   if (server.hasArg("longitude")) {
     String longitudestring = server.arg("longitude");  //get value from blend slider
@@ -1572,28 +1593,28 @@ void handleRoot() {
       clockname = tempclockname;
 
       dualOut.println(clockname);
-      dualOut.println("");
-      dualOut.println("clearing old clockname.");
+      logTS(); dualOut.println("");
+      logTS(); dualOut.println("clearing old clockname.");
       //clear the old clock name out
       for (int i = 195; i < 228; i++) {
         EEPROM.write(i, 0);
       }
-      dualOut.println("writing eeprom clockname.");
+      logTS(); dualOut.println("writing eeprom clockname.");
 
       int clockname_len = clockname.length() + 1;
       char clocknamechar[clockname_len];
       clockname.toCharArray(clocknamechar, clockname_len);
       if (!mdns.begin(clocknamechar)) {
-        dualOut.println("MDNS Fehler - wird beim Neustart aktiv.");
+        logTS(); dualOut.println("MDNS Fehler - wird beim Neustart aktiv.");
         // kein Endlosloop bei MDNS-Fehler
       } else {
-        dualOut.println("mDNS responder started");
+        logTS(); dualOut.println("mDNS responder started");
       }
       for (int i = 0; i < clockname.length(); ++i) {
         EEPROM.write(195 + i, clockname[i]);
         dualOut.print(clockname[i]);
       }
-      dualOut.println("");
+      logTS(); dualOut.println("");
     }
   }
   //save the current colours in case of crash
@@ -1659,7 +1680,7 @@ void handleRoot() {
   toSend.replace("$firmware_version", firmware_version);
   server.send(200, "text/html", toSend);
 
-  dualOut.println("Sending handleRoot");
+  logTS(); dualOut.println("Sending handleRoot");
   EEPROM.commit();
   delay(300);
 }
@@ -1695,11 +1716,11 @@ void nightCheck() {
     wakeH = wake;
     wakeM = wakemin;
 
-    dualOut.print("Auto-Schlaf Sonnenuntergang: ");
+    logTS(); dualOut.print("Auto-Schlaf Sonnenuntergang: ");
     dualOut.print(sunsetH); dualOut.print(":"); 
     if (sunsetM < 10) dualOut.print("0");
     dualOut.println(sunsetM);
-    dualOut.print("Auto-Wach Sonnenaufgang: ");
+    logTS(); dualOut.print("Auto-Wach Sonnenaufgang: ");
     dualOut.print(sunriseH); dualOut.print(":");
     if (sunriseM < 10) dualOut.print("0");
     dualOut.println(sunriseM);
@@ -1728,13 +1749,13 @@ void nightCheck() {
       }
     }
   }
-  dualOut.print("clockmode ");
+  logTS(); dualOut.print("clockmode ");
   dualOut.println(clockmode);
 }
 void handleSettings() {
   //  String fontreplace;
   //  if(webMode == 1){fontreplace=importfonts;} else {fontreplace="";}
-  dualOut.println("Sending handleSettings");
+  logTS(); dualOut.println("Sending handleSettings");
   String toSend = FPSTR(settings_html);
   for (int i = 82; i > 0; i--) {
     if (i == timezonevalue) {
@@ -1815,9 +1836,9 @@ void handleSettings() {
   dawnbreak ? ischecked = "checked" : ischecked = "";
   toSend.replace("$dawnbreak", ischecked);
   DSTtime ? ischecked = "checked" : ischecked = "";
-  dualOut.print("sleep: ");
+  logTS(); dualOut.print("sleep: ");
   dualOut.println(timeToText(sleep, sleepmin));
-  dualOut.print("wake: ");
+  logTS(); dualOut.print("wake: ");
   dualOut.println(timeToText(wake, wakemin));
   toSend.replace("$DSTtime", ischecked);
   toSend.replace("$sleep", timeToText(sleep, sleepmin));
@@ -1847,7 +1868,7 @@ void handleTimezone() {
 
   server.send(200, "text/html", toSend);
 
-  dualOut.println("Sending handleTimezone");
+  logTS(); dualOut.println("Sending handleTimezone");
 }
 
 
@@ -1855,12 +1876,12 @@ void webHandleClearRom() {
   String s;
   s = "<p>Clearing the EEPROM and reset to configure new wifi<p>";
   s += "</html>\r\n\r\n";
-  dualOut.println("Sending webHandleClearRom");
+  logTS(); dualOut.println("Sending webHandleClearRom");
   server.send(200, "text/html", s);
-  dualOut.println("clearing eeprom");
+  logTS(); dualOut.println("clearing eeprom");
   clearEEPROM();
   delay(10);
-  dualOut.println("Done, restarting!");
+  logTS(); dualOut.println("Done, restarting!");
   ESP.reset();
 }
 
@@ -1868,7 +1889,7 @@ void webHandleClearRom() {
 void webHandleClearRomSure() {
   String toSend = FPSTR(clearromsure_html);
   //toSend.replace("$css", css_file);
-  dualOut.println("Sending webHandleClearRomSure");
+  logTS(); dualOut.println("Sending webHandleClearRomSure");
   server.send(200, "text/html", toSend);
 }
 
@@ -2390,15 +2411,15 @@ void moontest() {
   long lp = 2551443L;
   long ref_new_moon = 1776595920L; // Referenz-Neumond 17. Apr 2026 11:52 UTC
   long diff = (now() - ref_new_moon) % lp; if (diff < 0) diff += lp; int phase = (int)(diff / 86400L);
-  dualOut.print("phase: ");
+  logTS(); dualOut.print("phase: ");
   dualOut.println(phase);
 
   for (phase = 0; phase < 30; phase++) {
     float illumination = (1.0 - cos(2.0 * PI * phase / 29.53)) / 2.0;
     int litLEDs = (int)(illumination * pixelCount);
-    dualOut.print("phase: "); dualOut.print(phase);
-    dualOut.print(" illumination: "); dualOut.print((int)(illumination*100));
-    dualOut.print("% litLEDs: "); dualOut.println(litLEDs);
+    logTS(); dualOut.print("phase: "); dualOut.print(phase);
+    logTS(); dualOut.print(" illumination: "); dualOut.print((int)(illumination*100));
+    logTS(); dualOut.print("% litLEDs: "); dualOut.println(litLEDs);
 
     // Alle LEDs aus
     for (int i = 0; i < pixelCount; i++) {
@@ -2509,7 +2530,7 @@ void moon() {
   static int lastMoonLogHour = -1;
   if (hour() != lastMoonLogHour) {
     lastMoonLogHour = hour();
-    dualOut.print("Mondphase Tag: "); dualOut.print(phase);
+    logTS(); dualOut.print("Mondphase Tag: "); dualOut.print(phase);
     dualOut.print(" Beleuchtung: "); dualOut.print((int)(illumination * 100));
     dualOut.print("% LEDs: "); dualOut.println(litLEDs);
   }
@@ -2681,7 +2702,7 @@ void webHandleGame() {
 }
 
 void handleHilfe() {
-  dualOut.println("Sending handleHilfe");
+  logTS(); dualOut.println("Sending handleHilfe");
   String toSend = FPSTR(hilfe_html);
   if (webMode != 2) {
     toSend.replace("$externallinks", FPSTR(externallinks));
@@ -2692,7 +2713,7 @@ void handleHilfe() {
 }
 
 void handleSupport() {
-  dualOut.println("Sending handleSupport");
+  logTS(); dualOut.println("Sending handleSupport");
   String toSend = FPSTR(support_html);
   if (webMode != 2) {
     toSend.replace("$externallinks", FPSTR(externallinks));
@@ -2717,7 +2738,7 @@ void handleGetSysInfo() {
 
 void handleReboot() {
   server.send(200, "text/html", "<!DOCTYPE html><html><head><meta http-equiv='refresh' content='5;url=/'></head><body style='font-family:Abel,sans-serif;text-align:center;padding:40px'><h2>Neustart...</h2><p>Die Uhr startet neu. Du wirst in 5 Sekunden weitergeleitet.</p></body></html>");
-  dualOut.println("Reboot per Support-Seite ausgeloest");
+  logTS(); dualOut.println("Reboot per Support-Seite ausgeloest");
   delay(500);
   ESP.reset();
 }
@@ -2758,10 +2779,10 @@ void webHandleTimeSet() {
     if (timestring.length() >= 8) {
       timesec = timestring.substring(6, 8).toInt();
     }
-    dualOut.print("Time Total: "); dualOut.println(timestring);
-    dualOut.print("Time Hour: "); dualOut.println(timehr);
-    dualOut.print("Time Minute: "); dualOut.println(timemin);
-    dualOut.print("Time Second: "); dualOut.println(timesec);
+    logTS(); dualOut.print("Time Total: "); dualOut.println(timestring);
+    logTS(); dualOut.print("Time Hour: "); dualOut.println(timehr);
+    logTS(); dualOut.print("Time Minute: "); dualOut.println(timemin);
+    logTS(); dualOut.print("Time Second: "); dualOut.println(timesec);
     setTime(timehr, timemin, timesec, 1, 1, 1);
   }
   server.send(200, "text/plain", "OK");
@@ -2811,11 +2832,11 @@ time_t getNTPtime(void)
   time_t newtime;
   NTPclient.forceUpdate();
   newtime = NTPclient.getEpochTime();
-  dualOut.print("NTP Zeit: ");
+  logTS(); dualOut.print("NTP Zeit: ");
   dualOut.println(newtime);
   for (int i = 0; i < 5; i++) {
     if (newtime == 0) {
-      dualOut.println("Failed NTP Attempt");
+      logTS(); dualOut.println("Failed NTP Attempt");
       delay(2000);
       NTPclient.forceUpdate();
       newtime = NTPclient.getEpochTime();
@@ -2834,9 +2855,6 @@ void ssdpResponder() {
   clockname.toCharArray(clocknamechar, clockname_len);
   String str = "<root><specVersion><major>1</major><minor>0</minor></specVersion><URLBase>http://" + ipString + ":80/</URLBase><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>" + clocknamechar + "(" + ipString + ")</friendlyName><manufacturer>MikoTec</manufacturer><manufacturerURL>http://www.mikotec-led-uhr.de</manufacturerURL><modelDescription>MikoTec LED Uhr v1</modelDescription><modelName>MikoTec LED Uhr v1</modelName><modelNumber>4</modelNumber><modelURL>http://www.mikotec-led-uhr.de</modelURL><serialNumber>3</serialNumber><UDN>uuid:3</UDN><presentationURL>index.html</presentationURL></device></root>";
   server.send(200, "text/plain", str);
-  dualOut.println("SSDP packet sent");
-
-
 }
 
 String StringIPaddress(IPAddress myaddr)
@@ -2854,7 +2872,7 @@ void connectToDSTServer() {
   String GETString;
   // attempt to connect, and wait a millisecond:
 
-  dualOut.println("Connecting to DST server");
+  logTS(); dualOut.println("Connecting to DST server");
   DSTclient.connect("api.timezonedb.com", 80);
 
   if (DSTclient.connect("api.timezonedb.com", 80)) {
@@ -2868,9 +2886,9 @@ void connectToDSTServer() {
     DSTclient.println(GETString);
     dualOut.println(GETString);
     DSTclient.println("Host: api.timezonedb.com");
-    dualOut.println("Host: api.timezonedb.com");
+    logTS(); dualOut.println("Host: api.timezonedb.com");
     DSTclient.println("Connection: close\r\n");
-    dualOut.println("Connection: close\r\n");
+    logTS(); dualOut.println("Connection: close\r\n");
     //DSTclient.print("Accept-Encoding: identity\r\n");
     //DSTclient.print("Host: api.geonames.org\r\n");
     //DSTclient.print("User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; Windows NT 5.1)\r\n");
@@ -2890,9 +2908,9 @@ void readDSTtime() {
   bool readingUTCOffset = false;
   String UTCOffset;
   connectToDSTServer();
-  dualOut.print("DST.connected: ");
+  logTS(); dualOut.print("DST.connected: ");
   dualOut.println(DSTclient.connected());
-  dualOut.print("DST.available: ");
+  logTS(); dualOut.print("DST.available: ");
   dualOut.println(DSTclient.available());
 
   while (DSTclient.connected()) {
@@ -2913,7 +2931,7 @@ void readDSTtime() {
           // if you got a "<" character,
           // you've reached the end of the UTC offset:
           readingUTCOffset = false;
-          dualOut.print("UTC Offset in seconds: ");
+          logTS(); dualOut.print("UTC Offset in seconds: ");
           dualOut.println(UTCOffset);
           //update the internal time-zone
           timezone = UTCOffset.toInt() / 3600;
@@ -3116,13 +3134,13 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
 //========================================GAME FUNCTIONS======================================================================
 
 void gamestart(){
-  dualOut.println("start command received");
+  logTS(); dualOut.println("start command received");
   gamestartticker.attach_ms(50, gamecountdown);
 
 }
 
 void gamecountdown(){
-  dualOut.print("Gamebrightness: ");
+  logTS(); dualOut.print("Gamebrightness: ");
   dualOut.println(gamebrightness);
   gamebrightness = gamebrightness - (maxBrightness/50);
   if (gamebrightness<=0) {
@@ -3176,11 +3194,11 @@ void gameplus(int playernum){
     int totalpoints=playercount*gamestartpoints;
     for (size_t i = 0; i < playercount; i++) {
 
-      dualOut.print("Player ");
+      logTS(); dualOut.print("Player ");
       dualOut.print(i);
-      dualOut.print(" score: ");
+      logTS(); dualOut.print(" score: ");
       dualOut.print(gamearray[i]);
-      dualOut.print(" animate to: ");
+      logTS(); dualOut.print(" animate to: ");
       dualOut.println((int)((float)accumulatedscore/(float)totalpoints*pixelCount));
       accumulatedscore+=gamearray[i+1];
     }
