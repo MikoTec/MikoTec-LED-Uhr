@@ -104,62 +104,19 @@ String getLogContent() {
 }
 
 // Eigene Print-Klasse die Serial UND Ringpuffer beschreibt
-// Fuegt automatisch einen Zeitstempel am Anfang jeder neuen Zeile ein
 class DualPrint : public Print {
-  private:
-    bool newLine = true;
-    
-    void printTimestamp() {
-      if (year() > 2000) {
-        char ts[22];
-        int d = day(); int mo = month(); int y = year();
-        int h = hour(); int mi = minute(); int s = second();
-        ts[0] = '[';
-        ts[1] = '0' + d / 10; ts[2] = '0' + d % 10; ts[3] = '.';
-        ts[4] = '0' + mo / 10; ts[5] = '0' + mo % 10; ts[6] = '.';
-        ts[7] = '0' + y / 1000; ts[8] = '0' + (y / 100) % 10;
-        ts[9] = '0' + (y / 10) % 10; ts[10] = '0' + y % 10;
-        ts[11] = ' ';
-        ts[12] = '0' + h / 10; ts[13] = '0' + h % 10; ts[14] = ':';
-        ts[15] = '0' + mi / 10; ts[16] = '0' + mi % 10; ts[17] = ':';
-        ts[18] = '0' + s / 10; ts[19] = '0' + s % 10;
-        ts[20] = ']'; ts[21] = ' ';
-        Serial.write((const uint8_t*)ts, 22);
-        for (int i = 0; i < 22; i++) {
-          char buf[2] = {ts[i], 0};
-          logAppend(buf);
-        }
-      }
-    }
-    
   public:
     size_t write(uint8_t c) override {
-      if (newLine && c != '\n' && c != '\r') {
-        printTimestamp();
-        newLine = false;
-      }
-      if (c == '\n') {
-        newLine = true;
-      }
       char buf[2] = {(char)c, 0};
       logAppend(buf);
       return Serial.write(c);
     }
     size_t write(const uint8_t *buffer, size_t size) override {
       for (size_t i = 0; i < size; i++) {
-        if (newLine && buffer[i] != '\n' && buffer[i] != '\r') {
-          printTimestamp();
-          newLine = false;
-        }
-        if (buffer[i] == '\n') {
-          newLine = true;
-        }
         char buf[2] = {(char)buffer[i], 0};
         logAppend(buf);
       }
-      Serial.write(buffer, size);
-      yield();
-      return size;
+      return Serial.write(buffer, size);
     }
 };
 
@@ -182,7 +139,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "1.0";
+const char* firmware_version = "1.1";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
