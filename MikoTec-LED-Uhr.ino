@@ -1695,6 +1695,11 @@ void handleRoot() {
 }
 
 void nightCheck() {
+  static int lastLoggedSleepH = -1;
+  static int lastLoggedSleepM = -1;
+  static int lastLoggedWakeH = -1;
+  static int lastLoggedWakeM = -1;
+
   int sleepH = sleep;
   int sleepM = sleepmin;
   int wakeH = wake;
@@ -1725,14 +1730,22 @@ void nightCheck() {
     wakeH = wake;
     wakeM = wakemin;
 
-    logTS(); dualOut.print("Auto-Schlaf Sonnenuntergang: ");
-    dualOut.print(sunsetH); dualOut.print(":"); 
-    if (sunsetM < 10) dualOut.print("0");
-    dualOut.println(sunsetM);
-    logTS(); dualOut.print("Auto-Wach Sonnenaufgang: ");
-    dualOut.print(sunriseH); dualOut.print(":");
-    if (sunriseM < 10) dualOut.print("0");
-    dualOut.println(sunriseM);
+    // Nur loggen wenn sich die Werte geaendert haben
+    if (sunsetH != lastLoggedSleepH || sunsetM != lastLoggedSleepM ||
+        sunriseH != lastLoggedWakeH || sunriseM != lastLoggedWakeM) {
+      lastLoggedSleepH = sunsetH;
+      lastLoggedSleepM = sunsetM;
+      lastLoggedWakeH = sunriseH;
+      lastLoggedWakeM = sunriseM;
+      logTS(); dualOut.print("Auto-Schlaf Sonnenuntergang: ");
+      dualOut.print(sunsetH); dualOut.print(":");
+      if (sunsetM < 10) dualOut.print("0");
+      dualOut.println(sunsetM);
+      logTS(); dualOut.print("Auto-Wach Sonnenaufgang: ");
+      dualOut.print(sunriseH); dualOut.print(":");
+      if (sunriseM < 10) dualOut.print("0");
+      dualOut.println(sunriseM);
+    }
   }
 
   int nowMin = hour() * 60 + minute();
@@ -1743,14 +1756,12 @@ void nightCheck() {
   // dawnmode wird vom Dawn-Timer selbst beendet
   if (clockmode != dawnmode) {
     if (sleepMin > wakeMin) {
-      // Schlaf geht ueber Mitternacht (z.B. 22:00 - 07:00)
       if (nowMin >= sleepMin || nowMin < wakeMin) {
         clockmode = night;
       } else {
         clockmode = normal;
       }
     } else {
-      // Schlaf innerhalb eines Tages (z.B. 01:00 - 06:00)
       if (nowMin >= sleepMin && nowMin < wakeMin) {
         clockmode = night;
       } else {
