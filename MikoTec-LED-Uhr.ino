@@ -182,7 +182,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "0.9";
+const char* firmware_version = "1.0";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -645,23 +645,31 @@ void loop() {
       saveFace(0);
     }
     if (second() == 0) {
+      // Bei autoSleep: nightCheck jede Minute ausfuehren
+      // damit sleep/wake immer auf Sonnenuntergang/Sonnenaufgang stehen
+      if (autoSleep == 1) {
+        // nightCheck nur aufrufen wenn wir NICHT im dawnmode sind
+        // sonst wuerde nightCheck den dawnmode ueberschreiben
+        if (clockmode != dawnmode) {
+          nightCheck();
+        }
+      }
+
       if (hour() == sleep && minute() == sleepmin) {
         clockmode = night;
+        dualOut.println("Schlafmodus aktiviert");
       }
       if (hour() == wake && minute() == wakemin) {
         clockmode = normal;
+        dualOut.println("Aufwachmodus aktiviert");
       }
       if ((hour() + 25) % 24 == wake && minute() == wakemin) {
         if (dawnbreak) {
           dawnprogress = 0;
           clockmode = dawnmode;
           dawntick.attach(14, dawnadvance);
+          dualOut.println("Sonnenaufgang-Simulation gestartet");
         }
-      }
-
-      // Jede volle Stunde nightCheck ausfuehren fuer autoSleep Aktualisierung
-      if (minute() == 0) {
-        nightCheck();
       }
     }
     prevsecond = second();
@@ -1777,19 +1785,23 @@ void nightCheck() {
   int sleepMin = sleepH * 60 + sleepM;
   int wakeMin = wakeH * 60 + wakeM;
 
-  if (sleepMin > wakeMin) {
-    // Schlaf geht ueber Mitternacht (z.B. 22:00 - 07:00)
-    if (nowMin >= sleepMin || nowMin < wakeMin) {
-      clockmode = night;
+  // clockmode nur aendern wenn wir nicht im dawnmode sind
+  // dawnmode wird vom Dawn-Timer selbst beendet
+  if (clockmode != dawnmode) {
+    if (sleepMin > wakeMin) {
+      // Schlaf geht ueber Mitternacht (z.B. 22:00 - 07:00)
+      if (nowMin >= sleepMin || nowMin < wakeMin) {
+        clockmode = night;
+      } else {
+        clockmode = normal;
+      }
     } else {
-      clockmode = normal;
-    }
-  } else {
-    // Schlaf innerhalb eines Tages (z.B. 01:00 - 06:00)
-    if (nowMin >= sleepMin && nowMin < wakeMin) {
-      clockmode = night;
-    } else {
-      clockmode = normal;
+      // Schlaf innerhalb eines Tages (z.B. 01:00 - 06:00)
+      if (nowMin >= sleepMin && nowMin < wakeMin) {
+        clockmode = night;
+      } else {
+        clockmode = normal;
+      }
     }
   }
   dualOut.print("clockmode ");
