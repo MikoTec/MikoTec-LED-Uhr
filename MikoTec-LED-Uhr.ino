@@ -182,7 +182,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "1.8";
+const char* firmware_version = "1.9";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -278,6 +278,7 @@ RgbColor hourcolor; // starting colour of hour
 RgbColor minutecolor; //starting colour of minute
 RgbColor alarmcolor; //the color the alarm will be
 int brightness = 50; // a variable to dim the over-all brightness of the clock
+int nightBrightness = 10; // Helligkeit im Schlafmodus (0-100)
 int maxBrightness = 100;
 uint8_t blendpoint = 40; //level of default blending
 int randommode; //face changes colour every hour
@@ -779,6 +780,10 @@ void loadConfig() {
   if (autoSleep > 1) autoSleep = 0;
   logTS(); dualOut.print("autoSleep: ");
   dualOut.println(autoSleep);
+  nightBrightness = EEPROM.read(234);
+  if (nightBrightness > 100) nightBrightness = 10;
+  logTS(); dualOut.print("nightBrightness: ");
+  dualOut.println(nightBrightness);
   logTS(); dualOut.print("dawnbreak: ");
   dualOut.println(dawnbreak);
   pixelCount = EEPROM.read(230);
@@ -815,6 +820,7 @@ void writeInitalConfig() {
   EEPROM.write(231, 255); //default to mains power for max brightness
   EEPROM.write(232, 0); //default hemisphere to 0 (Nord)
   EEPROM.write(233, 0); //default autoSleep to 0 (manuell)
+  EEPROM.write(234, 10); //default nightBrightness to 10%
 
 
   for (int i = 195; i < 228; i++) {//zero (instead of null) the values where clockname will be written.
@@ -1517,9 +1523,16 @@ void handleRoot() {
     EEPROM.write(181, hourmarks);
   }
   if (server.hasArg("sleeptype")) {
-    String sleeptypestring = server.arg("sleeptype");  //get value from blend slider
-    sleeptype = sleeptypestring.toInt();//atoi(c);  //get value from html5 color element
+    String sleeptypestring = server.arg("sleeptype");
+    sleeptype = sleeptypestring.toInt();
     EEPROM.write(228, sleeptype);
+  }
+  if (server.hasArg("nightbrightness")) {
+    String nbstring = server.arg("nightbrightness");
+    nightBrightness = nbstring.toInt();
+    EEPROM.write(234, nightBrightness);
+    logTS(); dualOut.print("nightBrightness gesetzt: ");
+    dualOut.println(nightBrightness);
   }
   if (server.hasArg("sleep")) {
     String sleepstring = server.arg("sleep");  //get value input
@@ -1700,6 +1713,7 @@ void handleRoot() {
   toSend.replace("$blendpoint", String(int(blendpoint)));
   toSend.replace("$brightness", String(int(brightness)));
   toSend.replace("$maxBrightness", String(int(maxBrightness)));
+  toSend.replace("$nightbrightness", String(int(nightBrightness)));
   toSend.replace("$firmware_version", firmware_version);
   server.send(200, "text/html", toSend);
 
@@ -2026,13 +2040,13 @@ void updateface() {
           for (int i = 0; i < pixelCount; i++) {
             clockleds->SetPixelColor(i, RgbColor(0, 0, 0));
           }
-          clockleds->SetPixelColor(hour_pos, RgbColor::LinearBlend(RgbColor(0,0,0), hourcolor, (float)(std::min)(30, brightness)/255.0f));
-          clockleds->SetPixelColor(min_pos, RgbColor::LinearBlend(RgbColor(0,0,0), minutecolor, (float)(std::min)(30, brightness)/255.0f));
+          clockleds->SetPixelColor(hour_pos, RgbColor::LinearBlend(RgbColor(0,0,0), hourcolor, (float)nightBrightness/255.0f));
+          clockleds->SetPixelColor(min_pos, RgbColor::LinearBlend(RgbColor(0,0,0), minutecolor, (float)nightBrightness/255.0f));
 
           break;
 
         case dim:
-          face(hour_pos, min_pos, 4);
+          face(hour_pos, min_pos, _max(1, nightBrightness / 25));
           break;
 
         case moonphase:
@@ -2041,8 +2055,8 @@ void updateface() {
           clockleds->SetPixelColor((hour_pos - 1 + pixelCount) % pixelCount, RgbColor(0, 0, 0));
           clockleds->SetPixelColor((min_pos + 1 + pixelCount) % pixelCount, RgbColor(0, 0, 0));
           clockleds->SetPixelColor((min_pos - 1 + pixelCount) % pixelCount, RgbColor(0, 0, 0));
-          clockleds->SetPixelColor(hour_pos, RgbColor::LinearBlend(RgbColor(0,0,0), hourcolor, (float)(std::min)(30, brightness)/255.0f));
-          clockleds->SetPixelColor(min_pos, RgbColor::LinearBlend(RgbColor(0,0,0), minutecolor, (float)(std::min)(30, brightness)/255.0f));
+          clockleds->SetPixelColor(hour_pos, RgbColor::LinearBlend(RgbColor(0,0,0), hourcolor, (float)nightBrightness/255.0f));
+          clockleds->SetPixelColor(min_pos, RgbColor::LinearBlend(RgbColor(0,0,0), minutecolor, (float)nightBrightness/255.0f));
           break;
 
         case disabled:

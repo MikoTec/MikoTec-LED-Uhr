@@ -108,6 +108,15 @@ updateTime();
 
 </select>
 </div>
+<label data-tooltip="Helligkeit der Uhr im Schlafmodus (0=komplett aus, 100=volle Helligkeit)" class="tooltip">Nacht-Helligkeit</label>
+<div class=form-field>
+<input type=range name=nightbrightness min=0 max=100 value=$nightbrightness>
+<span id=nbval>$nightbrightness%</span>
+</div>
+<script>
+var nb=document.querySelector('input[name=nightbrightness]');
+nb.oninput=function(){document.getElementById('nbval').innerText=this.value+'%';};
+</script>
 <label data-tooltip="Manuell: Feste Zeiten verwenden. Automatisch: Sonnenauf- und untergang berechnen (Breitengrad/Laengengrad erforderlich)" class="tooltip">Schlafsteuerung</label>
 <div class=form-field>
 <select name=autosleep id=autosleep onchange="toggleSleepFields()">
