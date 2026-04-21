@@ -169,7 +169,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "1.6";
+const char* firmware_version = "1.7";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -2427,7 +2427,7 @@ void dawntest() {
 
 void moontest() {
   long lp = 2551443L;
-  long ref_new_moon = 1776595920L; // Referenz-Neumond 17. Apr 2026 11:52 UTC
+  long ref_new_moon = 947182440L; // Referenz-Neumond 6. Jan 2000 18:14 UTC
   long diff = (now() - ref_new_moon) % lp; if (diff < 0) diff += lp; int phase = (int)(diff / 86400L);
   logTS(); dualOut.print("phase: ");
   dualOut.println(phase);
@@ -2471,16 +2471,17 @@ void moontest() {
 
 }
 void moon() {
-  long lp = 2551443L; // Mondperiode in Sekunden (29.53 Tage)
-  long ref_new_moon = 1776595920L; // Referenz-Neumond 17. Apr 2026 11:52 UTC
+  long lp = 2551443L; // Synodischer Monat in Sekunden (29.53058770576 Tage)
+  long ref_new_moon = 947182440L; // Referenz-Neumond 6. Jan 2000 18:14 UTC (astronomisch verifiziert)
 
-  // Phase berechnen: Tage seit letztem Neumond (0-29)
+  // Phase berechnen: Tage seit letztem Neumond als Fliesskomma fuer genauere Beleuchtung
   long diff = (now() - ref_new_moon) % lp;
   if (diff < 0) diff += lp;
-  int phase = (int)(diff / 86400L); // 0=Neumond, ~7=erstes Viertel, ~14=Vollmond, ~22=letztes Viertel
+  float phase_days = (float)diff / 86400.0;
+  int phase = (int)phase_days; // 0=Neumond, ~7=erstes Viertel, ~14=Vollmond, ~22=letztes Viertel
 
-  // Beleuchtung: 0.0 bei Neumond, 1.0 bei Vollmond, 0.0 bei nächstem Neumond
-  float illumination = (1.0 - cos(2.0 * PI * phase / 29.53)) / 2.0;
+  // Beleuchtung mit Fliesskomma-Phase fuer glattere Uebergaenge
+  float illumination = (1.0 - cos(2.0 * PI * phase_days / 29.53)) / 2.0;
 
   // Anzahl beleuchteter LEDs basierend auf Beleuchtung
   int litLEDs = (int)(illumination * pixelCount);
