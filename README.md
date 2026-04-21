@@ -95,6 +95,7 @@ Jede neue Firmware bekommt eine Unterversion (z.B. 2.0 → 2.1 → 2.2). Neue Ha
 
 - `v0.6-stable` – Erste stabile Version mit OTA und Auto-Schlaf
 - `v1.5-stable` – Zeitstempel im Log, HTTP-OTA, SSDP-Spam entfernt
+- `v2.0-stable` – Slider-Wertanzeige, Speicher-Tracking, Nacht-Helligkeit, Mondphasen-Fix
 
 ### Bekannte Crash-Versionen (nicht flashen!)
 
