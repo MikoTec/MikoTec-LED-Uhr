@@ -152,6 +152,19 @@ void logTS() {
   }
 }
 
+// Speicher-Info ausgeben
+void logMemory() {
+  logTS(); dualOut.print("[SYS] Freier Heap: ");
+  dualOut.print(ESP.getFreeHeap());
+  dualOut.print(" Bytes | Flash: ");
+  dualOut.print(ESP.getSketchSize() / 1024);
+  dualOut.print("KB / ");
+  dualOut.print(ESP.getFreeSketchSpace() / 1024);
+  dualOut.print("KB frei | Heap-Fragmentierung: ");
+  dualOut.print(ESP.getHeapFragmentation());
+  dualOut.println("%");
+}
+
 // Typedef fuer NeoPixelBus 2.8.4 - UART1 Methode (WiFi-kompatibel, nutzt GPIO2/D4)
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
@@ -169,7 +182,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "1.7";
+const char* firmware_version = "1.8";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -506,6 +519,7 @@ void setup() {
     clockleds->Show();
     logTS(); dualOut.println("LEDs bereit.");
   }
+  logMemory();
 
   // 5. Nachtmodus pruefen und Anzeige starten
   nightCheck();
@@ -2552,6 +2566,7 @@ void moon() {
     logTS(); dualOut.print("Mondphase Tag: "); dualOut.print(phase);
     dualOut.print(" Beleuchtung: "); dualOut.print((int)(illumination * 100));
     dualOut.print("% LEDs: "); dualOut.println(litLEDs);
+    logMemory();
   }
 }
 
