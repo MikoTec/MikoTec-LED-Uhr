@@ -182,7 +182,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.0";
+const char* firmware_version = "2.1";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -2560,12 +2560,13 @@ void moon() {
     }
 
     int brightness_val;
+    int moonMax = _max(1, 64 * nightBrightness / 100); // Mond-Helligkeit nach nightBrightness skalieren
     if (i < fadeZone) {
-      brightness_val = 64 * i / fadeZone; // einblenden
+      brightness_val = moonMax * i / fadeZone; // einblenden
     } else if (i >= litLEDs + fadeZone) {
-      brightness_val = 64 * (litLEDs + fadeZone * 2 - i) / fadeZone; // ausblenden
+      brightness_val = moonMax * (litLEDs + fadeZone * 2 - i) / fadeZone; // ausblenden
     } else {
-      brightness_val = 64; // voll beleuchtet
+      brightness_val = moonMax; // voll beleuchtet
     }
 
     if (brightness_val > 0) {
