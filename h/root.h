@@ -35,14 +35,15 @@ $csswgradient
     </div>
     <div class="slide-section">
       <div class="point-slide">
-        <label>Überblendeffekt</label>
-        <input type='range' id= 'blendpoint' name='blendpoint' min='0' max='255' value=$blendpoint>
+        <label>Überblendeffekt <span id="bpval" style="color:#999;font-size:0.85em;"></span></label>
+        <input type='range' id= 'blendpoint' name='blendpoint' min='0' max='255' value=$blendpoint oninput="document.getElementById('bpval').innerText=this.value">
       </div>
       <div class="point-slide">
-        <label>Helligkeit</label>
-        <input type='range' id= 'brightness' name='brightness' min='10' max=$maxBrightness value=$brightness>
+        <label>Helligkeit <span id="brval" style="color:#999;font-size:0.85em;"></span></label>
+        <input type='range' id= 'brightness' name='brightness' min='10' max=$maxBrightness value=$brightness oninput="document.getElementById('brval').innerText=this.value">
       </div>
     </div>
+<script>document.getElementById('bpval').innerText=document.getElementById('blendpoint').value;document.getElementById('brval').innerText=document.getElementById('brightness').value;</script>
     <div class="btn-box scheme1">
       <input class='btn btn-sm' type='submit' name='submit' value='Speichern V1' />
       <input class='btn btn-sm' type='submit' name='submit' value='Laden V1' />
