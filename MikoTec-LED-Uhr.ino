@@ -71,7 +71,7 @@ NTPClient NTPclient(ntpUDP, "pool.ntp.org");
 #endif
 
 // Serial-Ringpuffer fuer Support-Seite
-#define LOG_BUFFER_SIZE 8192
+#define LOG_BUFFER_SIZE 6144
 char logBuffer[LOG_BUFFER_SIZE];
 int logWritePos = 0;
 bool logWrapped = false;
@@ -182,7 +182,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.4";
+const char* firmware_version = "2.1.0.5";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
