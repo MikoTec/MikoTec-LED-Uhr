@@ -69,7 +69,7 @@ x.send();
 setInterval(updateTime,1000);
 updateTime();
 </script>
-<form class=form-verticle action=/ method=GET>
+<form class=form-verticle action=/settings method=GET>
 <ul>
 <li>
 <label>Std-Marken:</label>

@@ -182,7 +182,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.5";
+const char* firmware_version = "2.1.0.6";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1821,9 +1821,92 @@ void nightCheck() {
   }
 }
 void handleSettings() {
-  //  String fontreplace;
-  //  if(webMode == 1){fontreplace=importfonts;} else {fontreplace="";}
+  EEPROM.begin(512);
+  
+  // Settings-Formular verarbeiten wenn Parameter vorhanden
+  if (server.hasArg("submit")) {
+    logTS(); dualOut.print("Submit: ");
+    dualOut.println(server.arg("submit"));
+  }
+  if (server.hasArg("hourmarks")) {
+    String hourmarksstring = server.arg("hourmarks");
+    hourmarks = hourmarksstring.toInt();
+    EEPROM.write(181, hourmarks);
+  }
+  if (server.hasArg("sleeptype")) {
+    String sleeptypestring = server.arg("sleeptype");
+    sleeptype = sleeptypestring.toInt();
+    EEPROM.write(228, sleeptype);
+  }
+  if (server.hasArg("nightbrightness")) {
+    String nbstring = server.arg("nightbrightness");
+    nightBrightness = nbstring.toInt();
+    EEPROM.write(234, nightBrightness);
+    logTS(); dualOut.print("nightBrightness gesetzt: ");
+    dualOut.println(nightBrightness);
+  }
+  if (server.hasArg("sleep")) {
+    String sleepstring = server.arg("sleep");
+    sleep = sleepstring.substring(0, 2).toInt();
+    sleepmin = sleepstring.substring(3).toInt();
+    EEPROM.write(182, sleep);
+    EEPROM.write(183, sleepmin);
+  }
+  if (server.hasArg("wake")) {
+    String wakestring = server.arg("wake");
+    wake = wakestring.substring(0, 2).toInt();
+    wakemin = wakestring.substring(3).toInt();
+    EEPROM.write(189, wake);
+    EEPROM.write(190, wakemin);
+    nightCheck();
+  }
+  if (server.hasArg("DSThidden")) {
+    int oldDSTtime = DSTtime;
+    DSTtime = server.hasArg("DST");
+    EEPROM.write(192, DSTtime);
+    NTPclient.setTimeOffset((timezone + DSTtime) * 3600);
+    adjustTime((DSTtime - oldDSTtime) * 3600);
+  }
+  if (server.hasArg("showsecondshidden")) {
+    showseconds = server.hasArg("showseconds");
+    EEPROM.write(184, showseconds);
+  }
+  if (server.hasArg("dawnbreakhidden")) {
+    dawnbreak = server.hasArg("dawnbreak");
+    EEPROM.write(229, dawnbreak);
+  }
+  if (server.hasArg("hemisphere")) {
+    String hemiStr = server.arg("hemisphere");
+    hemisphere = hemiStr.toInt();
+    EEPROM.write(232, hemisphere);
+  }
+  if (server.hasArg("autosleep")) {
+    String autoStr = server.arg("autosleep");
+    autoSleep = autoStr.toInt();
+    EEPROM.write(233, autoSleep);
+  }
+  if (server.hasArg("clockname")) {
+    String tempclockname = server.arg("clockname");
+    cleanASCII(tempclockname);
+    if (tempclockname != clockname) {
+      clockname = tempclockname;
+      for (int i = 195; i < 228; i++) {
+        EEPROM.write(i, 0);
+      }
+      for (unsigned int i = 0; i < clockname.length(); ++i) {
+        EEPROM.write(195 + i, clockname[i]);
+      }
+    }
+  }
+  EEPROM.commit();
+  delay(100);
+
   logTS(); dualOut.println("Sending handleSettings");
+  logTS(); dualOut.print("sleep: ");
+  dualOut.println(timeToText(sleep, sleepmin));
+  logTS(); dualOut.print("wake: ");
+  dualOut.println(timeToText(wake, wakemin));
+  
   String toSend = FPSTR(settings_html);
   for (int i = 82; i > 0; i--) {
     if (i == timezonevalue) {
