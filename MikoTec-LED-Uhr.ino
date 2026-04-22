@@ -182,7 +182,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.2";
+const char* firmware_version = "2.1.0.3";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -494,6 +494,8 @@ void setup() {
   memset(logBuffer, 0, LOG_BUFFER_SIZE);
   logTS(); dualOut.println("");
   logTS(); dualOut.println("Light Clock wird gestartet...");
+  logTS(); dualOut.print("Firmware Version: ");
+  dualOut.println(firmware_version);
 
   // 2. Spielerfarben
   playercolors[0] = RgbColor(255, 0, 0);
@@ -1893,7 +1895,8 @@ void handleSettings() {
   toSend.replace("$wake", timeToText(wake, wakemin));
   toSend.replace("$timezone", String(timezone));
   toSend.replace("$clockname", String(clockname));
-
+  toSend.replace("$nightbrightness", String(int(nightBrightness)));
+  toSend.replace("$firmware_version", firmware_version);
 
   server.send(200, "text/html", toSend);
 
