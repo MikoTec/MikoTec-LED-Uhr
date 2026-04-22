@@ -89,7 +89,12 @@ Die Nacht-Helligkeit ist separat einstellbar (0-100%).
 
 ## Versionierung
 
-Jede neue Firmware bekommt eine Unterversion (z.B. 2.0 → 2.1 → 2.2). Neue Hauptversionen nur nach Absprache.
+Das Versionierungsschema ist 4-stellig: `Major.Minor.Patch.Build` (z.B. `2.1.0.1`).
+
+- **Build** wird bei jeder neuen `.bin`-Datei hochgezählt
+- **Patch/Minor/Major** werden nach Absprache erhöht
+- Nur **stable** Versionen werden automatisch per OTA verteilt
+- Test-Versionen müssen manuell per OTA geflasht werden
 
 ### Stabile Versionen
 

@@ -71,7 +71,7 @@ NTPClient NTPclient(ntpUDP, "pool.ntp.org");
 #endif
 
 // Serial-Ringpuffer fuer Support-Seite
-#define LOG_BUFFER_SIZE 4096
+#define LOG_BUFFER_SIZE 8192
 char logBuffer[LOG_BUFFER_SIZE];
 int logWritePos = 0;
 bool logWrapped = false;
@@ -182,7 +182,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1";
+const char* firmware_version = "2.1.0.1";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -250,7 +250,7 @@ const char* DSTTimeServer = "api.timezonedb.com";
 const char* update_version_url = "http://yzdlcru01ktmqlzy.myfritz.net:8080/updates/version.json";
 const char* update_bin_base_url = "http://yzdlcru01ktmqlzy.myfritz.net:8080/updates/";
 unsigned long lastUpdateCheck = 0;
-const unsigned long updateCheckInterval = 86400000; // 24 Stunden in Millisekunden
+const unsigned long updateCheckInterval = 14400000; // 4 Stunden in Millisekunden (6x taeglich)
 
 bool DSTchecked = 0;
 
@@ -369,14 +369,16 @@ int minuteofdeath; //saves the time incase of an unplanned reset
 // Vergleicht zwei Versionsnummern (z.B. "0.1" < "0.2")
 // Gibt true zurueck wenn remoteVersion neuer ist als die lokale
 bool isNewerVersion(const String& remoteVersion) {
-  int localMajor = 0, localMinor = 0;
-  int remoteMajor = 0, remoteMinor = 0;
+  int lv[4] = {0, 0, 0, 0};
+  int rv[4] = {0, 0, 0, 0};
   
-  sscanf(firmware_version, "%d.%d", &localMajor, &localMinor);
-  sscanf(remoteVersion.c_str(), "%d.%d", &remoteMajor, &remoteMinor);
+  sscanf(firmware_version, "%d.%d.%d.%d", &lv[0], &lv[1], &lv[2], &lv[3]);
+  sscanf(remoteVersion.c_str(), "%d.%d.%d.%d", &rv[0], &rv[1], &rv[2], &rv[3]);
   
-  if (remoteMajor > localMajor) return true;
-  if (remoteMajor == localMajor && remoteMinor > localMinor) return true;
+  for (int i = 0; i < 4; i++) {
+    if (rv[i] > lv[i]) return true;
+    if (rv[i] < lv[i]) return false;
+  }
   return false;
 }
 
