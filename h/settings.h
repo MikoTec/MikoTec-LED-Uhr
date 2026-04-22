@@ -291,7 +291,7 @@ toggleSleepFields();
 </ul>
 </form>
 <div class=btn-box>
-<a class=btn href=/>Zurueck</a>
+<a class=btn href=/>Hauptseite</a>
 <a class=btn href=/timezone>Zeitzone</a>
 <a class=btn href=/update>Update</a>
 <a class=btn href=/hilfe>Hilfe</a>

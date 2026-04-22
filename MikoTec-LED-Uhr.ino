@@ -182,7 +182,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.3";
+const char* firmware_version = "2.1.0.4";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1671,6 +1671,9 @@ void handleRoot() {
   EEPROM.write(106, blendpoint);
 
 
+  // Heap freigeben vor dem Aufbau der Root-Seite
+  yield();
+  
   String toSend = FPSTR(root_html);
   String tempgradient = "";
   String csswgradient = "";
@@ -1719,6 +1722,21 @@ void handleRoot() {
   toSend.replace("$maxBrightness", String(int(maxBrightness)));
   toSend.replace("$brightness", String(int(brightness)));
   toSend.replace("$firmware_version", firmware_version);
+  
+  // Prüfe ob die Seite korrekt aufgebaut wurde
+  if (toSend.indexOf("$externallinks") >= 0 || toSend.indexOf("$csswgradient") >= 0) {
+    logTS(); dualOut.print("[WARN] Root-Seite unvollstaendig! Heap: ");
+    dualOut.println(ESP.getFreeHeap());
+    // Nochmal versuchen mit freigegebenem Heap
+    if (toSend.indexOf("$externallinks") >= 0) {
+      if (webMode != 2) {
+        toSend.replace("$externallinks", FPSTR(externallinks));
+      } else {
+        toSend.replace("$externallinks", "<link rel=stylesheet href='clockmenustyle.css'>");
+      }
+    }
+  }
+  
   server.send(200, "text/html", toSend);
 
   logTS(); dualOut.println("Sending handleRoot");
