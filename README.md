@@ -135,6 +135,18 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.1.0.5 (Test)
+- Log-Buffer von 8KB auf 6KB reduziert (8KB verursachte Heap-Probleme bei Root-Seite mit nur 8104 Bytes frei)
+
+### v2.1.0.4 (Test)
+- Settings: "Zurueck" Button zu "Hauptseite" umbenannt
+- Heap-Check beim Aufbau der Root-Seite mit Warnung im Log
+- yield() vor Root-Seiten-Aufbau für Heap-Freigabe
+
+### v2.1.0.3 (Test)
+- Fix: Nacht-Helligkeit Replace fehlte in handleSettings (war nur in handleRoot)
+- Firmware-Version wird beim Start im Log ausgegeben
+
 ### v2.1.0.2 (Test)
 - Fix: Nacht-Helligkeit Slider zeigte `$nightbrightness%` statt echtem Wert (Replace-Reihenfolge korrigiert)
 
