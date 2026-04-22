@@ -66,14 +66,15 @@ Die Uhr ist im lokalen Netzwerk erreichbar unter:
 
 ## Auto-Update System
 
-Die Uhr prüft täglich einen HTTP-Server auf neue Firmware-Versionen:
+Die Uhr prüft alle 4 Stunden (6x täglich) einen HTTP-Server auf neue Firmware-Versionen:
 
 1. `version.json` wird vom Server geladen
-2. Versionsnummer wird mit der installierten Version verglichen
+2. Versionsnummer wird mit der installierten Version verglichen (4-stellig: Major.Minor.Patch.Build)
 3. Bei neuer Version wird die `.bin`-Datei heruntergeladen und geflasht
 4. Die Uhr startet automatisch mit der neuen Firmware neu
+5. Nur **stable** Versionen werden über `version.json` verteilt
 
-Ein Cronjob auf dem Update-Server synchronisiert die Dateien aus diesem GitHub-Repository.
+Ein Cronjob auf dem Update-Server synchronisiert alle `.bin`-Dateien aus diesem GitHub-Repository. Die `version.json` wird nur aktualisiert wenn eine neue stable Version freigegeben wird.
 
 ## Schlafmodi
 
@@ -131,3 +132,46 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 ## Lizenz
 
 Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Public License v3.
+
+## Changelog
+
+### v2.1.0.2 (Test)
+- Fix: Nacht-Helligkeit Slider zeigte `$nightbrightness%` statt echtem Wert (Replace-Reihenfolge korrigiert)
+
+### v2.1.0.1 (Test)
+- 4-stelliges Versionierungsschema eingeführt
+- Update-Intervall von 24h auf 4h geändert (6x täglich)
+- Log-Buffer von 4KB auf 8KB verdoppelt
+- `isNewerVersion()` unterstützt jetzt 4-stellige Versionen
+- Auto-Update nur noch für stable Versionen
+
+### v2.1 (2026-04-21)
+- Mondphase-LEDs werden mit Nacht-Helligkeit skaliert
+
+### v2.0-stable (2026-04-21)
+- Dezente Wertanzeige neben Slidern auf der Startseite
+- Speicher-Tracking im Log (Heap, Flash, Fragmentierung)
+- Nacht-Helligkeit separat einstellbar (0-100%)
+- Mondphasen-Berechnung korrigiert (Referenz-Neumond 6. Jan 2000)
+- Zeitstempel `[DD.MM.YYYY HH:MM:SS]` für alle Log-Einträge
+- SSDP-Spam entfernt
+- nightCheck loggt nur noch bei geänderten Werten
+
+### v1.5-stable (2026-04-20)
+- Zeitstempel mit globalem Cache (kein DualPrint-Crash mehr)
+- OTA auf HTTP-Server umgestellt (kein HTTPS/BearSSL)
+
+### v1.3 (2026-04-20)
+- OTA-URL auf lokalen HTTP-Server umgestellt
+- Zeitstempel-Code entfernt (v0.8-v1.2 crashten)
+
+### v0.6-stable (2026-04-19)
+- Auto-Schlaf mit Sonnenuntergang/Sonnenaufgang
+- Nominatim Geocoding statt GPS
+- TimezoneDB API Key aktualisiert
+- Timezone-Defaults auf Solingen (UTC+1)
+- OTA Auto-Update Funktion (HTTPS/GitHub)
+
+### v0.1 (2026-04-19)
+- Erstes Release im GitHub Repository
+- Umbenennung von "The Light Clock" zu "MikoTec LED Uhr"
