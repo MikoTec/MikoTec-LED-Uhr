@@ -135,6 +135,9 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.1.0.11 (Test)
+- Keine Code-Änderungen – Rebuild auf Basis von v2.1.0.10 (Sonnenpunkt-Feature)
+
 ### v2.1.0.10 (Test)
 - Sonnenpunkt in JS-Uhr der Startseite ergänzt (identisches Verhalten wie LED-Ring)
 - `/getstate` liefert jetzt zusätzlich `sunriseMinutes` und `sunsetMinutes`
