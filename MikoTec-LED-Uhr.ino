@@ -37,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "h/settings.h"
 #include "h/root.h"
+#include "h/menu.h"
 #include "h/timezone.h"
 #include "h/timezonesetup.h"
 #include "h/css.h"

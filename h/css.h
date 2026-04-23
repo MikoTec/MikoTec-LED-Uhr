@@ -146,9 +146,96 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e0e0e0', end
 
     }
 
+/* ===================== OVERLAY MENÜ ===================== */
+.menu-btn {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 10001;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  transition: background 0.2s;
+}
+.menu-btn:hover { background: #333; }
+.menu-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 10000;
+  background: rgba(0,0,0,0.35);
+}
+.menu-overlay.open { display: block; }
+.menu-panel {
+  position: absolute;
+  top: 0; right: 0;
+  width: 240px;
+  height: 100%;
+  background: #fff;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.18);
+  padding: 60px 0 20px 0;
+  overflow-y: auto;
+}
+.menu-panel a, .menu-panel span {
+  display: block;
+  padding: 13px 28px;
+  color: #222;
+  text-decoration: none;
+  font-family: 'Abel', sans-serif;
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: bold;
+  transition: background 0.15s;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  box-sizing: border-box;
+}
+.menu-panel a:hover, .menu-panel span:hover { background: #f0f0f0; }
+.menu-sub a, .menu-sub span {
+  padding-left: 44px !important;
+  font-size: 13px !important;
+  font-weight: normal !important;
+  color: #555 !important;
+}
+.menu-sub a:hover, .menu-sub span:hover { background: #f5f5f5 !important; color: #111 !important; }
+.menu-sep {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 6px 20px;
+}
+.menu-red { color: #c00 !important; }
+.menu-red:hover { background: #fff0f0 !important; color: #900 !important; }
+.menu-green { color: #2a9a40 !important; }
+.menu-green:hover { background: #f0fff4 !important; color: #1a7a30 !important; }
+.menu-head {
+  padding: 6px 28px 2px 28px !important;
+  font-size: 11px !important;
+  color: #aaa !important;
+  letter-spacing: 2px !important;
+  font-weight: normal !important;
+  cursor: default !important;
+}
+.menu-head:hover { background: none !important; }
+
+/* ===================== TOOLTIP ===================== */
     .tooltip{
         display: inline;
         position: relative;
+        border-bottom: 1px dotted #999;
+        cursor: help;
     }
     .checkbox .tooltip{
         position: relative;
