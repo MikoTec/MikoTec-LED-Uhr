@@ -5,7 +5,7 @@ const char menu_html[] PROGMEM = R"=====(
     <a href="/">Hauptseite</a>
     <a href="/alarm">Alarm</a>
     <hr class="menu-sep">
-    <span class="menu-head">Einstellungen</span>
+    <a href="/settings">Einstellungen</a>
     <div class="menu-sub">
       <a href="/timezone">Zeitzone Manuell</a>
       <a href="/update" class="menu-green">Update</a>

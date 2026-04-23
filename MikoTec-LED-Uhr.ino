@@ -183,7 +183,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.12";
+const char* firmware_version = "2.1.0.13";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1098,29 +1098,26 @@ void setUpServerHandle() {
 
   // Deutsche Update-Seite (überschreibt den Standard-Handler von httpUpdater)
   server.on("/update", HTTP_GET, [](){
-    server.send(200, "text/html",
-      "<!DOCTYPE html><html lang='de'><head>"
-      "<meta charset='utf-8'>"
-      "<meta name='viewport' content='width=device-width,initial-scale=1'/>"
+    String upd = "<!DOCTYPE html><html lang=\'de\'><head>"
+      "<meta charset=\'utf-8\'>"
+      "<meta name=\'viewport\' content=\'width=device-width,initial-scale=1\'/>"
       "<title>Firmware Update</title>"
-      "<style>"
-      "body{font-family:Abel,sans-serif;text-align:center;padding:40px;background:#fff;}"
-      "h1{font-size:1.4em;color:#333;margin-bottom:5px;}"
-      "p.version{color:#888;font-size:0.9em;margin-top:0;}"
-      "form{margin:20px auto;max-width:400px;padding:20px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;}"
-      "form label{font-weight:bold;display:block;margin-bottom:8px;}"
-      "input[type=file]{margin:10px 0;}"
-      "input[type=submit]{background:#4CAF50;color:#fff;border:none;padding:12px 24px;border-radius:4px;cursor:pointer;font-size:1em;margin-top:10px;}"
-      "input[type=submit]:hover{background:#45a049;}"
-      "</style></head><body>"
-      "<h1>MikoTec's LED Uhr</h1>"
-      "<p class='version'>Installierte Version: " + String(firmware_version) + "</p>"
-      "<form method='POST' enctype='multipart/form-data'>"
-      "<label>Firmware-Datei auswaehlen:</label>"
-      "<input type='file' accept='.bin,.bin.gz' name='firmware'><br>"
-      "<input type='submit' value='Firmware aktualisieren'>"
+      "<link rel=stylesheet href=\'clockmenustyle.css\'>"
+      "</head><body class=\'settings-page\'>";
+    upd += FPSTR(menu_html);
+    upd += "<div id=\'rcorners2\' style=\'max-width:420px;margin:30px auto;text-align:center;\'>"
+      "<label class=\'section-head\'>Firmware Update</label>"
+      "<p class=\'version\' style=\'margin:10px 0;color:#888;font-size:0.9em;\'>Installierte Version: " + String(firmware_version) + "</p>"
+      "<form method=\'POST\' enctype=\'multipart/form-data\' style=\'margin-top:20px;\'>"
+      "<ul class=\'form-verticle\'>"
+      "<li><label>Firmware-Datei auswaehlen (.bin)</label>"
+      "<div class=\'form-field\'><input type=\'file\' accept=\'.bin,.bin.gz\' name=\'firmware\'></div></li>"
+      "</ul>"
+      "<input class=\'btn btn-green\' type=\'submit\' value=\'Firmware aktualisieren\'>"
       "</form>"
-      "</body></html>");
+      "</div>"
+      "</body></html>";
+    server.send(200, "text/html", upd);
   });
 
   // httpUpdater registriert nur noch den POST-Handler (GET wird von oben bedient)

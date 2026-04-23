@@ -6,6 +6,37 @@ const char hilfe_html[] PROGMEM = R"=====(
 <meta http-equiv=Content-Type content="text/html; charset=utf-8" />
 <meta name=viewport content="width=device-width, initial-scale=1.0">
 $externallinks
+<style>
+.hilfe-tooltip {
+  position: relative;
+  cursor: help;
+  border-bottom: 1px dotted #666;
+  display: inline;
+}
+.hilfe-tooltip::after {
+  content: attr(data-tooltip);
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 120%;
+  z-index: 999;
+  background: #222;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: normal;
+  min-width: 220px;
+  max-width: 320px;
+  line-height: 1.5;
+  white-space: normal;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+.hilfe-tooltip:hover::after {
+  display: block;
+}
+</style>
 </head>
 <body class=settings-page>
 $menu
@@ -15,19 +46,34 @@ $menu
 <form class=form-verticle>
 <ul>
 <li>
-<label data-tooltip="Waehle die Farben fuer Stunden- und Minutenzeiger ueber den Farbwaehler." class="tooltip" style="cursor:help">Stundenfarbe / Minutenfarbe &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Waehle die Farbe fuer den Stundenzeiger und den Minutenzeiger unabhaengig voneinander ueber den integrierten Farbwaehler. Die gewaehlten Farben werden sofort auf der Uhr sichtbar nachdem du auf Update drueckst.">Stundenfarbe / Minutenfarbe</span>
+– Legt die Farben der beiden Uhrzeiger fest.
+</label>
 </li>
 <li>
-<label data-tooltip="Bestimmt wie stark die Farben ineinander uebergehen. 0 = kein Mischen, 255 = voller Uebergang." class="tooltip" style="cursor:help">Mischpunkt &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Bestimmt wie stark Stunden- und Minutenfarbe ineinander uebergehen. Bei 0 gibt es keinen Uebergang, die Farben sind klar getrennt. Bei 255 ist der Uebergang maximal weich und die Farben mischen sich stark.">Mischpunkt</span>
+– Regelt den Farbverlauf zwischen Stunden- und Minutenzeiger.
+</label>
 </li>
 <li>
-<label data-tooltip="Gesamthelligkeit aller LEDs. Wird durch den Uhrentyp begrenzt (Netzstrom=255, USB=100)." class="tooltip" style="cursor:help">Helligkeit &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Setzt die Gesamthelligkeit aller LEDs. Der maximale Wert haengt vom gewahlten Uhrentyp ab: Bei Netzstrombetrieb bis 255, bei USB-Betrieb bis 100, um die Stromversorgung nicht zu ueberladen.">Helligkeit</span>
+– Steuert wie hell alle LEDs leuchten.
+</label>
 </li>
 <li>
-<label data-tooltip="Speichere deine aktuelle Farbkombination in einem von drei Speicherplaetzen. Lade sie jederzeit wieder." class="tooltip" style="cursor:help">Speichern / Laden V1-V3 &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Du kannst bis zu vier verschiedene Farbkombinationen (Stunden, Minuten, Helligkeit, Mischpunkt) in den Speicherplaetzen V1 bis V4 ablegen. Mit Laden rufst du eine gespeicherte Kombination wieder ab. So kannst du schnell zwischen Lieblingsfarben wechseln.">Speichern / Laden V1–V4</span>
+– Speichert und laedt Farbkombinationen.
+</label>
 </li>
 <li>
-<label data-tooltip="Uebertraegt die aktuellen Farb- und Helligkeitswerte auf die Uhr." class="tooltip" style="cursor:help">Update &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Sendet die aktuellen Einstellungen (Farben, Helligkeit, Mischpunkt) an die Uhr und aktualisiert die LEDs sofort. Ohne diesen Knopf werden Aenderungen nicht uebernommen.">Update</span>
+– Uebertraegt alle Einstellungen auf die Uhr.
+</label>
 </li>
 </ul>
 </form>
@@ -38,16 +84,34 @@ $menu
 <form class=form-verticle>
 <ul>
 <li>
-<label data-tooltip="Zeigt die aktuelle Uhrzeit des ESP. Per Klick auf die Zeit startet das Spiel. Daneben kann die Zeit manuell gesetzt werden." class="tooltip" style="cursor:help">Uhrzeit &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Zeigt die aktuelle Systemzeit des ESP8266. Ein Klick auf die Anzeige oeffnet das versteckte Minispiel. Die Zeit wird automatisch per NTP synchronisiert.">Uhrzeit</span>
+– Anzeige der aktuellen ESP-Zeit.
+</label>
 </li>
 <li>
-<label data-tooltip="Markierungen auf dem Zifferblatt: Keine / Mittag / Quadranten (3,6,9,12) / Stunden (alle 12) / Abdunkeln (zum Mittag hin dunkler)." class="tooltip" style="cursor:help">Std-Marken &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Legt fest ob und welche Markierungen auf dem LED-Ring erscheinen: Keine (kein Marker), Mittag (12-Uhr-Position), Quadranten (3, 6, 9, 12 Uhr), Stunden (alle 12 Positionen), Abdunkeln (LEDs in Richtung 12 Uhr werden schwaecher).">Std-Marken</span>
+– Stundenmarkierungen auf dem Zifferblatt.
+</label>
 </li>
 <li>
-<label data-tooltip="Zeigt den Sekundenzeiger als invertierte (umgekehrte Farbe) LED an." class="tooltip" style="cursor:help">Sekunden &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Zeigt den aktuellen Sekundenzeiger als LED in der invertierten Farbe an, also der Gegenfarbe der Minutenfarbe. So ist die Sekunde immer sichtbar ohne die Optik zu stoeren.">Sekunden</span>
+– Sekundenzeiger als invertierte LED.
+</label>
 </li>
 <li>
-<label data-tooltip="Simuliert eine Stunde vor dem Aufwachen einen langsamen Sonnenaufgang auf den LEDs." class="tooltip" style="cursor:help">Sonnenaufgang &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Eine Stunde vor dem berechneten Sonnenaufgang beginnen die LEDs langsam von Schwarz auf die eingestellten Farben aufzuhellen. Das simuliert ein natuerliches Aufwachen mit Licht. Benoetigt korrekte Koordinaten in der Zeitzone.">Sonnenaufgang</span>
+– Sanfter Lichtanstieg vor dem Aufwachen.
+</label>
+</li>
+<li>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Zeigt einen goldenen LED-Punkt der die aktuelle Position der Sonne zwischen Auf- und Untergang anzeigt. Der Punkt wandert tagsüber entsprechend der Tageszeit. Benoetigt korrekte Koordinaten.">Sonnenpunkt</span>
+– Goldener LED-Punkt als Sonnenposition.
+</label>
 </li>
 </ul>
 </form>
@@ -58,16 +122,34 @@ $menu
 <form class=form-verticle>
 <ul>
 <li>
-<label data-tooltip="Schwarz: Alle LEDs aus. Punkte: Nur Stunden-/Minutenpunkt sichtbar. Gedimmt: Normales Zifferblatt sehr dunkel. Mondphase: Aktuelle Mondphase. Aus: Schlafmodus deaktiviert." class="tooltip" style="cursor:help">Schlaf-Typ &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Bestimmt was die Uhr waehrend der Schlafzeit anzeigt. Schwarz: Alle LEDs aus. Punkte: Nur Stunden- und Minutenpunkt bleiben sichtbar. Gedimmt: Das gesamte Zifferblatt wird sehr dunkel dargestellt. Mondphase: Die aktuelle Mondphase wird als LED-Bogen angezeigt. Aus: Der Schlafmodus ist deaktiviert, die Uhr laeuft immer normal.">Schlaf-Typ</span>
+– Darstellung der Uhr waehrend der Nacht.
+</label>
 </li>
 <li>
-<label data-tooltip="Manuell: Feste Schlaf-/Wachzeiten. Automatisch: Berechnet Sonnenauf- und untergang anhand der gespeicherten Koordinaten." class="tooltip" style="cursor:help">Schlafsteuerung &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Manuell: Du legst feste Uhrzeiten fuer Schlafen und Aufwachen fest. Automatisch: Die Uhr berechnet Sonnenauf- und -untergang anhand der gespeicherten GPS-Koordinaten und schaltet sich automatisch.">Schlafsteuerung</span>
+– Manuell oder automatisch per Sonnenstand.
+</label>
 </li>
 <li>
-<label data-tooltip="Feste Uhrzeiten fuer den Beginn und das Ende des Schlafmodus. Nur bei manueller Schlafsteuerung aktiv." class="tooltip" style="cursor:help">Von / Bis &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Nur aktiv wenn Schlafsteuerung auf Manuell steht. Lege eine feste Uhrzeit fest ab wann die Uhr schlafen geht (Von) und ab wann sie wieder aufwacht (Bis).">Von / Bis</span>
+– Feste Schlaf- und Aufwachzeit.
+</label>
 </li>
 <li>
-<label data-tooltip="Beeinflusst die Darstellung der Mondphase. Nordhalbkugel: zunehmender Mond rechts. Suedhalbkugel: zunehmender Mond links." class="tooltip" style="cursor:help">Hemispaere &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Helligkeit waehrend des Schlafmodus, z.B. fuer die Mondphasen-Anzeige. 0% bedeutet aus, 100% entspricht der vollen Nacht-Helligkeit. Hat keinen Einfluss auf den Schwarz-Modus.">Nacht-Helligkeit</span>
+– Helligkeit im Schlafmodus (z.B. fuer Mondphase).
+</label>
+</li>
+<li>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Beeinflusst die Darstellung der Mondphase auf dem LED-Ring. Nordhalbkugel: Der zunehmende Mond erscheint rechts (westlich). Suedhalbkugel: Der zunehmende Mond erscheint links (oestlich). Fuer Deutschland ist Nordhalbkugel korrekt.">Hemisphere</span>
+– Nord- oder Suedhalbkugel fuer die Monddarstellung.
+</label>
 </li>
 </ul>
 </form>
@@ -78,16 +160,28 @@ $menu
 <form class=form-verticle>
 <ul>
 <li>
-<label data-tooltip="Ermittelt den Standort per Browser-GPS und setzt Breitengrad/Laengengrad automatisch." class="tooltip" style="cursor:help">GPS &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Suche deinen Ort per Adresse oder Stadtname. Die Koordinaten (Breitengrad, Laengengrad) werden automatisch eingetragen und fuer Schlafmodus und Sonnenpunkt verwendet.">Standortsuche</span>
+– Ortsbestimmung per Adresssuche.
+</label>
 </li>
 <li>
-<label data-tooltip="Waehle eine Stadt aus der Liste. Koordinaten und Zeitzone werden automatisch gesetzt." class="tooltip" style="cursor:help">Stadt &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Waehle eine voreingestellte Stadt aus der Liste. Koordinaten und Zeitzone werden automatisch gesetzt. Praktisch fuer haeufig verwendete Staedte ohne manuelle Eingabe.">Stadt</span>
+– Schnellauswahl aus einer Staedte-Liste.
+</label>
 </li>
 <li>
-<label data-tooltip="UTC-Versatz direkt als Zahl eingeben (z.B. 1 fuer MEZ, 2 fuer MESZ)." class="tooltip" style="cursor:help">Manuell &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Trage den UTC-Versatz direkt als Zahl ein, z.B. 1 fuer Mitteleuropaeische Zeit (MEZ) oder 2 fuer Mitteleuropaeische Sommerzeit (MESZ). Negative Werte fuer Zeitzonen westlich von Greenwich.">Manuell</span>
+– Direkte Eingabe des UTC-Versatzes.
+</label>
 </li>
 <li>
-<label data-tooltip="Sommerzeit manuell aktivieren oder deaktivieren. Addiert eine Stunde zur Zeitzone." class="tooltip" style="cursor:help">Sommerzeit &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Aktiviert oder deaktiviert die Sommerzeit manuell. Wenn aktiviert wird eine Stunde zur Zeitzone addiert. Fuer automatische Erkennung kann der TimezoneDB-API-Key in den Einstellungen hinterlegt werden.">Sommerzeit</span>
+– Manuelle Sommerzeitumschaltung.
+</label>
 </li>
 </ul>
 </form>
@@ -98,26 +192,40 @@ $menu
 <form class=form-verticle>
 <ul>
 <li>
-<label data-tooltip="Original: 120 LEDs, Netzstrom (max. 255). Mini: 60 LEDs, USB (max. 100). Benutzerdefiniert: Eigene LED-Anzahl und Stromversorgung." class="tooltip" style="cursor:help">Uhrentyp &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Original: 120 LEDs, Netzstrombetrieb, maximale Helligkeit 255. Mini: 60 LEDs, USB-Betrieb, maximale Helligkeit 100. Benutzerdefiniert: Du kannst die LED-Anzahl und die Stromversorgungsart selbst festlegen.">Uhrentyp</span>
+– Legt LED-Anzahl und Strombegrenzung fest.
+</label>
 </li>
 <li>
-<label data-tooltip="Name der Uhr im Netzwerk (mDNS). Erreichbar unter http://[name].local im Browser." class="tooltip" style="cursor:help">Uhrenname &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Der Name unter dem die Uhr im lokalen Netzwerk erreichbar ist. Mit mDNS kannst du die Uhr unter http://[name].local aufrufen, ohne die IP-Adresse zu kennen.">Uhrenname</span>
+– Netzwerkname der Uhr (mDNS).
+</label>
 </li>
 <li>
-<label data-tooltip="Setzt einen Timer. Die LEDs fuellen sich in der gewaehlten Alarmfarbe und blinken am Ende." class="tooltip" style="cursor:help">Alarm &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Startet einen Countdown-Timer. Die LEDs fuellen sich schrittweise in der Alarmfarbe auf. Am Ende blinken alle LEDs als Signal. Erreichbar ueber das Menue oder direkt unter /alarm.">Alarm</span>
+– LED-Countdown mit Blinklicht am Ende.
+</label>
 </li>
 <li>
-<label data-tooltip="Neue Firmware (.bin Datei) per Browser hochladen (OTA Update). Erreichbar unter /update." class="tooltip" style="cursor:help">Firmware Update &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Lade eine neue Firmware-Datei (.bin) per Browser hoch um die Uhr zu aktualisieren. Die Datei wird direkt auf den ESP geflasht ohne USB-Kabel. Erreichbar ueber Menue > Einstellungen > Update.">Firmware Update</span>
+– Drahtloses Firmware-Update per Browser (OTA).
+</label>
 </li>
 <li>
-<label data-tooltip="Loescht alle Einstellungen inkl. WLAN-Daten. Die Uhr startet im Access-Point-Modus zur Neukonfiguration." class="tooltip" style="cursor:help">Werksreset &#9432;</label>
+<label>
+<span class="hilfe-tooltip" data-tooltip="Loescht saemtliche gespeicherten Einstellungen inklusive WLAN-Zugangsdaten aus dem EEPROM. Die Uhr startet danach als WLAN Access Point mit dem Namen 'MikoTec LED Uhr' zur Neukonfiguration. Nicht rueckgaengig zu machen!">Werksreset</span>
+– Loescht alle Einstellungen und WLAN-Daten.
+</label>
 </li>
 </ul>
 </form>
 </div>
 
 
-
 </body>
 </html>
-)=====";
+)=====" ;

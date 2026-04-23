@@ -1,17 +1,20 @@
 const char clearromsure_html[] PROGMEM = R"=====(
 <!DOCTYPE HTML>
-<html><head>
+<html>
+<head>
+<title>Werksreset</title>
 <meta http-equiv=Content-Type content="text/html; charset=utf-8" />
 <meta name=viewport content="width=device-width, initial-scale=1.0">
-<link rel=stylesheet href=style.css>
+$externallinks
 </head>
 <body class=settings-page>
 $menu
-<H1>Bist du sicher?</H1><br>
-Alle Einstellungen inkl. WLAN-Passwort werden geloescht. Nach Neustart bitte neu verbinden.<br><br><br>
-<a class="btn" href=/cleareeprom>Werksreset</a>
-<br><br>
-<a href=/settings>Zurueck zu Einstellungen</a>
+<div id="rcorners2" style="max-width:420px;margin:40px auto;text-align:center;">
+  <label class="section-head" style="color:#c00;">Werksreset</label>
+  <p style="margin:16px 0 8px 0;font-size:15px;color:#333;">Alle gespeicherten Einstellungen werden geloescht.</p>
+  <p style="margin:0 0 20px 0;font-size:13px;color:#888;">Das beinhaltet WLAN-Zugangsdaten, Farben, Helligkeit, Zeitzone und alle weiteren Einstellungen. Die Uhr startet danach im Access-Point-Modus zur Neukonfiguration.</p>
+  <a class="btn" style="background:#c00;color:#fff;margin-right:12px;" href=/cleareeprom>Jetzt zuruecksetzen</a>
+</div>
 </body>
 </html>
-)=====";
+)=====" ;

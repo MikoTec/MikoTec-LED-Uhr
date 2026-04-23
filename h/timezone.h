@@ -9,15 +9,15 @@ const char timezone_html[] PROGMEM = R"=====(
 <script src=https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js></script>
 <link rel=stylesheet href='clockmenustyle.css'>
 <style>
-.container{max-width:600px;margin:0 auto;padding:15px;}
-.tab-content{padding:15px 0;}
+.container{max-width:600px;margin:0 auto;padding:15px;overflow-x:hidden;box-sizing:border-box;}
+.tab-content{padding:15px 0;overflow-x:hidden;}
 .nav-tabs{margin-bottom:15px;}
 .nav-tabs li{display:inline-block;}
 .nav-tabs li a{padding:8px 15px;text-decoration:none;border:1px solid #ddd;margin-right:5px;color:#333;}
 .nav-tabs li.active a{background:#fff;border-bottom:1px solid #fff;font-weight:bold;}
 .tab-pane{display:none;}
 .tab-pane.active{display:block;}
-input[type=text]{padding:6px;margin:5px 0;font-size:16px;width:200px;}
+input[type=text]{padding:6px;margin:5px 0;font-size:16px;width:100%;max-width:300px;box-sizing:border-box;}
 input[type=submit]{padding:8px 16px;margin:10px 0;font-size:14px;cursor:pointer;}
 h2{text-align:center;}
 h3{margin-top:10px;}
@@ -42,13 +42,12 @@ h3{margin-top:10px;}
 <span id=searchStatus style="margin-left:10px;color:#888;"></span>
 </div>
 <form action=/ method=GET>
-Breitengrad:<input type=text name=latitude id=latitude value=$latitude><br>
-Laengengrad:<input type=text name=longitude id=longitude value=$longitude><br>
+<label style="display:block;margin-top:8px;">Breitengrad</label><input type=text name=latitude id=latitude value=$latitude><br><label style="display:block;margin-top:8px;">Laengengrad</label><input type=text name=longitude id=longitude value=$longitude><br>
 <input type=submit name=submit value='Update Timezone'/></form>
 </div>
 <div id=Manual class="tab-pane">
 <form action=/ method=GET>
-UTC Versatz <input type=text name=timezone id=timezone value=$timezone><br>
+<label style="display:block;margin-top:8px;">UTC Versatz</label><input type=text name=timezone id=timezone value=$timezone><br>
 <input type=submit name=submit value='Update Timezone'/></form>
 </div>
 <div id=City class="tab-pane">

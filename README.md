@@ -135,6 +135,14 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.1.0.13 (Test)
+- Fix: Menü-Button "Einstellungen" war kein klickbarer Link (nur Text-Span)
+- support.h: Log-Intervall von 5s auf 60s erhöht, Dropdown zur Intervallauswahl (5s/10s/30s/1min/5min/Aus)
+- hilfe.h: ⓘ-Symbol entfernt, Hover-Tooltips direkt auf Wortnamen, Hilfetexte ausführlicher
+- clearromsure.h: Ans globale Design angepasst (rcorners2, section-head, btn-Klassen)
+- Update-Seite (/update): Ans Design angepasst, Menü eingebunden
+- timezone.h: Eingabefelder mit box-sizing und max-width repariert (gingen über weißes div hinaus)
+
 ### v2.1.0.12 (Test)
 - Menü-Overlay auf allen Seiten aktiviert ($menu Platzhalter + toSend.replace in allen Handlern)
 - Alte btn-box Navigation entfernt aus root.h, settings.h, hilfe.h, support.h, timezone.h

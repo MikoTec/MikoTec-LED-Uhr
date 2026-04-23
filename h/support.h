@@ -33,10 +33,19 @@ $menu
 
 <div id="rcorners2">
 <label class="section-head">Serielles Protokoll</label>
-<div style="margin:10px 0">
+<div style="margin:10px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
 <button class="btn btn-sm" onclick="refreshLog()">Aktualisieren</button>
 <button class="btn btn-sm" onclick="downloadLog()">Herunterladen</button>
 <button class="btn btn-sm" onclick="clearLogView()">Leeren</button>
+<label style="margin:0 4px 0 12px;font-size:13px;">Intervall:</label>
+<select id="logInterval" onchange="updateInterval()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:13px;">
+  <option value="5000">5 Sek</option>
+  <option value="10000">10 Sek</option>
+  <option value="30000">30 Sek</option>
+  <option value="60000" selected>1 Min</option>
+  <option value="300000">5 Min</option>
+  <option value="0">Aus</option>
+</select>
 </div>
 <textarea id="logbox" readonly style="width:100%;height:300px;font-family:monospace;font-size:12px;background:#111;color:#0f0;border:1px solid rgba(0,0,0,0.15);border-radius:3px;padding:8px;resize:vertical"></textarea>
 </div>
@@ -86,10 +95,17 @@ x.send();
 alert("Uhr wird neu gestartet...");
 }
 }
+var logTimer = null;
+var infoTimer = null;
+function updateInterval(){
+  var val = parseInt(document.getElementById("logInterval").value);
+  if(logTimer) clearInterval(logTimer);
+  if(val > 0) logTimer = setInterval(refreshLog, val);
+}
 refreshLog();
 refreshInfo();
-setInterval(refreshLog,5000);
-setInterval(refreshInfo,10000);
+logTimer = setInterval(refreshLog, 60000);
+infoTimer = setInterval(refreshInfo, 10000);
 </script>
 
 
