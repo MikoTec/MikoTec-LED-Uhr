@@ -89,6 +89,11 @@ updateTime();
 <label for=showseconds>Sekunden</label>
 </li>
 <li class=checkbox>
+<input id=showsunpointhidden type=hidden name=showsunpointhidden value=0>
+<input id=showsunpoint type=checkbox name=showsunpoint $showsunpoint>
+<label for=showsunpoint>Sonnenpunkt <span data-tooltip="Zeigt die aktuelle Sonnenposition als goldenen LED-Punkt (nur tagsüber sichtbar, Breitengrad/Längengrad erforderlich)" class="tooltip" style="cursor:help;">&#9432;</span></label>
+</li>
+<li class=checkbox>
 <input id=dawnbreakhidden type=hidden name=dawnbreakhidden value=0>
 <input id=dawnbreak type=checkbox name=dawnbreak $dawnbreak>
 <label for=dawnbreak>Sonnenaufgang <span data-tooltip="Simuliere den Sonnenaufgang eine Std. vor Einschalten der vollen Tagesuhrzeit" class="tooltip" style="cursor:help;">&#9432;</span></label>

@@ -182,7 +182,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.7";
+const char* firmware_version = "2.1.0.8";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -346,6 +346,7 @@ float timezone = 10; //Australian Eastern Standard Time
 int timezonevalue;
 int DSTtime; //add one if we're in DST
 bool showseconds; //should the seconds hand tick around
+bool showSunPoint; //should the sun position be shown as a golden LED point
 bool DSTauto; //should the clock automatically update for DST
 int alarmmode = 0;
 int gamearray[6];
@@ -749,6 +750,10 @@ void loadConfig() {
   showseconds = EEPROM.read(184);
   logTS(); dualOut.print("showseconds: ");
   dualOut.println(showseconds);
+  showSunPoint = EEPROM.read(235);
+  if (showSunPoint > 1) showSunPoint = 0;
+  logTS(); dualOut.print("showSunPoint: ");
+  dualOut.println(showSunPoint);
   DSTauto = EEPROM.read(185);
   logTS(); dualOut.print("DSTauto: ");
   dualOut.println(DSTauto);
@@ -1609,6 +1614,10 @@ void handleRoot() {
     showseconds = server.hasArg("showseconds");
     EEPROM.write(184, showseconds);
   }
+  if (server.hasArg("showsunpointhidden")) {
+    showSunPoint = server.hasArg("showsunpoint");
+    EEPROM.write(235, showSunPoint);
+  }
   if (server.hasArg("dawnbreakhidden")) {
     dawnbreak = server.hasArg("dawnbreak");
     EEPROM.write(229, dawnbreak);
@@ -1870,6 +1879,10 @@ void handleSettings() {
     showseconds = server.hasArg("showseconds");
     EEPROM.write(184, showseconds);
   }
+  if (server.hasArg("showsunpointhidden")) {
+    showSunPoint = server.hasArg("showsunpoint");
+    EEPROM.write(235, showSunPoint);
+  }
   if (server.hasArg("dawnbreakhidden")) {
     dawnbreak = server.hasArg("dawnbreak");
     EEPROM.write(229, dawnbreak);
@@ -1983,6 +1996,8 @@ void handleSettings() {
   String ischecked;
   showseconds ? ischecked = "checked" : ischecked = "";
   toSend.replace("$showseconds", ischecked);
+  showSunPoint ? ischecked = "checked" : ischecked = "";
+  toSend.replace("$showsunpoint", ischecked);
   dawnbreak ? ischecked = "checked" : ischecked = "";
   toSend.replace("$dawnbreak", ischecked);
   DSTtime ? ischecked = "checked" : ischecked = "";
@@ -2221,6 +2236,26 @@ void updateface() {
       if (showseconds) {
 
         invertLED(second()*pixelCount / 60);
+      }
+      if (showSunPoint) {
+        int m = month();
+        int d = day();
+        int doy = d;
+        int daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+        int y = year();
+        if (y % 4 == 0 && (y % 100 != 0 || y % 400 == 0)) daysInMonth[2] = 29;
+        for (int i = 1; i < m; i++) doy += daysInMonth[i];
+        float tz = timezone + DSTtime;
+        int sunriseH, sunriseM, sunsetH, sunsetM;
+        calcSunriseSunset(doy, latitude, longitude, tz, sunriseH, sunriseM, sunsetH, sunsetM);
+        int sunriseMinutes = sunriseH * 60 + sunriseM;
+        int sunsetMinutes = sunsetH * 60 + sunsetM;
+        int nowMinutes = hour() * 60 + minute();
+        if (nowMinutes >= sunriseMinutes && nowMinutes <= sunsetMinutes && sunsetMinutes > sunriseMinutes) {
+          float sunProgress = (float)(nowMinutes - sunriseMinutes) / (float)(sunsetMinutes - sunriseMinutes);
+          int sun_pos = (int)(sunProgress * pixelCount) % pixelCount;
+          clockleds->SetPixelColor(sun_pos, RgbColor::LinearBlend(RgbColor(0,0,0), RgbColor(255, 180, 0), (float)brightness/255.0f));
+        }
       }
       break;
 
@@ -2910,6 +2945,7 @@ void handleGetState() {
   json += "\"s\":" + String(second()) + ",";
   json += "\"clockmode\":" + String(clockmode) + ",";
   json += "\"showseconds\":" + String(showseconds) + ",";
+  json += "\"showsunpoint\":" + String(showSunPoint) + ",";
   json += "\"hourmarks\":" + String(hourmarks) + ",";
   json += "\"pixelCount\":" + String(pixelCount) + ",";
   json += "\"brightness\":" + String(brightness) + ",";
