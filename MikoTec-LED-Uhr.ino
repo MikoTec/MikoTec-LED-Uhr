@@ -183,7 +183,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.14";
+const char* firmware_version = "2.1.0.15";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -2027,6 +2027,11 @@ void handleTimezone() {
   String toSend = FPSTR(timezone_html);
   //toSend.replace("$css", css_file);
   //toSend.replace("$fonts", fontreplace);
+  if (webMode != 2) {
+    toSend.replace("$externallinks", FPSTR(externallinks));
+  } else {
+    toSend.replace("$externallinks", "<link rel=stylesheet href='clockmenustyle.css'>");
+  }
   toSend.replace("$timezone", String(timezone));
   toSend.replace("$latitude", String(latitude));
   toSend.replace("$longitude", String(longitude));
@@ -2056,6 +2061,11 @@ void webHandleClearRom() {
 void webHandleClearRomSure() {
   String toSend = FPSTR(clearromsure_html);
   //toSend.replace("$css", css_file);
+  if (webMode != 2) {
+    toSend.replace("$externallinks", FPSTR(externallinks));
+  } else {
+    toSend.replace("$externallinks", "<link rel=stylesheet href='clockmenustyle.css'>");
+  }
   toSend.replace("$menu", FPSTR(menu_html));
   logTS(); dualOut.println("Sending webHandleClearRomSure");
   server.send(200, "text/html", toSend);

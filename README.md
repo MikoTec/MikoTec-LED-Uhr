@@ -135,6 +135,9 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.1.0.15 (Test)
+- Fix: $externallinks wurde in handleTimezone und handleClearRomSure nicht ersetzt (CSS und Menü-Styling fehlten)
+
 ### v2.1.0.14 (Test)
 - timezone.h: Komplett neu im MikoTec-Design, Bootstrap entfernt, eigenes Tab-System, Eingabefelder korrekt skaliert
 
