@@ -135,6 +135,13 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.1.0.12 (Test)
+- Menü-Overlay auf allen Seiten aktiviert ($menu Platzhalter + toSend.replace in allen Handlern)
+- Alte btn-box Navigation entfernt aus root.h, settings.h, hilfe.h, support.h, timezone.h
+- Nur noch Update-Button im Footer der Hauptseite
+- Neustart-Button aus support.h entfernt (jetzt im Menü)
+- Werksreset-Link aus settings.h entfernt (jetzt im Menü)
+
 ### v2.1.0.11 (Test)
 - Keine Code-Änderungen – Rebuild auf Basis von v2.1.0.10 (Sonnenpunkt-Feature)
 

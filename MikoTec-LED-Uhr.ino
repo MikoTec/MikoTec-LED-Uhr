@@ -183,7 +183,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.11";
+const char* firmware_version = "2.1.0.12";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1731,6 +1731,7 @@ void handleRoot() {
   toSend.replace("$maxBrightness", String(int(maxBrightness)));
   toSend.replace("$brightness", String(int(brightness)));
   toSend.replace("$firmware_version", firmware_version);
+  toSend.replace("$menu", FPSTR(menu_html));
   
   // Prüfe ob die Seite korrekt aufgebaut wurde
   if (toSend.indexOf("$externallinks") >= 0 || toSend.indexOf("$csswgradient") >= 0) {
@@ -2013,6 +2014,7 @@ void handleSettings() {
   toSend.replace("$clockname", String(clockname));
   toSend.replace("$nightbrightness", String(int(nightBrightness)));
   toSend.replace("$firmware_version", firmware_version);
+  toSend.replace("$menu", FPSTR(menu_html));
 
   server.send(200, "text/html", toSend);
 
@@ -2031,6 +2033,7 @@ void handleTimezone() {
   toSend.replace("$timezone", String(timezone));
   toSend.replace("$latitude", String(latitude));
   toSend.replace("$longitude", String(longitude));
+  toSend.replace("$menu", FPSTR(menu_html));
 
 
   server.send(200, "text/html", toSend);
@@ -2056,6 +2059,7 @@ void webHandleClearRom() {
 void webHandleClearRomSure() {
   String toSend = FPSTR(clearromsure_html);
   //toSend.replace("$css", css_file);
+  toSend.replace("$menu", FPSTR(menu_html));
   logTS(); dualOut.println("Sending webHandleClearRomSure");
   server.send(200, "text/html", toSend);
 }
@@ -2900,6 +2904,7 @@ void handleHilfe() {
   } else {
     toSend.replace("$externallinks", "<link rel=stylesheet href='clockmenustyle.css'>");
   }
+  toSend.replace("$menu", FPSTR(menu_html));
   server.send(200, "text/html", toSend);
 }
 
@@ -2911,6 +2916,7 @@ void handleSupport() {
   } else {
     toSend.replace("$externallinks", "<link rel=stylesheet href='clockmenustyle.css'>");
   }
+  toSend.replace("$menu", FPSTR(menu_html));
   server.send(200, "text/html", toSend);
 }
 

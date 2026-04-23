@@ -38,6 +38,7 @@ function CheckClockType(val){
 <meta name=viewport content="width=device-width, initial-scale=1.0">
 </head>
 <body class=settings-page>
+$menu
 <div style="font-size:32px;font-weight:bold;letter-spacing:2px;margin-bottom:10px;font-family:Abel,sans-serif">
 <span id="esptime" onclick="window.location='/game'" style="cursor:pointer">--:--:--</span>
 </div>
@@ -295,13 +296,7 @@ toggleSleepFields();
 </div>
 </ul>
 </form>
-<div class=btn-box>
-<a class=btn href=/>Hauptseite</a>
-<a class=btn href=/timezone>Zeitzone</a>
-<a class=btn href=/update>Update</a>
-<a class=btn href=/hilfe>Hilfe</a>
-<a class=btn href=/cleareepromsure>Werksreset</a>
-</div>
+
 </body>
 </html>
 )=====";

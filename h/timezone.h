@@ -98,9 +98,6 @@ UTC Versatz <input type=text name=timezone id=timezone value=$timezone><br>
 </div>
 </div>
 <div class=btn-box style="margin-top:15px">
-<a class=btn href=/>Zurueck</a>
-<a class=btn href=/settings>Einstellungen</a>
-<a class=btn href=/hilfe>Hilfe</a>
 </div>
 <script>
 var x=document.getElementById("latitude");var y=document.getElementById("longitude");

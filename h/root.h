@@ -13,6 +13,7 @@ $externallinks
 $csswgradient
 </head>
 <body class=settings-page>
+$menu
   <div style="text-align:center;background:#fff;padding:10px 0 5px 0;position:relative;z-index:10;">
     <h1 style="margin:0;font-size:1.6em;color:#333;font-family:Abel,sans-serif;">MikoTec's LED Uhr</h1>
     <p style="margin:2px 0 0 0;font-size:0.9em;color:#888;">Version $firmware_version</p>
@@ -64,8 +65,6 @@ $csswgradient
     $alarm
     </div>
     <div class="btn-footer">
-      <a class="btn btn-default" href=/settings>Einstellungen</a>
-      <a class="btn btn-default" href=/hilfe>Hilfe</a>
       <input class='btn btn-green' type=submit name=submit value='Update'/>
     </div>
   </form>

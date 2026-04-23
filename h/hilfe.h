@@ -8,6 +8,7 @@ const char hilfe_html[] PROGMEM = R"=====(
 $externallinks
 </head>
 <body class=settings-page>
+$menu
 
 <div id="rcorners2">
 <label class="section-head">Hauptseite</label>
@@ -115,12 +116,7 @@ $externallinks
 </form>
 </div>
 
-<div class=btn-box>
-<a class="btn btn-default" href=/>Hauptseite</a>
-<a class="btn btn-default" href=/settings>Einstellungen</a>
-<a class="btn btn-default" href=/timezone>Zeitzone</a>
-<a class="btn btn-default" href=/support>Support</a>
-</div>
+
 
 </body>
 </html>

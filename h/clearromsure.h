@@ -6,6 +6,7 @@ const char clearromsure_html[] PROGMEM = R"=====(
 <link rel=stylesheet href=style.css>
 </head>
 <body class=settings-page>
+$menu
 <H1>Bist du sicher?</H1><br>
 Alle Einstellungen inkl. WLAN-Passwort werden geloescht. Nach Neustart bitte neu verbinden.<br><br><br>
 <a class="btn" href=/cleareeprom>Werksreset</a>

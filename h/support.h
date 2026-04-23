@@ -8,6 +8,7 @@ const char support_html[] PROGMEM = R"=====(
 $externallinks
 </head>
 <body class=settings-page>
+$menu
 
 <label class="section-head">Support - Systemprotokoll</label>
 
@@ -91,10 +92,7 @@ setInterval(refreshLog,5000);
 setInterval(refreshInfo,10000);
 </script>
 
-<div class=btn-box>
-<a class="btn btn-default" href=/hilfe>Zurueck zur Hilfe</a>
-<button class="btn" onclick="rebootClock()" style="background:#c00;color:#fff">Neustart</button>
-</div>
+
 
 </body>
 </html>
