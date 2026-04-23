@@ -135,6 +135,9 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.1.0.9 (Test)
+- Sonnenpunkt-Richtung korrigiert: Aufgang bei 3 Uhr, gegen Uhrzeigersinn über 12 nach 9 Uhr (Untergang)
+
 ### v2.1.0.8 (Test)
 - Sonnenpunkt-Feature: Zeigt die aktuelle Sonnenposition als goldenen LED-Punkt (nur tagsüber sichtbar)
 - Neues Ein/Aus-Element in den Settings (Checkbox mit Tooltip)

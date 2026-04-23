@@ -182,7 +182,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.8";
+const char* firmware_version = "2.1.0.9";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -2253,7 +2253,8 @@ void updateface() {
         int nowMinutes = hour() * 60 + minute();
         if (nowMinutes >= sunriseMinutes && nowMinutes <= sunsetMinutes && sunsetMinutes > sunriseMinutes) {
           float sunProgress = (float)(nowMinutes - sunriseMinutes) / (float)(sunsetMinutes - sunriseMinutes);
-          int sun_pos = (int)(sunProgress * pixelCount) % pixelCount;
+          // Aufgang bei 3 Uhr (LED pixelCount/4), gegen Uhrzeigersinn über 12 nach 9 Uhr
+          int sun_pos = ((pixelCount / 4) - (int)(sunProgress * (pixelCount / 2)) + pixelCount) % pixelCount;
           clockleds->SetPixelColor(sun_pos, RgbColor::LinearBlend(RgbColor(0,0,0), RgbColor(255, 180, 0), (float)brightness/255.0f));
         }
       }
