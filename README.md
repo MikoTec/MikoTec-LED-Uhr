@@ -135,6 +135,12 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.1.0.8 (Test)
+- Sonnenpunkt-Feature: Zeigt die aktuelle Sonnenposition als goldenen LED-Punkt (nur tagsüber sichtbar)
+- Neues Ein/Aus-Element in den Settings (Checkbox mit Tooltip)
+- EEPROM-Adresse 235 für Sonnenpunkt-Einstellung
+- Sonnenpunkt wird über `calcSunriseSunset()` berechnet (Breitengrad/Längengrad erforderlich)
+
 ### v2.1.0.7 (Test)
 - Fix: nightCheck() vor NTP-Sync entfernt – verhinderte falsche Sonnenzeiten (doy=0 ergab vertauschte/falsche Werte)
 - Sonnenaufgang-Simulation startet jetzt korrekt
