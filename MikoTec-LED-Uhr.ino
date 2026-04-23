@@ -183,7 +183,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.13";
+const char* firmware_version = "2.1.0.14";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 

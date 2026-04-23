@@ -135,6 +135,9 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.1.0.14 (Test)
+- timezone.h: Komplett neu im MikoTec-Design, Bootstrap entfernt, eigenes Tab-System, Eingabefelder korrekt skaliert
+
 ### v2.1.0.13 (Test)
 - Fix: Menü-Button "Einstellungen" war kein klickbarer Link (nur Text-Span)
 - support.h: Log-Intervall von 5s auf 60s erhöht, Dropdown zur Intervallauswahl (5s/10s/30s/1min/5min/Aus)
