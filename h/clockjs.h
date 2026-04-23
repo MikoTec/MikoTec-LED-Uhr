@@ -134,6 +134,9 @@ var espShowSeconds = 1;
 var espHourmarks = 0;
 var espClockmode = 2;
 var espBrightness = 100;
+var espShowSunPoint = 0;
+var espSunriseMinutes = 360;
+var espSunsetMinutes = 1200;
 
 function fetchESPState() {
   var x = new XMLHttpRequest();
@@ -149,6 +152,9 @@ function fetchESPState() {
         espShowSeconds = st.showseconds;
         espHourmarks = st.hourmarks;
         espBrightness = st.brightness;
+        espShowSunPoint = st.showsunpoint;
+        espSunriseMinutes = st.sunriseMinutes;
+        espSunsetMinutes = st.sunsetMinutes;
         pixelCount = st.pixelCount;
         INTERVAL = TwoPI / pixelCount;
         hourcolor = new RGBColour(st.hourR, st.hourG, st.hourB);
@@ -240,6 +246,15 @@ function tick()
     if (espShowSeconds) {
       var sec_pos = Math.floor(curSec * pixelCount / 60);
       clock[sec_pos] = new RGBColour(255, 255, 255);
+    }
+
+    if (espShowSunPoint) {
+      var nowMinutes = curHour * 60 + curMin;
+      if (nowMinutes >= espSunriseMinutes && nowMinutes <= espSunsetMinutes && espSunsetMinutes > espSunriseMinutes) {
+        var sunProgress = (nowMinutes - espSunriseMinutes) / (espSunsetMinutes - espSunriseMinutes);
+        var sun_pos = ((Math.floor(pixelCount / 4) - Math.floor(sunProgress * (pixelCount / 2))) + pixelCount) % pixelCount;
+        clock[sun_pos] = new RGBColour(255, 180, 0);
+      }
     }
 
     show(ctx, width/2, height/2);

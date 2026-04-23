@@ -182,7 +182,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.9";
+const char* firmware_version = "2.1.0.10";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -2947,6 +2947,17 @@ void handleGetState() {
   json += "\"clockmode\":" + String(clockmode) + ",";
   json += "\"showseconds\":" + String(showseconds) + ",";
   json += "\"showsunpoint\":" + String(showSunPoint) + ",";
+  // Sonnenauf/-untergang in Minuten für JS-Uhr
+  int gsM = month(), gsD = day(), gsDoy = gsD;
+  int gsDIM[] = {0,31,28,31,30,31,30,31,31,30,31,30,31};
+  int gsY = year();
+  if (gsY % 4 == 0 && (gsY % 100 != 0 || gsY % 400 == 0)) gsDIM[2] = 29;
+  for (int i = 1; i < gsM; i++) gsDoy += gsDIM[i];
+  float gsTz = timezone + DSTtime;
+  int gsRH, gsRM, gsSH, gsSM;
+  calcSunriseSunset(gsDoy, latitude, longitude, gsTz, gsRH, gsRM, gsSH, gsSM);
+  json += "\"sunriseMinutes\":" + String(gsRH * 60 + gsRM) + ",";
+  json += "\"sunsetMinutes\":" + String(gsSH * 60 + gsSM) + ",";
   json += "\"hourmarks\":" + String(hourmarks) + ",";
   json += "\"pixelCount\":" + String(pixelCount) + ",";
   json += "\"brightness\":" + String(brightness) + ",";
