@@ -182,7 +182,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.6";
+const char* firmware_version = "2.1.0.7";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -526,8 +526,7 @@ void setup() {
   }
   logMemory();
 
-  // 5. Nachtmodus pruefen und Anzeige starten
-  nightCheck();
+  // 5. Anzeige starten (nightCheck erst nach NTP, sonst falsches Datum)
   updateface();
   if(clockleds) clockleds->Show();
   initWiFi();
