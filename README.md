@@ -135,6 +135,10 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.1.0.7 (Test)
+- Fix: nightCheck() vor NTP-Sync entfernt – verhinderte falsche Sonnenzeiten (doy=0 ergab vertauschte/falsche Werte)
+- Sonnenaufgang-Simulation startet jetzt korrekt
+
 ### v2.1.0.6 (Test)
 - Settings-Formular leitet jetzt nach dem Speichern auf /settings zurück statt auf / (Root-Seite) – verhindert Heap-Problem
 - Settings Args-Verarbeitung in handleSettings verschoben
