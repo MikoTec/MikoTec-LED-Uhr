@@ -192,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.10";
+const char* firmware_version = "2.2.0.11";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1914,7 +1914,17 @@ void handleRoot() {
 
   // Heap freigeben vor dem Aufbau der Root-Seite
   yield();
-  
+
+  // index.html direkt aus LittleFS streamen - kein RAM fuer toSend noetig
+  if (LittleFS.exists("/index.html")) {
+    logTS(); dualOut.println("Sending handleRoot (LittleFS)");
+    File f = LittleFS.open("/index.html", "r");
+    server.streamFile(f, "text/html");
+    f.close();
+    EEPROM.commit();
+    return;
+  }
+
   String toSend = FPSTR(root_html);
   toSend.replace("$menu", FPSTR(menu_html));
   String tempgradient = "";
@@ -2167,6 +2177,16 @@ void handleSettings() {
   logTS(); dualOut.print("wake: ");
   dualOut.println(timeToText(wake, wakemin));
   
+  // settings.html direkt aus LittleFS streamen - Werte kommen per JS fetch /getstate
+  if (LittleFS.exists("/settings.html")) {
+    logTS(); dualOut.println("Sending handleSettings (LittleFS)");
+    File f = LittleFS.open("/settings.html", "r");
+    server.streamFile(f, "text/html");
+    f.close();
+    EEPROM.commit();
+    return;
+  }
+
   String toSend = FPSTR(settings_html);
   toSend.replace("$timezonevalue", String(timezonevalue));
   for (int i = 0; i < 5; i++) {
@@ -2260,6 +2280,13 @@ void handleSettings() {
 }
 
 void handleTimezone() {
+  if (LittleFS.exists("/timezone.html")) {
+    logTS(); dualOut.println("Sending handleTimezone (LittleFS)");
+    File f = LittleFS.open("/timezone.html", "r");
+    server.streamFile(f, "text/html");
+    f.close();
+    return;
+  }
   String fontreplace;
   if (webMode == 1) {
     fontreplace = FPSTR(importfonts);

@@ -135,6 +135,12 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.2.0.11 (25.04.2026)
+- Fix: handleRoot, handleSettings, handleTimezone streamen sofort aus LittleFS
+- Kein PROGMEM-String mehr aufgebaut wenn LittleFS-Datei vorhanden - spart mehrere KB RAM
+- WARN Root-Seite unvollstaendig entfaellt wenn LittleFS korrekt geflasht ist
+- Neues LittleFS-Image: littlefs_v2.2.0.11.bin
+
 ### v2.2.0.10 (25.04.2026)
 - Neu: FS-OTA Erfolgsseite zeigt zwei Buttons: Log herunterladen + Uhr neu starten
 - Log-Snapshot wird vor Neustart gesichert und als fs_ota_log.txt zum Download angeboten
@@ -217,6 +223,12 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 - Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
 - Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
 - Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
+
+### v2.2.0.11 (25.04.2026)
+- Fix: handleRoot, handleSettings, handleTimezone streamen sofort aus LittleFS
+- Kein PROGMEM-String mehr aufgebaut wenn LittleFS-Datei vorhanden - spart mehrere KB RAM
+- WARN Root-Seite unvollstaendig entfaellt wenn LittleFS korrekt geflasht ist
+- Neues LittleFS-Image: littlefs_v2.2.0.11.bin
 
 ### v2.2.0.10 (25.04.2026)
 - Neu: FS-OTA Erfolgsseite zeigt zwei Buttons: Log herunterladen + Uhr neu starten
