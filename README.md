@@ -135,6 +135,11 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.1.0.16 (Test)
+- Fix: Heap-Überlauf in handleRoot und handleSettings durch Menü-Einbindung
+- $menu wird jetzt als erstes replace eingefügt (vor allen anderen replaces)
+- toSend.reserve() in handleRoot (4096) und handleSettings (16384) zur Vermeidung von Heap-Fragmentierung
+
 ### v2.1.0.15 (Test)
 - Fix: $externallinks wurde in handleTimezone und handleClearRomSure nicht ersetzt (CSS und Menü-Styling fehlten)
 

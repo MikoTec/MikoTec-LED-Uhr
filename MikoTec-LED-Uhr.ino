@@ -183,7 +183,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.15";
+const char* firmware_version = "2.1.0.16";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1681,6 +1681,8 @@ void handleRoot() {
   yield();
   
   String toSend = FPSTR(root_html);
+  toSend.reserve(4096);
+  toSend.replace("$menu", FPSTR(menu_html));
   String tempgradient = "";
   String csswgradient = "";
   const String scheme = "scheme";
@@ -1728,7 +1730,6 @@ void handleRoot() {
   toSend.replace("$maxBrightness", String(int(maxBrightness)));
   toSend.replace("$brightness", String(int(brightness)));
   toSend.replace("$firmware_version", firmware_version);
-  toSend.replace("$menu", FPSTR(menu_html));
   
   // Prüfe ob die Seite korrekt aufgebaut wurde
   if (toSend.indexOf("$externallinks") >= 0 || toSend.indexOf("$csswgradient") >= 0) {
@@ -1919,6 +1920,8 @@ void handleSettings() {
   dualOut.println(timeToText(wake, wakemin));
   
   String toSend = FPSTR(settings_html);
+  toSend.reserve(16384);
+  toSend.replace("$menu", FPSTR(menu_html));
   for (int i = 82; i > 0; i--) {
     if (i == timezonevalue) {
       toSend.replace("$timezonevalue" + String(i), "selected");
@@ -2011,7 +2014,6 @@ void handleSettings() {
   toSend.replace("$clockname", String(clockname));
   toSend.replace("$nightbrightness", String(int(nightBrightness)));
   toSend.replace("$firmware_version", firmware_version);
-  toSend.replace("$menu", FPSTR(menu_html));
 
   server.send(200, "text/html", toSend);
 
