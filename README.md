@@ -135,6 +135,11 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.2.0.8 (25.04.2026)
+- Fix: logFile.flush() aus logAppend() entfernt - verhinderte extremen Blockier beim FS-OTA Upload
+- Log wird jetzt alle 5 Sekunden im loop() geflusht und vor ESP.restart()
+- Neues LittleFS-Image: littlefs_v2.2.0.8.bin
+
 ### v2.2.0.7 (25.04.2026)
 - Neu: Log-Persistenz in LittleFS - alle Log-Ausgaben werden in /log.txt geschrieben
 - Beim Neustart wird /log.txt zu /log_prev.txt umbenannt (Log des letzten Boots bleibt erhalten)
@@ -200,6 +205,11 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 - Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
 - Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
 - Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
+
+### v2.2.0.8 (25.04.2026)
+- Fix: logFile.flush() aus logAppend() entfernt - verhinderte extremen Blockier beim FS-OTA Upload
+- Log wird jetzt alle 5 Sekunden im loop() geflusht und vor ESP.restart()
+- Neues LittleFS-Image: littlefs_v2.2.0.8.bin
 
 ### v2.2.0.7 (25.04.2026)
 - Neu: Log-Persistenz in LittleFS - alle Log-Ausgaben werden in /log.txt geschrieben

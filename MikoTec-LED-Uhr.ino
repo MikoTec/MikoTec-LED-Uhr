@@ -92,10 +92,9 @@ void logAppend(const char* str) {
     }
     p++;
   }
-  // Zusaetzlich in LittleFS persistieren
+  // Zusaetzlich in LittleFS persistieren (kein flush - zu langsam)
   if (logFSready && logFile) {
     logFile.print(str);
-    logFile.flush();
   }
 }
 
@@ -193,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.7";
+const char* firmware_version = "2.2.0.8";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -678,6 +677,12 @@ void loop() {
   }
 
   delay(50);
+  // Log-Datei alle 5 Sekunden flushen
+  static unsigned long lastLogFlush = 0;
+  if (logFSready && logFile && millis() - lastLogFlush > 5000) {
+    logFile.flush();
+    lastLogFlush = millis();
+  }
   if (second() != prevsecond) {
     updateTimestampCache();
     if (webMode != 0 && second() == 0 && minute() % 10 == 0) { //only record "time of death" if we're in normal running mode.
