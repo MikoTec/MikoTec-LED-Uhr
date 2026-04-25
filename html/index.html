@@ -48,19 +48,19 @@
     document.getElementById('bpval').innerText=document.getElementById('blendpoint').value;
     document.getElementById('brval').innerText=document.getElementById('brightness').value;
   </script>
-  <div class="btn-box scheme1">
+  <div class="btn-box scheme1" id="scheme-box-1" style="background:linear-gradient(to right,#ff0000,#0000ff);border-radius:6px;padding:4px;">
     <input class="btn btn-sm" type="submit" name="submit" value="Speichern V1" />
     <input class="btn btn-sm" type="submit" name="submit" value="Laden V1" />
   </div>
-  <div class="btn-box scheme2">
+  <div class="btn-box scheme2" id="scheme-box-2" style="background:linear-gradient(to right,#ff0000,#0000ff);border-radius:6px;padding:4px;">
     <input class="btn btn-sm" type="submit" name="submit" value="Speichern V2" />
     <input class="btn btn-sm" type="submit" name="submit" value="Laden V2" />
   </div>
-  <div class="btn-box scheme3">
+  <div class="btn-box scheme3" id="scheme-box-3" style="background:linear-gradient(to right,#ff0000,#0000ff);border-radius:6px;padding:4px;">
     <input class="btn btn-sm" type="submit" name="submit" value="Speichern V3" />
     <input class="btn btn-sm" type="submit" name="submit" value="Laden V3" />
   </div>
-  <div class="btn-box scheme4">
+  <div class="btn-box scheme4" id="scheme-box-4" style="background:linear-gradient(to right,#ff0000,#0000ff);border-radius:6px;padding:4px;">
     <input class="btn btn-sm" type="submit" name="submit" value="Speichern V4" />
     <input class="btn btn-sm" type="submit" name="submit" value="Laden V4" />
   </div>
@@ -98,11 +98,11 @@ fetch('/getstate').then(r=>r.json()).then(function(d){
   } else {
     alarmBox.innerHTML = '<a class="btn btn-default" href="/alarm">Alarm Einstellungen</a>';
   }
-  // Farbverläufe für Scheme-Buttons per CSS-Variable setzen
+  // Farbverlaeufe fuer Scheme-Buttons direkt setzen
   if(d.schemes){
     d.schemes.forEach(function(s,i){
-      document.documentElement.style.setProperty('--scheme'+(i+1)+'-h', s.h);
-      document.documentElement.style.setProperty('--scheme'+(i+1)+'-m', s.m);
+      var box = document.getElementById('scheme-box-'+(i+1));
+      if(box) box.style.background = 'linear-gradient(to right, '+s.h+' 0%, '+s.m+' 100%)';
     });
   }
 });

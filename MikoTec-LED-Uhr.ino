@@ -192,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.16";
+const char* firmware_version = "2.2.0.17";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -3272,7 +3272,19 @@ void handleGetState() {
   snprintf(hcHex, sizeof(hcHex), "#%02x%02x%02x", hourcolor.R, hourcolor.G, hourcolor.B);
   snprintf(mcHex, sizeof(mcHex), "#%02x%02x%02x", minutecolor.R, minutecolor.G, minutecolor.B);
   json += "\"hourcolor\":\"" + String(hcHex) + "\",";
-  json += "\"minutecolor\":\"" + String(mcHex) + "\"";
+  json += "\"minutecolor\":\"" + String(mcHex) + "\",";
+  // 4 Farbschemata aus EEPROM
+  json += "\"schemes\":[";
+  for (int i = 1; i <= 4; i++) {
+    char sh[8], sm[8];
+    snprintf(sh, sizeof(sh), "#%02x%02x%02x",
+      EEPROM.read(100 + i*15), EEPROM.read(101 + i*15), EEPROM.read(102 + i*15));
+    snprintf(sm, sizeof(sm), "#%02x%02x%02x",
+      EEPROM.read(103 + i*15), EEPROM.read(104 + i*15), EEPROM.read(105 + i*15));
+    json += "{\"h\":\"" + String(sh) + "\",\"m\":\"" + String(sm) + "\"}";
+    if (i < 4) json += ",";
+  }
+  json += "]";
   json += "}";
   server.send(200, "application/json", json);
 }
