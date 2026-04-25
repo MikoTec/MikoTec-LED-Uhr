@@ -135,6 +135,10 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.2.0.2 (Test - LittleFS)
+- Fix: Update.begin() für LittleFS mit exakter Partitionsgröße 0x200000 (2MB, nodemcuv2)
+- Vorher: 0xFFFFFFFF führte zu "Fehler beim Dateisystem-Update!"
+
 ### v2.2.0.1 (Test - LittleFS)
 - Neu: /update_fs Endpunkt für OTA-Upload des LittleFS-Dateisystems per Browser
 - GET /update_fs: Upload-Formular für LittleFS-Image (.bin)
@@ -167,6 +171,10 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 - Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
 - Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
 - Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
+
+### v2.2.0.2 (Test - LittleFS)
+- Fix: Update.begin() für LittleFS mit exakter Partitionsgröße 0x200000 (2MB, nodemcuv2)
+- Vorher: 0xFFFFFFFF führte zu "Fehler beim Dateisystem-Update!"
 
 ### v2.2.0.1 (Test - LittleFS)
 - Neu: /update_fs Endpunkt für OTA-Upload des LittleFS-Dateisystems per Browser
