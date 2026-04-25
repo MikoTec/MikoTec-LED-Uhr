@@ -135,6 +135,17 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.2.0.0 (Test - LittleFS)
+- **Major:** LittleFS Dateisystem integriert — CSS und JS kommen direkt aus dem Flash
+- LittleFS initialisiert beim Start, serveStatic() für alle CSS/JS Dateien
+- handleCSS und handleclockjs liefern aus LittleFS (Fallback auf PROGMEM)
+- handleHilfe und handleSupport liefern HTML aus LittleFS (Fallback auf PROGMEM)
+- handleRoot: index.html aus LittleFS wenn vorhanden (RAM wird nicht mehr für CSS/JS belegt)
+- /getstate erweitert: hourcolor, minutecolor (Hex), maxBrightness, fw, alarmactive
+- Neuer /getsettings Endpunkt für settings.js
+- data/ Ordner: index.html, settings.html, support.html, hilfe.html, timezone.html, clearromsure.html, alarm.html, style.css, menu.css, clock.js, menu.js, settings.js, support.js, timezone.js
+- **WICHTIG:** Vor dem Flash zuerst LittleFS-Dateisystem über Arduino IDE (ESP8266 LittleFS Data Upload) flashen!
+
 ### v2.1.0.20 (Test)
 - Sauberer Merge aus v2.1.0.15 (stabil) mit allen Fixes aus v2.1.0.16–2.1.0.19
 - Fix: EEPROM.write(179, timezone) → timezonevalue an beiden Stellen (float→int Bug)
@@ -149,6 +160,17 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 - Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
 - Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
 - Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
+
+### v2.2.0.0 (Test - LittleFS)
+- **Major:** LittleFS Dateisystem integriert — CSS und JS kommen direkt aus dem Flash
+- LittleFS initialisiert beim Start, serveStatic() für alle CSS/JS Dateien
+- handleCSS und handleclockjs liefern aus LittleFS (Fallback auf PROGMEM)
+- handleHilfe und handleSupport liefern HTML aus LittleFS (Fallback auf PROGMEM)
+- handleRoot: index.html aus LittleFS wenn vorhanden (RAM wird nicht mehr für CSS/JS belegt)
+- /getstate erweitert: hourcolor, minutecolor (Hex), maxBrightness, fw, alarmactive
+- Neuer /getsettings Endpunkt für settings.js
+- data/ Ordner: index.html, settings.html, support.html, hilfe.html, timezone.html, clearromsure.html, alarm.html, style.css, menu.css, clock.js, menu.js, settings.js, support.js, timezone.js
+- **WICHTIG:** Vor dem Flash zuerst LittleFS-Dateisystem über Arduino IDE (ESP8266 LittleFS Data Upload) flashen!
 
 ### v2.1.0.20 (Test)
 - Sauberer Merge aus v2.1.0.15 (stabil) mit allen Fixes aus v2.1.0.16–2.1.0.19

@@ -57,6 +57,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "h/hilfe.h"
 #include "h/support.h"
 #include <ESP8266HTTPUpdateServer.h>
+#include <LittleFS.h>
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 
@@ -183,7 +184,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.20";
+const char* firmware_version = "2.2.0.0";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1119,6 +1120,21 @@ void launchWeb(int webtype) {
   }
 
   //server.onNotFound(webHandleRoot);
+
+  // LittleFS initialisieren
+  if (LittleFS.begin()) {
+    logTS(); dualOut.println("[LittleFS] Dateisystem bereit");
+    server.serveStatic("/style.css",   LittleFS, "/style.css",   "max-age=3600");
+    server.serveStatic("/menu.css",    LittleFS, "/menu.css",    "max-age=3600");
+    server.serveStatic("/clock.js",    LittleFS, "/clock.js",    "max-age=3600");
+    server.serveStatic("/menu.js",     LittleFS, "/menu.js",     "max-age=3600");
+    server.serveStatic("/settings.js", LittleFS, "/settings.js", "max-age=3600");
+    server.serveStatic("/support.js",  LittleFS, "/support.js",  "max-age=3600");
+    server.serveStatic("/timezone.js", LittleFS, "/timezone.js", "max-age=3600");
+  } else {
+    logTS(); dualOut.println("[LittleFS] FEHLER: Dateisystem nicht gefunden!");
+  }
+
   server.begin();
   logTS(); dualOut.println("Web server started");
   //Store global to use in loop()
@@ -1417,7 +1433,11 @@ void handleNotFound() {
 }
 
 void handleCSS() {
-  server.send(200, "text/css", css_file);
+  if (LittleFS.exists("/style.css")) {
+    File f = LittleFS.open("/style.css", "r");
+    server.sendHeader("Cache-Control", "max-age=3600");
+    server.streamFile(f, "text/css"); f.close();
+  } else { server.send(200, "text/css", css_file); }
   //WiFiClient client = server.client();
   //sendProgmem(client, css_file);
   logTS(); dualOut.println("Sending CSS");
@@ -1435,7 +1455,11 @@ void handlespectrumjs() {
   logTS(); dualOut.println("Sending spectrumjs");
 }
 void handleclockjs() {
-  server.send(200, "text/plain", FPSTR(clockjs));
+  if (LittleFS.exists("/clock.js")) {
+    File f = LittleFS.open("/clock.js", "r");
+    server.sendHeader("Cache-Control", "max-age=3600");
+    server.streamFile(f, "text/javascript"); f.close();
+  } else { server.send(200, "text/plain", FPSTR(clockjs)); }
   //WiFiClient client = server.client();
   //sendProgmem(client, clockjs);
   logTS(); dualOut.println("Sending clockjs");
@@ -1804,11 +1828,19 @@ void handleRoot() {
     }
   }
   
-  server.setContentLength(toSend.length());
-  server.send(200, "text/html", "");
-  server.sendContent(toSend);
-  toSend = "";  // RAM sofort freigeben
-
+  // index.html aus LittleFS liefern falls vorhanden (spart RAM)
+  if (LittleFS.exists("/index.html")) {
+    // Erst toSend leeren um RAM freizugeben
+    toSend = "";
+    File f = LittleFS.open("/index.html", "r");
+    server.streamFile(f, "text/html");
+    f.close();
+  } else {
+    server.setContentLength(toSend.length());
+    server.send(200, "text/html", "");
+    server.sendContent(toSend);
+    toSend = "";
+  }
   logTS(); dualOut.println("Sending handleRoot");
   EEPROM.commit();
   delay(300);
@@ -2962,26 +2994,30 @@ void webHandleGame() {
 
 void handleHilfe() {
   logTS(); dualOut.println("Sending handleHilfe");
-  String toSend = FPSTR(hilfe_html);
-  if (webMode != 2) {
-    toSend.replace("$externallinks", FPSTR(externallinks));
+  if (LittleFS.exists("/hilfe.html")) {
+    File f = LittleFS.open("/hilfe.html", "r");
+    server.streamFile(f, "text/html"); f.close();
   } else {
-    toSend.replace("$externallinks", "<link rel=stylesheet href='clockmenustyle.css'>");
+    String toSend = FPSTR(hilfe_html);
+    if (webMode != 2) toSend.replace("$externallinks", FPSTR(externallinks));
+    else toSend.replace("$externallinks", "<link rel=stylesheet href='clockmenustyle.css'>");
+    toSend.replace("$menu", FPSTR(menu_html));
+    server.send(200, "text/html", toSend);
   }
-  toSend.replace("$menu", FPSTR(menu_html));
-  server.send(200, "text/html", toSend);
 }
 
 void handleSupport() {
   logTS(); dualOut.println("Sending handleSupport");
-  String toSend = FPSTR(support_html);
-  if (webMode != 2) {
-    toSend.replace("$externallinks", FPSTR(externallinks));
+  if (LittleFS.exists("/support.html")) {
+    File f = LittleFS.open("/support.html", "r");
+    server.streamFile(f, "text/html"); f.close();
   } else {
-    toSend.replace("$externallinks", "<link rel=stylesheet href='clockmenustyle.css'>");
+    String toSend = FPSTR(support_html);
+    if (webMode != 2) toSend.replace("$externallinks", FPSTR(externallinks));
+    else toSend.replace("$externallinks", "<link rel=stylesheet href='clockmenustyle.css'>");
+    toSend.replace("$menu", FPSTR(menu_html));
+    server.send(200, "text/html", toSend);
   }
-  toSend.replace("$menu", FPSTR(menu_html));
-  server.send(200, "text/html", toSend);
 }
 
 void handleGetLog() {
@@ -3038,7 +3074,15 @@ void handleGetState() {
   json += "\"minR\":" + String(minutecolor.R) + ",";
   json += "\"minG\":" + String(minutecolor.G) + ",";
   json += "\"minB\":" + String(minutecolor.B) + ",";
-  json += "\"blendpoint\":" + String(blendpoint);
+  json += "\"blendpoint\":" + String(blendpoint) + ",";
+  json += "\"maxBrightness\":" + String((int)maxBrightness) + ",";
+  json += "\"fw\":\"" + String(firmware_version) + "\",";
+  json += "\"alarmactive\":" + String(clockmode == alarm ? 1 : 0) + ",";
+  char hcHex[8], mcHex[8];
+  snprintf(hcHex, sizeof(hcHex), "#%02x%02x%02x", hourcolor.R, hourcolor.G, hourcolor.B);
+  snprintf(mcHex, sizeof(mcHex), "#%02x%02x%02x", minutecolor.R, minutecolor.G, minutecolor.B);
+  json += "\"hourcolor\":\"" + String(hcHex) + "\",";
+  json += "\"minutecolor\":\"" + String(mcHex) + "\"";
   json += "}";
   server.send(200, "application/json", json);
 }
