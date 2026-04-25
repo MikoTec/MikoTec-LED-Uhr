@@ -140,6 +140,12 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 - Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
 - Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
 
+### v2.1.0.19 (Test)
+- Fix: Sonnenzeiten API auf Open-Meteo (HTTP) umgestellt — sunrise-sunset.org leitet auf HTTPS um (HTTP 301, kein HTTPS auf ESP8266)
+- Open-Meteo liefert Lokalzeit direkt (timezone=auto), keine UTC-Umrechnung mehr nötig
+- Fix: EEPROM Default timezone von 1 (GMT-12) auf 34 (UTC+1/CET Solingen) geändert
+- handleRoot: server.sendContent() statt server.send() — RAM wird sofort nach dem Senden freigegeben
+
 ### v2.1.0.18 (Test)
 - Fix: Heap-Warning durch 82-fache replace()-Schleife in handleSettings (Timezone-Dropdown)
 - Timezone-Select wird jetzt per JS gesetzt (document.getElementById("timezone").value) statt 82 String-Operationen
