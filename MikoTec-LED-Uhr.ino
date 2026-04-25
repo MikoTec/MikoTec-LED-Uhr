@@ -185,7 +185,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.2";
+const char* firmware_version = "2.2.0.3";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1249,8 +1249,8 @@ void setUpServerHandle() {
       if (upload.status == UPLOAD_FILE_START) {
         logTS(); dualOut.println("[FS-OTA] Start");
         LittleFS.end();
-        // LittleFS Partition: 4MB Flash, nodemcuv2 Standard = 2MB
-        if (!Update.begin(0x200000, U_FS)) {
+        // LittleFS Partition exakt aus ELF: _FS_end(0x405FA000) - _FS_start(0x40400000) = 0x1FA000
+        if (!Update.begin(0x1FA000, U_FS)) {
           fsUploadError = true;
           logTS(); dualOut.println("[FS-OTA] begin() fehlgeschlagen");
         } else {
