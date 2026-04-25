@@ -1,6 +1,6 @@
 {
   "version": "2.1.0.20",
   "file": "MikoTec-LED-Uhr_v2.1.0.20.bin",
-  "littlefs_version": "2.2.0.1",
-  "littlefs_file": "littlefs_v2.2.0.1.bin"
+  "littlefs_version": "2.2.0.4",
+  "littlefs_file": "littlefs_v2.2.0.4.bin"
 }
