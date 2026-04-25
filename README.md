@@ -135,6 +135,10 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.2.0.4 (Test - LittleFS)
+- Fix: Update.end(false) statt end(true) — LittleFS-Image hat keinen MD5, end(true) schlug fehl
+- Bessere Fehlerausgabe: Update.getError() im Log
+
 ### v2.2.0.3 (Test - LittleFS)
 - Fix: LittleFS Update.begin() Größe auf 0x1FA000 korrigiert (exakt aus ELF: _FS_end 0x405FA000 - _FS_start 0x40400000)
 - Vorher 0x200000 führte zu begin() fehlgeschlagen
@@ -175,6 +179,10 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 - Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
 - Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
 - Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
+
+### v2.2.0.4 (Test - LittleFS)
+- Fix: Update.end(false) statt end(true) — LittleFS-Image hat keinen MD5, end(true) schlug fehl
+- Bessere Fehlerausgabe: Update.getError() im Log
 
 ### v2.2.0.3 (Test - LittleFS)
 - Fix: LittleFS Update.begin() Größe auf 0x1FA000 korrigiert (exakt aus ELF: _FS_end 0x405FA000 - _FS_start 0x40400000)

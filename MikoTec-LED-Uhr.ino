@@ -185,7 +185,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.3";
+const char* firmware_version = "2.2.0.4";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1261,12 +1261,13 @@ void setUpServerHandle() {
           fsUploadError = true;
         }
       } else if (upload.status == UPLOAD_FILE_END) {
-        if (Update.end(true)) {
+        if (Update.end(false)) {  // false = kein MD5-Check fuer FS-Image
           logTS(); dualOut.print("[FS-OTA] OK: ");
           dualOut.print(upload.totalSize); dualOut.println(" Bytes");
         } else {
           fsUploadError = true;
-          logTS(); dualOut.println("[FS-OTA] end() fehlgeschlagen");
+          logTS(); dualOut.print("[FS-OTA] end() Fehler: ");
+          dualOut.println(Update.getError());
         }
       }
     }
