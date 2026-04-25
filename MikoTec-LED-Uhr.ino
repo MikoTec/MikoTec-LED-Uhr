@@ -183,7 +183,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.17";
+const char* firmware_version = "2.1.0.18";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1416,7 +1416,7 @@ void webHandleConfigSave() {
     writeLatLong(177, longitude);
     DSTauto = 1;
     EEPROM.write(185, 1);
-    EEPROM.write(179, timezone);
+    EEPROM.write(179, timezonevalue);  // Fix: timezonevalue (int) statt timezone (float)
   }
   EEPROM.commit();
   delay(1000);
@@ -1680,7 +1680,7 @@ void handleRoot() {
     DSTauto = 1;
     EEPROM.write(185, 1); //tell the system that DST is auto adjusting
     readDSTtime();
-    EEPROM.write(179, timezone);
+    EEPROM.write(179, timezonevalue);  // Fix: timezonevalue (int) statt timezone (float)
   }
 
 
@@ -1757,7 +1757,6 @@ void handleRoot() {
   yield();
   
   String toSend = FPSTR(root_html);
-  toSend.reserve(4096);
   toSend.replace("$menu", FPSTR(menu_html));
   String tempgradient = "";
   String csswgradient = "";
@@ -1999,15 +1998,9 @@ void handleSettings() {
   dualOut.println(timeToText(wake, wakemin));
   
   String toSend = FPSTR(settings_html);
-  toSend.reserve(16384);
   toSend.replace("$menu", FPSTR(menu_html));
-  for (int i = 82; i > 0; i--) {
-    if (i == timezonevalue) {
-      toSend.replace("$timezonevalue" + String(i), "selected");
-    } else {
-      toSend.replace("$timezonevalue" + String(i), "");
-    }
-  }
+  // Timezone-Select per JS setzen (spart 82 replace()-Aufrufe)
+  toSend.replace("$timezonevalue", String(timezonevalue));
   for (int i = 0; i < 5; i++) {
     if (i == hourmarks) {
       toSend.replace("$hourmarks" + String(i), "selected");

@@ -135,6 +135,12 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.1.0.18 (Test)
+- Fix: Heap-Warning durch 82-fache replace()-Schleife in handleSettings (Timezone-Dropdown)
+- Timezone-Select wird jetzt per JS gesetzt (document.getElementById("timezone").value) statt 82 String-Operationen
+- Fix: EEPROM.write(179, timezone) → timezonevalue an beiden Stellen (float statt int korrumpierte EEPROM-Wert)
+- toSend.reserve() Aufrufe entfernt (haben keinen positiven Effekt gehabt)
+
 ### v2.1.0.17 (Test)
 - Sonnenzeiten API integriert (api.sunrise-sunset.org / sonnenzeiten.org)
 - Neue Funktion fetchSunriseSunset(): holt Sonnenauf- und -untergang täglich per HTTP, gecacht in apiSunriseMinutes/apiSunsetMinutes
