@@ -135,6 +135,13 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.2.0.1 (Test - LittleFS)
+- Neu: /update_fs Endpunkt für OTA-Upload des LittleFS-Dateisystems per Browser
+- GET /update_fs: Upload-Formular für LittleFS-Image (.bin)
+- POST /update_fs: Empfängt und flasht das Dateisystem, Uhr startet danach neu
+- /update_fs im Menü unter Einstellungen eingetragen (Firmware Update / Dateisystem Update)
+- Fix: FS-Deklarationskonflikte behoben, U_FS mit korrekter Größenangabe
+
 ### v2.2.0.0 (Test - LittleFS)
 - **Major:** LittleFS Dateisystem integriert — CSS und JS kommen direkt aus dem Flash
 - LittleFS initialisiert beim Start, serveStatic() für alle CSS/JS Dateien
@@ -160,6 +167,13 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 - Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
 - Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
 - Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
+
+### v2.2.0.1 (Test - LittleFS)
+- Neu: /update_fs Endpunkt für OTA-Upload des LittleFS-Dateisystems per Browser
+- GET /update_fs: Upload-Formular für LittleFS-Image (.bin)
+- POST /update_fs: Empfängt und flasht das Dateisystem, Uhr startet danach neu
+- /update_fs im Menü unter Einstellungen eingetragen (Firmware Update / Dateisystem Update)
+- Fix: FS-Deklarationskonflikte behoben, U_FS mit korrekter Größenangabe
 
 ### v2.2.0.0 (Test - LittleFS)
 - **Major:** LittleFS Dateisystem integriert — CSS und JS kommen direkt aus dem Flash

@@ -28,7 +28,8 @@ function rebootClock() {
     '<a href="/settings">Einstellungen</a>' +
     '<div class="menu-sub">' +
     '<a href="/timezone">Zeitzone Manuell</a>' +
-    '<a href="/update" class="menu-green">Update</a>' +
+    '<a href="/update" class="menu-green">Firmware Update</a>' +
+    '<a href="/update_fs" class="menu-green">Dateisystem Update</a>' +
     '</div>' +
     '<hr class="menu-sep">' +
     '<a href="/hilfe">Hilfe</a>' +

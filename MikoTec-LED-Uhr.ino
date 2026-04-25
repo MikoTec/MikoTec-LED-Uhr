@@ -58,6 +58,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "h/support.h"
 #include <ESP8266HTTPUpdateServer.h>
 #include <LittleFS.h>
+
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 
@@ -184,7 +185,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.0";
+const char* firmware_version = "2.2.0.1";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1196,8 +1197,79 @@ void setUpServerHandle() {
     server.send(200, "text/html", upd);
   });
 
-  // httpUpdater registriert nur noch den POST-Handler (GET wird von oben bedient)
+  // httpUpdater registriert nur noch den POST-Handler
   httpUpdater.setup(&server);
+
+  // LittleFS Dateisystem Update per Browser
+  server.on("/update_fs", HTTP_GET, [](){
+    String p = "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+      "<meta name='viewport' content='width=device-width,initial-scale=1'/>"
+      "<title>Dateisystem Update</title>"
+      "<link rel=stylesheet href='/style.css'>"
+      "<link rel=stylesheet href='/menu.css'>"
+      "</head><body class='settings-page'>"
+      "<div id='menu-placeholder'></div>"
+      "<div id='rcorners2' style='max-width:480px;margin:30px auto;text-align:center;'>"
+      "<label class='section-head'>Dateisystem Update</label>"
+      "<p style='margin:10px 0;color:#888;font-size:0.9em;'>Firmware: " + String(firmware_version) + "</p>"
+      "<p style='font-size:13px;color:#555;margin-bottom:16px;'>Laedt HTML, CSS und JS Dateien ins Flash-Dateisystem.<br>Danach startet die Uhr neu.</p>"
+      "<form method='POST' enctype='multipart/form-data'>"
+      "<ul class='form-verticle'>"
+      "<li><label>LittleFS-Image auswaehlen (.bin)</label>"
+      "<div class='form-field'><input type='file' accept='.bin' name='filesystem'></div></li>"
+      "</ul>"
+      "<input class='btn btn-default' type='submit' value='Dateisystem aktualisieren'>"
+      "</form></div>"
+      "<script src='/menu.js'></script>"
+      "</body></html>";
+    server.send(200, "text/html", p);
+  });
+
+  static bool fsUploadError = false;
+  server.on("/update_fs", HTTP_POST,
+    [](){
+      server.sendHeader("Connection", "close");
+      if (fsUploadError) {
+        server.send(500, "text/plain", "Fehler beim Dateisystem-Update!");
+      } else {
+        server.send(200, "text/html",
+          "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+          "<link rel=stylesheet href='/style.css'></head>"
+          "<body class='settings-page'>"
+          "<div id='rcorners2' style='max-width:420px;margin:40px auto;text-align:center;'>"
+          "<label class='section-head' style='color:#4CAF50;'>Erfolgreich aktualisiert!</label>"
+          "<p style='margin:16px 0;'>Uhr startet neu...</p>"
+          "</div></body></html>");
+        delay(500);
+        ESP.restart();
+      }
+    },
+    [](){
+      HTTPUpload& upload = server.upload();
+      if (upload.status == UPLOAD_FILE_START) {
+        logTS(); dualOut.println("[FS-OTA] Start");
+        LittleFS.end();
+        if (!Update.begin((size_t)0xFFFFFFFF, U_FS)) {
+          fsUploadError = true;
+          logTS(); dualOut.println("[FS-OTA] begin() fehlgeschlagen");
+        } else {
+          fsUploadError = false;
+        }
+      } else if (upload.status == UPLOAD_FILE_WRITE) {
+        if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+          fsUploadError = true;
+        }
+      } else if (upload.status == UPLOAD_FILE_END) {
+        if (Update.end(true)) {
+          logTS(); dualOut.print("[FS-OTA] OK: ");
+          dualOut.print(upload.totalSize); dualOut.println(" Bytes");
+        } else {
+          fsUploadError = true;
+          logTS(); dualOut.println("[FS-OTA] end() fehlgeschlagen");
+        }
+      }
+    }
+  );
 
   server.begin();
 
