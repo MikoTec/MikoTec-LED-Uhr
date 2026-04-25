@@ -7,15 +7,15 @@ Eine ESP8266-basierte LED-Uhr mit NeoPixel-Ring, Webinterface und automatischen 
 - **LED-Uhranzeige** mit einstellbaren Stunden- und Minutenfarben, Überblendeffekt und Helligkeit
 - **Mondphase** als Nachtanzeige – astronomisch korrekte Berechnung
 - **Sonnenaufgang-Simulation** – Uhr simuliert eine Stunde vor Sonnenaufgang einen langsamen Dämmerungseffekt
-- **Auto-Schlaf** – schaltet automatisch bei Sonnenuntergang ab und bei Sonnenaufgang wieder ein (berechnet anhand von Breitengrad/Längengrad)
+- **Auto-Schlaf** – schaltet automatisch bei Sonnenuntergang ab und bei Sonnenaufgang wieder ein
 - **Nacht-Helligkeit** – separate Helligkeitseinstellung für den Schlafmodus
 - **4 Farbschemata** – speichere und lade verschiedene Farbkombinationen
 - **Webinterface** – alle Einstellungen über den Browser konfigurierbar
-- **OTA-Updates** – Firmware kann über den Browser oder automatisch aktualisiert werden
-- **Automatische Updates** – Uhr prüft täglich einen Update-Server und installiert neue Versionen selbstständig
+- **OTA-Updates** – Firmware und LittleFS-Dateisystem per Browser aktualisierbar
+- **Automatische Updates** – Uhr prüft täglich einen Update-Server und installiert neue Versionen
 - **NTP-Zeitsynchronisation** – automatische Uhrzeit über das Internet
-- **Sommerzeit** – automatische DST-Erkennung über TimezoneDB API
-- **Standortsuche** – Koordinaten per OpenStreetMap Nominatim oder Städteauswahl
+- **Sommerzeit** – automatische DST-Erkennung
+- **LittleFS** – HTML, CSS und JS werden aus dem Flash-Dateisystem geladen (RAM-Entlastung)
 
 ## Hardware
 
@@ -28,415 +28,231 @@ Eine ESP8266-basierte LED-Uhr mit NeoPixel-Ring, Webinterface und automatischen 
 ```
 MikoTec-LED-Uhr/
 ├── MikoTec-LED-Uhr.ino    # Hauptsketch
-├── h/                      # Header-Dateien (HTML/CSS/JS für Webinterface)
-│   ├── root.h              # Startseite
-│   ├── settings.h          # Einstellungen
-│   ├── timezone.h          # Zeitzone (Suche/Manuell/Stadt)
-│   ├── clockjs.h           # Uhr-Animation im Browser
-│   ├── css.h               # Stylesheet
-│   ├── alarm.h             # Alarm-Seite
-│   ├── hilfe.h             # Hilfe-Seite
-│   ├── support.h           # Support/Log-Seite
-│   └── ...
-├── lib/                    # Eingebettete Libraries
-│   ├── NeoPixelBus/
-│   ├── Time/
-│   ├── NTP/
-│   └── arduinoWebSockets-master/
-├── updates/                # Firmware-Binaries für OTA
-│   ├── version.json        # Aktuelle Version und Dateiname
-│   └── MikoTec-LED-Uhr_vX.X.bin
+├── h/                      # Header-Dateien (PROGMEM Fallback)
+├── data/                   # LittleFS Dateien (HTML, CSS, JS)
+├── html/                   # Entwicklungs-Kopie HTML
+├── css/                    # Entwicklungs-Kopie CSS
+├── js/                     # Entwicklungs-Kopie JS
+├── updates/                # Firmware-Binaries und LittleFS-Images für OTA
+│   ├── version.json        # Aktuelle stabile Version
+│   ├── MikoTec-LED-Uhr_vX.X.X.XX.bin
+│   └── littlefs_vX.X.X.XX.bin
 └── platformio.ini
 ```
 
 ## Webinterface
 
-Die Uhr ist im lokalen Netzwerk erreichbar unter:
 - `http://mikotec-led-uhr.local` (mDNS)
-- `http://[IP-Adresse]`
+- `http://192.168.10.83`
 
-### Seiten
+### Endpunkte
 
-- **Startseite** – Farben, Helligkeit, Überblendeffekt, Farbschemata
-- **Einstellungen** – Stundenmarkierungen, Schlafmodus, Zeitzone, Uhrentyp
-- **Zeitzone** – Standort per Adresssuche, manueller UTC-Versatz oder Städteauswahl
-- **Firmware Update** – Manuelle Firmware-Aktualisierung per Dateiupload (`/update`)
-- **Hilfe** – Bedienungshinweise
-- **Support** – Live-Log der Uhr
+| Endpunkt | Beschreibung |
+|----------|-------------|
+| `/` | Startseite mit Uhr-Canvas |
+| `/settings` | Einstellungen |
+| `/timezone` | Zeitzone |
+| `/update` | Firmware OTA-Upload |
+| `/update_fs` | LittleFS-Image OTA-Upload |
+| `/getstate` | JSON: aktuelle Uhr-Werte |
+| `/getlog` | Aktueller Log (RAM-Buffer) |
+| `/getlog?prev=1` | Log vom letzten Boot (LittleFS) |
+| `/log_prev.txt` | Log-Datei direkt downloadbar |
 
-## Auto-Update System
+## OTA Update System
 
-Die Uhr prüft alle 4 Stunden (6x täglich) einen HTTP-Server auf neue Firmware-Versionen:
+### Firmware
+Über `/update` per Browser oder automatisch täglich vom Update-Server.
 
-1. `version.json` wird vom Server geladen
-2. Versionsnummer wird mit der installierten Version verglichen (4-stellig: Major.Minor.Patch.Build)
-3. Bei neuer Version wird die `.bin`-Datei heruntergeladen und geflasht
-4. Die Uhr startet automatisch mit der neuen Firmware neu
-5. Nur **stable** Versionen werden über `version.json` verteilt
+### LittleFS-Dateisystem
+Über `/update_fs` per Browser. Nur nötig wenn sich HTML/CSS/JS geändert haben.
+Nach dem Upload: Log herunterladen → Neustart-Button klicken.
 
-Ein Cronjob auf dem Update-Server synchronisiert alle `.bin`-Dateien aus diesem GitHub-Repository. Die `version.json` wird nur aktualisiert wenn eine neue stable Version freigegeben wird.
-
-## Schlafmodi
-
-| Modus | Beschreibung |
-|-------|-------------|
-| Schwarz | Alle LEDs aus |
-| Punkte | Nur Stunden- und Minutenpunkt sichtbar |
-| Gedimmt | Komplette Uhr stark gedimmt |
-| Mondphase | Aktuelle Mondphase als LED-Darstellung |
-| Aus | Schlafmodus deaktiviert |
-
-Die Nacht-Helligkeit ist separat einstellbar (0-100%).
+### Auto-Update Server
+`http://yzdlcru01ktmqlzy.myfritz.net:8080/updates/`
 
 ## Versionierung
 
-Das Versionierungsschema ist 4-stellig: `Major.Minor.Patch.Build` (z.B. `2.1.0.1`).
+Schema: `Major.Minor.Patch.Build` (z.B. `2.2.0.12`)
 
 - **Build** wird bei jeder neuen `.bin`-Datei hochgezählt
-- **Patch/Minor/Major** werden nach Absprache erhöht
+- **Minor/Major** nur nach expliziter Absprache
 - Nur **stable** Versionen werden automatisch per OTA verteilt
-- Test-Versionen müssen manuell per OTA geflasht werden
 
 ### Stabile Versionen
 
-- `v0.6-stable` – Erste stabile Version mit OTA und Auto-Schlaf
-- `v1.5-stable` – Zeitstempel im Log, HTTP-OTA, SSDP-Spam entfernt
-- `v2.0-stable` – Slider-Wertanzeige, Speicher-Tracking, Nacht-Helligkeit, Mondphasen-Fix
+- `v2.1.0.15` – Letzte stabile Version vor LittleFS-Migration
+- `v2.0-stable` – Slider, Speicher-Tracking, Nacht-Helligkeit, Mondphasen-Fix
+- `v1.5-stable` – HTTP-OTA, Zeitstempel-Fix
+- `v0.6-stable` – Erste stabile Version
 
 ### Bekannte Crash-Versionen (nicht flashen!)
 
-- `v0.8-CRASH` – Zeitstempel mit snprintf
-- `v0.9-CRASH` – Zeitstempel in DualPrint write()
-- `v1.0-CRASH` – Basiert auf v0.9
-- `v1.2-CRASH` – Template-basierter Zeitstempel
-- `v1.4-CRASH` – logTS() mit direkten TimeLib-Aufrufen
+- `v0.8-CRASH` bis `v1.4-CRASH` – Verschiedene Zeitstempel-Crashes
+- `v2.1.0.16` bis `v2.1.0.19` – Instabil, zurückgerollt
 
 ## Kompilierung
-
-### Arduino CLI
 
 ```bash
 arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 ```
 
-### Benötigte Board-Packages
-
-- `esp8266:esp8266` Version 3.1.2
-
 ### Benötigte Libraries
-
 - NeoPixelBus by Makuna 2.8.4
 - NTPClient 3.2.1
-- (Time, WebSockets, NTP sind im `lib/`-Ordner enthalten)
-
-## Lizenz
-
-Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Public License v3.
+- WebSockets 2.7.2
+- Time 1.6.1
+- ESP8266 Core 3.1.2
 
 ## Changelog
 
 ### v2.2.0.12 (25.04.2026)
 - Fix: clock.js aktualisiert nach /getstate fetch die Spectrum Color Picker korrekt
-- Fix: hidden inputs hourcolor/minutecolor werden mit Werten aus getstate befuellt
+- Fix: hidden inputs hourcolor/minutecolor werden mit Werten aus getstate befüllt
 - Fix: Brightness Slider und Firmware-Version werden nach fetch gesetzt
-- ⚠️ Neues LittleFS-Image erforderlich: littlefs_v2.2.0.12.bin (clock.js geaendert)
+- ⚠️ Neues LittleFS-Image erforderlich: littlefs_v2.2.0.12.bin (clock.js geändert)
 
 ### v2.2.0.11 (25.04.2026)
 - Fix: handleRoot, handleSettings, handleTimezone streamen sofort aus LittleFS
-- Kein PROGMEM-String mehr aufgebaut wenn LittleFS-Datei vorhanden - spart mehrere KB RAM
-- WARN Root-Seite unvollstaendig entfaellt wenn LittleFS korrekt geflasht ist
-- Neues LittleFS-Image: littlefs_v2.2.0.11.bin
+- Kein PROGMEM-String mehr aufgebaut wenn LittleFS-Datei vorhanden — spart mehrere KB RAM
+- [WARN] Root-Seite unvollständig entfällt wenn LittleFS korrekt geflasht ist
+- ⚠️ Neues LittleFS-Image erforderlich: littlefs_v2.2.0.11.bin
 
 ### v2.2.0.10 (25.04.2026)
 - Neu: FS-OTA Erfolgsseite zeigt zwei Buttons: Log herunterladen + Uhr neu starten
 - Log-Snapshot wird vor Neustart gesichert und als fs_ota_log.txt zum Download angeboten
-- Neustart erst auf Knopfdruck - kein Log geht mehr verloren
-- Neues LittleFS-Image: littlefs_v2.2.0.10.bin
+- Neustart erst auf Knopfdruck — kein Log geht mehr verloren
 
 ### v2.2.0.9 (25.04.2026)
 - Fix: Log-Datei wird vor LittleFS.end() geflusht und geschlossen (logFSready=false)
-- Fix: ERR_CONNECTION_RESET nach FS-OTA - delay 500ms auf 2000ms erhoeht
-- Fix: Log-Close vor delay statt nach ESP.restart()
-- Neu: Erfolgsseite nach FS-OTA hat meta-refresh nach 10s zur Startseite
+- Fix: ERR_CONNECTION_RESET nach FS-OTA — delay von 500ms auf 2000ms erhöht
+- Neu: Erfolgsseite nach FS-OTA mit meta-refresh nach 10s zur Startseite
 
 ### v2.2.0.8 (25.04.2026)
-- Fix: logFile.flush() aus logAppend() entfernt - verhinderte extremen Blockier beim FS-OTA Upload
+- Fix: logFile.flush() aus logAppend() entfernt — blockierte den ESP beim FS-OTA Upload
 - Log wird jetzt alle 5 Sekunden im loop() geflusht und vor ESP.restart()
-- Neues LittleFS-Image: littlefs_v2.2.0.8.bin
 
 ### v2.2.0.7 (25.04.2026)
-- Neu: Log-Persistenz in LittleFS - alle Log-Ausgaben werden in /log.txt geschrieben
-- Beim Neustart wird /log.txt zu /log_prev.txt umbenannt (Log des letzten Boots bleibt erhalten)
-- /getlog liefert weiterhin den aktuellen RAM-Buffer
+- Neu: Log-Persistenz in LittleFS — alle Log-Ausgaben werden in /log.txt geschrieben
+- Beim Neustart wird /log.txt zu /log_prev.txt umbenannt
 - /getlog?prev=1 liefert den Log vom letzten Boot aus LittleFS
 - /log_prev.txt direkt im Browser downloadbar
-- Log-Datei wird vor ESP.restart() sauber geschlossen
 
 ### v2.2.0.6 (25.04.2026)
-- Fix: LittleFS OTA-Upload blockierte nicht mehr durch Vorab-Loeschen aller Sektoren
-- Sektoren werden jetzt einzeln geloescht direkt bevor sie beschrieben werden (auf 4096-Byte-Grenze)
-- Verhindert HTTP-Timeout beim Upload durch zu langen Blocker (~45s vorher)
-- Neues LittleFS-Image: littlefs_v2.2.0.6.bin (15 Dateien)
+- Fix: LittleFS OTA-Upload — kein Vorab-Löschen aller Sektoren mehr beim Start
+- Sektoren werden einzeln direkt vor dem Beschreiben gelöscht (verhindert ~45s Blockierung)
 
 ### v2.2.0.5 (25.04.2026)
-- Fix: LittleFS OTA-Upload komplett neu implementiert
-- Statt Update-Mechanismus (der Magic Byte 0xE9 erwartet) wird jetzt ESP.flashEraseSector() und ESP.flashWrite() direkt verwendet
-- Partition-Adresse wird aus Linker-Symbol _FS_start ermittelt (immer korrekt)
-- Damit funktioniert das Hochladen von rohen LittleFS-Images (.bin aus mklittlefs) ohne Fehler
-- Neues LittleFS-Image: littlefs_v2.2.0.5.bin (15 Dateien, Größe 0x1FA000)
+- Fix: LittleFS OTA-Upload komplett neu implementiert mit ESP.flashEraseSector() und ESP.flashWrite()
+- Kein Update-Mechanismus mehr (der Magic Byte 0xE9 erwartet hatte)
+- Partition-Adresse aus Linker-Symbol _FS_start — immer korrekt
 
-### v2.2.0.4 (Test - LittleFS)
-- Fix: Update.end(false) statt end(true) — LittleFS-Image hat keinen MD5, end(true) schlug fehl
+### v2.2.0.4 (25.04.2026)
+- Fix: Update.end(false) — LittleFS-Image hat keinen MD5
 - Bessere Fehlerausgabe: Update.getError() im Log
 
-### v2.2.0.3 (Test - LittleFS)
-- Fix: LittleFS Update.begin() Größe auf 0x1FA000 korrigiert (exakt aus ELF: _FS_end 0x405FA000 - _FS_start 0x40400000)
-- Vorher 0x200000 führte zu begin() fehlgeschlagen
+### v2.2.0.3 (25.04.2026)
+- Fix: LittleFS Update.begin() Größe auf 0x1FA000 korrigiert
 
-### v2.2.0.2 (Test - LittleFS)
-- Fix: Update.begin() für LittleFS mit exakter Partitionsgröße 0x200000 (2MB, nodemcuv2)
-- Vorher: 0xFFFFFFFF führte zu "Fehler beim Dateisystem-Update!"
+### v2.2.0.2 (25.04.2026)
+- Fix: Update.begin() für LittleFS mit Partitionsgröße 0x200000
 
-### v2.2.0.1 (Test - LittleFS)
+### v2.2.0.1 (25.04.2026)
 - Neu: /update_fs Endpunkt für OTA-Upload des LittleFS-Dateisystems per Browser
-- GET /update_fs: Upload-Formular für LittleFS-Image (.bin)
-- POST /update_fs: Empfängt und flasht das Dateisystem, Uhr startet danach neu
-- /update_fs im Menü unter Einstellungen eingetragen (Firmware Update / Dateisystem Update)
-- Fix: FS-Deklarationskonflikte behoben, U_FS mit korrekter Größenangabe
 
-### v2.2.0.0 (Test - LittleFS)
-- **Major:** LittleFS Dateisystem integriert — CSS und JS kommen direkt aus dem Flash
-- LittleFS initialisiert beim Start, serveStatic() für alle CSS/JS Dateien
-- handleCSS und handleclockjs liefern aus LittleFS (Fallback auf PROGMEM)
-- handleHilfe und handleSupport liefern HTML aus LittleFS (Fallback auf PROGMEM)
-- handleRoot: index.html aus LittleFS wenn vorhanden (RAM wird nicht mehr für CSS/JS belegt)
+### v2.2.0.0 (25.04.2026)
+- Major: LittleFS Dateisystem integriert — CSS und JS aus dem Flash
+- Alle HTML/CSS/JS Dateien in data/ Ordner
 - /getstate erweitert: hourcolor, minutecolor (Hex), maxBrightness, fw, alarmactive
 - Neuer /getsettings Endpunkt für settings.js
-- data/ Ordner: index.html, settings.html, support.html, hilfe.html, timezone.html, clearromsure.html, alarm.html, style.css, menu.css, clock.js, menu.js, settings.js, support.js, timezone.js
-- **WICHTIG:** Vor dem Flash zuerst LittleFS-Dateisystem über Arduino IDE (ESP8266 LittleFS Data Upload) flashen!
 
 ### v2.1.0.20 (Test)
-- Sauberer Merge aus v2.1.0.15 (stabil) mit allen Fixes aus v2.1.0.16–2.1.0.19
-- Fix: EEPROM.write(179, timezone) → timezonevalue an beiden Stellen (float→int Bug)
-- Fix: EEPROM Default timezone 1 (GMT-12) → 34 (UTC+1/CET Solingen)
-- Fix: 82-fache replace()-Schleife für Timezone-Dropdown → JS-Select (Heap-Ersparnis)
-- Fix: $menu als erstes replace in handleRoot und handleSettings
-- Fix: handleRoot auf sendContent() umgestellt (RAM wird sofort nach Senden freigegeben)
-- Neu: Open-Meteo API (HTTP) für Sonnenzeiten — fetchSunriseSunset() + getSunTimes() mit lokalem Fallback
-- Neu: html/ und css/ Ordner für v2.2.0.0 LittleFS-Vorbereitung angelegt
+- Sauberer Merge aus v2.1.0.15 mit allen Fixes aus v2.1.0.16–v2.1.0.19
+- Fix: EEPROM Default timezone 34 (UTC+1/CET)
+- Fix: Timezone-Dropdown per JS statt 82 String-Operationen
+- Neu: Open-Meteo API für Sonnenzeiten
 
-### v2.1.0.19 (INSTABIL — zurückgerollt auf v2.1.0.15)
-- Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
-- Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
-- Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
-
-### v2.2.0.12 (25.04.2026)
-- Fix: clock.js aktualisiert nach /getstate fetch die Spectrum Color Picker korrekt
-- Fix: hidden inputs hourcolor/minutecolor werden mit Werten aus getstate befuellt
-- Fix: Brightness Slider und Firmware-Version werden nach fetch gesetzt
-- ⚠️ Neues LittleFS-Image erforderlich: littlefs_v2.2.0.12.bin (clock.js geaendert)
-
-### v2.2.0.11 (25.04.2026)
-- Fix: handleRoot, handleSettings, handleTimezone streamen sofort aus LittleFS
-- Kein PROGMEM-String mehr aufgebaut wenn LittleFS-Datei vorhanden - spart mehrere KB RAM
-- WARN Root-Seite unvollstaendig entfaellt wenn LittleFS korrekt geflasht ist
-- Neues LittleFS-Image: littlefs_v2.2.0.11.bin
-
-### v2.2.0.10 (25.04.2026)
-- Neu: FS-OTA Erfolgsseite zeigt zwei Buttons: Log herunterladen + Uhr neu starten
-- Log-Snapshot wird vor Neustart gesichert und als fs_ota_log.txt zum Download angeboten
-- Neustart erst auf Knopfdruck - kein Log geht mehr verloren
-- Neues LittleFS-Image: littlefs_v2.2.0.10.bin
-
-### v2.2.0.9 (25.04.2026)
-- Fix: Log-Datei wird vor LittleFS.end() geflusht und geschlossen (logFSready=false)
-- Fix: ERR_CONNECTION_RESET nach FS-OTA - delay 500ms auf 2000ms erhoeht
-- Fix: Log-Close vor delay statt nach ESP.restart()
-- Neu: Erfolgsseite nach FS-OTA hat meta-refresh nach 10s zur Startseite
-
-### v2.2.0.8 (25.04.2026)
-- Fix: logFile.flush() aus logAppend() entfernt - verhinderte extremen Blockier beim FS-OTA Upload
-- Log wird jetzt alle 5 Sekunden im loop() geflusht und vor ESP.restart()
-- Neues LittleFS-Image: littlefs_v2.2.0.8.bin
-
-### v2.2.0.7 (25.04.2026)
-- Neu: Log-Persistenz in LittleFS - alle Log-Ausgaben werden in /log.txt geschrieben
-- Beim Neustart wird /log.txt zu /log_prev.txt umbenannt (Log des letzten Boots bleibt erhalten)
-- /getlog liefert weiterhin den aktuellen RAM-Buffer
-- /getlog?prev=1 liefert den Log vom letzten Boot aus LittleFS
-- /log_prev.txt direkt im Browser downloadbar
-- Log-Datei wird vor ESP.restart() sauber geschlossen
-
-### v2.2.0.6 (25.04.2026)
-- Fix: LittleFS OTA-Upload blockierte nicht mehr durch Vorab-Loeschen aller Sektoren
-- Sektoren werden jetzt einzeln geloescht direkt bevor sie beschrieben werden (auf 4096-Byte-Grenze)
-- Verhindert HTTP-Timeout beim Upload durch zu langen Blocker (~45s vorher)
-- Neues LittleFS-Image: littlefs_v2.2.0.6.bin (15 Dateien)
-
-### v2.2.0.5 (25.04.2026)
-- Fix: LittleFS OTA-Upload komplett neu implementiert
-- Statt Update-Mechanismus (der Magic Byte 0xE9 erwartet) wird jetzt ESP.flashEraseSector() und ESP.flashWrite() direkt verwendet
-- Partition-Adresse wird aus Linker-Symbol _FS_start ermittelt (immer korrekt)
-- Damit funktioniert das Hochladen von rohen LittleFS-Images (.bin aus mklittlefs) ohne Fehler
-- Neues LittleFS-Image: littlefs_v2.2.0.5.bin (15 Dateien, Größe 0x1FA000)
-
-### v2.2.0.4 (Test - LittleFS)
-- Fix: Update.end(false) statt end(true) — LittleFS-Image hat keinen MD5, end(true) schlug fehl
-- Bessere Fehlerausgabe: Update.getError() im Log
-
-### v2.2.0.3 (Test - LittleFS)
-- Fix: LittleFS Update.begin() Größe auf 0x1FA000 korrigiert (exakt aus ELF: _FS_end 0x405FA000 - _FS_start 0x40400000)
-- Vorher 0x200000 führte zu begin() fehlgeschlagen
-
-### v2.2.0.2 (Test - LittleFS)
-- Fix: Update.begin() für LittleFS mit exakter Partitionsgröße 0x200000 (2MB, nodemcuv2)
-- Vorher: 0xFFFFFFFF führte zu "Fehler beim Dateisystem-Update!"
-
-### v2.2.0.1 (Test - LittleFS)
-- Neu: /update_fs Endpunkt für OTA-Upload des LittleFS-Dateisystems per Browser
-- GET /update_fs: Upload-Formular für LittleFS-Image (.bin)
-- POST /update_fs: Empfängt und flasht das Dateisystem, Uhr startet danach neu
-- /update_fs im Menü unter Einstellungen eingetragen (Firmware Update / Dateisystem Update)
-- Fix: FS-Deklarationskonflikte behoben, U_FS mit korrekter Größenangabe
-
-### v2.2.0.0 (Test - LittleFS)
-- **Major:** LittleFS Dateisystem integriert — CSS und JS kommen direkt aus dem Flash
-- LittleFS initialisiert beim Start, serveStatic() für alle CSS/JS Dateien
-- handleCSS und handleclockjs liefern aus LittleFS (Fallback auf PROGMEM)
-- handleHilfe und handleSupport liefern HTML aus LittleFS (Fallback auf PROGMEM)
-- handleRoot: index.html aus LittleFS wenn vorhanden (RAM wird nicht mehr für CSS/JS belegt)
-- /getstate erweitert: hourcolor, minutecolor (Hex), maxBrightness, fw, alarmactive
-- Neuer /getsettings Endpunkt für settings.js
-- data/ Ordner: index.html, settings.html, support.html, hilfe.html, timezone.html, clearromsure.html, alarm.html, style.css, menu.css, clock.js, menu.js, settings.js, support.js, timezone.js
-- **WICHTIG:** Vor dem Flash zuerst LittleFS-Dateisystem über Arduino IDE (ESP8266 LittleFS Data Upload) flashen!
-
-### v2.1.0.20 (Test)
-- Sauberer Merge aus v2.1.0.15 (stabil) mit allen Fixes aus v2.1.0.16–2.1.0.19
-- Fix: EEPROM.write(179, timezone) → timezonevalue an beiden Stellen (float→int Bug)
-- Fix: EEPROM Default timezone 1 (GMT-12) → 34 (UTC+1/CET Solingen)
-- Fix: 82-fache replace()-Schleife für Timezone-Dropdown → JS-Select (Heap-Ersparnis)
-- Fix: $menu als erstes replace in handleRoot und handleSettings
-- Fix: handleRoot auf sendContent() umgestellt (RAM wird sofort nach Senden freigegeben)
-- Neu: Open-Meteo API (HTTP) für Sonnenzeiten — fetchSunriseSunset() + getSunTimes() mit lokalem Fallback
-- Neu: html/ und css/ Ordner für v2.2.0.0 LittleFS-Vorbereitung angelegt
-
-### v2.1.0.19 (INSTABIL — zurückgerollt auf v2.1.0.15)
-- Fix: Sonnenzeiten API auf Open-Meteo (HTTP) umgestellt — sunrise-sunset.org leitet auf HTTPS um (HTTP 301, kein HTTPS auf ESP8266)
-- Open-Meteo liefert Lokalzeit direkt (timezone=auto), keine UTC-Umrechnung mehr nötig
-- Fix: EEPROM Default timezone von 1 (GMT-12) auf 34 (UTC+1/CET Solingen) geändert
-- handleRoot: server.sendContent() statt server.send() — RAM wird sofort nach dem Senden freigegeben
+### v2.1.0.19 (INSTABIL)
+- Sonnenzeiten-API auf Open-Meteo umgestellt
 
 ### v2.1.0.18 (INSTABIL)
-- Fix: Heap-Warning durch 82-fache replace()-Schleife in handleSettings (Timezone-Dropdown)
-- Timezone-Select wird jetzt per JS gesetzt (document.getElementById("timezone").value) statt 82 String-Operationen
-- Fix: EEPROM.write(179, timezone) → timezonevalue an beiden Stellen (float statt int korrumpierte EEPROM-Wert)
-- toSend.reserve() Aufrufe entfernt (haben keinen positiven Effekt gehabt)
+- Fix: Heap-Problem durch Timezone-Dropdown Replace-Schleife
 
 ### v2.1.0.17 (INSTABIL)
-- Sonnenzeiten API integriert (api.sunrise-sunset.org / sonnenzeiten.org)
-- Neue Funktion fetchSunriseSunset(): holt Sonnenauf- und -untergang täglich per HTTP, gecacht in apiSunriseMinutes/apiSunsetMinutes
-- Neue Funktion getSunTimes(): liefert gecachte API-Werte oder Fallback auf lokale Berechnung
-- Alle calcSunriseSunset()-Aufrufe (handleRoot, Loop, getstate) durch getSunTimes() ersetzt
-- API-Abruf erfolgt einmal täglich zusammen mit NTP forceUpdate
+- Sonnenzeiten API integriert (sunrise-sunset.org)
 
 ### v2.1.0.16 (INSTABIL)
-- Fix: Heap-Überlauf in handleRoot und handleSettings durch Menü-Einbindung
-- $menu wird jetzt als erstes replace eingefügt (vor allen anderen replaces)
-- toSend.reserve() in handleRoot (4096) und handleSettings (16384) zur Vermeidung von Heap-Fragmentierung
+- Fix: Heap-Überlauf in handleRoot durch Menü-Einbindung
 
-### v2.1.0.15 (Test)
-- Fix: $externallinks wurde in handleTimezone und handleClearRomSure nicht ersetzt (CSS und Menü-Styling fehlten)
+### v2.1.0.15 (stabil)
+- Fix: $externallinks in handleTimezone und handleClearRomSure
 
-### v2.1.0.14 (Test)
-- timezone.h: Komplett neu im MikoTec-Design, Bootstrap entfernt, eigenes Tab-System, Eingabefelder korrekt skaliert
+### v2.1.0.14
+- timezone.h komplett neu im MikoTec-Design
 
-### v2.1.0.13 (Test)
-- Fix: Menü-Button "Einstellungen" war kein klickbarer Link (nur Text-Span)
-- support.h: Log-Intervall von 5s auf 60s erhöht, Dropdown zur Intervallauswahl (5s/10s/30s/1min/5min/Aus)
-- hilfe.h: ⓘ-Symbol entfernt, Hover-Tooltips direkt auf Wortnamen, Hilfetexte ausführlicher
-- clearromsure.h: Ans globale Design angepasst (rcorners2, section-head, btn-Klassen)
-- Update-Seite (/update): Ans Design angepasst, Menü eingebunden
-- timezone.h: Eingabefelder mit box-sizing und max-width repariert (gingen über weißes div hinaus)
+### v2.1.0.13
+- Fix: Menü-Button Einstellungen war kein klickbarer Link
+- support.h: Log-Intervall einstellbar (5s–5min)
 
-### v2.1.0.12 (Test)
-- Menü-Overlay auf allen Seiten aktiviert ($menu Platzhalter + toSend.replace in allen Handlern)
-- Alte btn-box Navigation entfernt aus root.h, settings.h, hilfe.h, support.h, timezone.h
-- Nur noch Update-Button im Footer der Hauptseite
-- Neustart-Button aus support.h entfernt (jetzt im Menü)
-- Werksreset-Link aus settings.h entfernt (jetzt im Menü)
+### v2.1.0.12
+- Menü-Overlay auf allen Seiten aktiviert
 
-### v2.1.0.11 (Test)
-- Keine Code-Änderungen – Rebuild auf Basis von v2.1.0.10 (Sonnenpunkt-Feature)
+### v2.1.0.11
+- Rebuild auf Basis v2.1.0.10
 
-### v2.1.0.10 (Test)
-- Sonnenpunkt in JS-Uhr der Startseite ergänzt (identisches Verhalten wie LED-Ring)
-- `/getstate` liefert jetzt zusätzlich `sunriseMinutes` und `sunsetMinutes`
+### v2.1.0.10
+- Sonnenpunkt in JS-Uhr der Startseite
+- /getstate liefert sunriseMinutes und sunsetMinutes
 
-### v2.1.0.9 (Test)
-- Sonnenpunkt-Richtung korrigiert: Aufgang bei 3 Uhr, gegen Uhrzeigersinn über 12 nach 9 Uhr (Untergang)
+### v2.1.0.9
+- Fix: Sonnenpunkt-Richtung korrigiert
 
-### v2.1.0.8 (Test)
-- Sonnenpunkt-Feature: Zeigt die aktuelle Sonnenposition als goldenen LED-Punkt (nur tagsüber sichtbar)
-- Neues Ein/Aus-Element in den Settings (Checkbox mit Tooltip)
-- EEPROM-Adresse 235 für Sonnenpunkt-Einstellung
-- Sonnenpunkt wird über `calcSunriseSunset()` berechnet (Breitengrad/Längengrad erforderlich)
+### v2.1.0.8
+- Neu: Sonnenpunkt-Feature (goldener LED-Punkt, Sonnenposition tagsüber)
 
-### v2.1.0.7 (Test)
-- Fix: nightCheck() vor NTP-Sync entfernt – verhinderte falsche Sonnenzeiten (doy=0 ergab vertauschte/falsche Werte)
-- Sonnenaufgang-Simulation startet jetzt korrekt
+### v2.1.0.7
+- Fix: nightCheck() vor NTP-Sync entfernt
 
-### v2.1.0.6 (Test)
-- Settings-Formular leitet jetzt nach dem Speichern auf /settings zurück statt auf / (Root-Seite) – verhindert Heap-Problem
-- Settings Args-Verarbeitung in handleSettings verschoben
+### v2.1.0.6
+- Fix: Settings leitet nach Speichern auf /settings zurück
 
-### v2.1.0.5 (Test)
-- Log-Buffer von 8KB auf 6KB reduziert (8KB verursachte Heap-Probleme bei Root-Seite mit nur 8104 Bytes frei)
+### v2.1.0.5
+- Log-Buffer von 8KB auf 6KB reduziert
 
-### v2.1.0.4 (Test)
-- Settings: "Zurueck" Button zu "Hauptseite" umbenannt
+### v2.1.0.4
 - Heap-Check beim Aufbau der Root-Seite mit Warnung im Log
-- yield() vor Root-Seiten-Aufbau für Heap-Freigabe
 
-### v2.1.0.3 (Test)
-- Fix: Nacht-Helligkeit Replace fehlte in handleSettings (war nur in handleRoot)
-- Firmware-Version wird beim Start im Log ausgegeben
+### v2.1.0.3
+- Fix: Nacht-Helligkeit Replace fehlte in handleSettings
 
-### v2.1.0.2 (Test)
-- Fix: Nacht-Helligkeit Slider zeigte `$nightbrightness%` statt echtem Wert (Replace-Reihenfolge korrigiert)
+### v2.1.0.2
+- Fix: Nacht-Helligkeit Slider zeigte Platzhalter statt Wert
 
-### v2.1.0.1 (Test)
+### v2.1.0.1
 - 4-stelliges Versionierungsschema eingeführt
-- Update-Intervall von 24h auf 4h geändert (6x täglich)
-- Log-Buffer von 4KB auf 8KB verdoppelt
-- `isNewerVersion()` unterstützt jetzt 4-stellige Versionen
-- Auto-Update nur noch für stable Versionen
+- Update-Intervall auf 4h geändert
 
 ### v2.1 (2026-04-21)
-- Mondphase-LEDs werden mit Nacht-Helligkeit skaliert
+- Mondphase-LEDs mit Nacht-Helligkeit skaliert
 
 ### v2.0-stable (2026-04-21)
-- Dezente Wertanzeige neben Slidern auf der Startseite
-- Speicher-Tracking im Log (Heap, Flash, Fragmentierung)
-- Nacht-Helligkeit separat einstellbar (0-100%)
-- Mondphasen-Berechnung korrigiert (Referenz-Neumond 6. Jan 2000)
-- Zeitstempel `[DD.MM.YYYY HH:MM:SS]` für alle Log-Einträge
+- Dezente Wertanzeige neben Slidern
+- Speicher-Tracking im Log
+- Nacht-Helligkeit separat einstellbar
+- Mondphasen-Berechnung korrigiert
+- Zeitstempel für alle Log-Einträge
 - SSDP-Spam entfernt
-- nightCheck loggt nur noch bei geänderten Werten
 
 ### v1.5-stable (2026-04-20)
-- Zeitstempel mit globalem Cache (kein DualPrint-Crash mehr)
-- OTA auf HTTP-Server umgestellt (kein HTTPS/BearSSL)
+- Zeitstempel mit globalem Cache
+- OTA auf HTTP-Server umgestellt
 
 ### v1.3 (2026-04-20)
 - OTA-URL auf lokalen HTTP-Server umgestellt
-- Zeitstempel-Code entfernt (v0.8-v1.2 crashten)
 
 ### v0.6-stable (2026-04-19)
 - Auto-Schlaf mit Sonnenuntergang/Sonnenaufgang
-- Nominatim Geocoding statt GPS
-- TimezoneDB API Key aktualisiert
-- Timezone-Defaults auf Solingen (UTC+1)
-- OTA Auto-Update Funktion (HTTPS/GitHub)
+- OTA Auto-Update Funktion
 
 ### v0.1 (2026-04-19)
 - Erstes Release im GitHub Repository
