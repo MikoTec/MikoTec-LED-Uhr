@@ -192,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.8";
+const char* firmware_version = "2.2.0.9";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1266,14 +1266,15 @@ void setUpServerHandle() {
       } else {
         server.send(200, "text/html",
           "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+          "<meta http-equiv='refresh' content='10;url=/'>"
           "<link rel=stylesheet href='/style.css'></head>"
           "<body class='settings-page'>"
           "<div id='rcorners2' style='max-width:420px;margin:40px auto;text-align:center;'>"
-          "<label class='section-head' style='color:#4CAF50;'>Erfolgreich aktualisiert!</label>"
-          "<p style='margin:16px 0;'>Uhr startet neu...</p>"
+          "<label class='section-head' style='color:#4CAF50;'>Dateisystem aktualisiert!</label>"
+          "<p style='margin:16px 0;'>Uhr startet neu...<br><small>Weiterleitung in 10 Sekunden</small></p>"
           "</div></body></html>");
-        delay(500);
         if (logFSready && logFile) { logFile.flush(); logFile.close(); }
+        delay(2000);
         ESP.restart();
       }
     },
@@ -1283,6 +1284,12 @@ void setUpServerHandle() {
       HTTPUpload& upload = server.upload();
       if (upload.status == UPLOAD_FILE_START) {
         logTS(); dualOut.println("[FS-OTA] Start");
+        // Log-Datei flushen und schliessen bevor LittleFS beendet wird
+        if (logFSready && logFile) {
+          logFile.flush();
+          logFile.close();
+          logFSready = false;
+        }
         LittleFS.end();
         fsUploadError = false;
         // Physikalische Flash-Adresse aus Linker-Symbol (mapped Adresse - 0x40200000)

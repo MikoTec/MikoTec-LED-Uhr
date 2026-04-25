@@ -135,6 +135,12 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.2.0.9 (25.04.2026)
+- Fix: Log-Datei wird vor LittleFS.end() geflusht und geschlossen (logFSready=false)
+- Fix: ERR_CONNECTION_RESET nach FS-OTA - delay 500ms auf 2000ms erhoeht
+- Fix: Log-Close vor delay statt nach ESP.restart()
+- Neu: Erfolgsseite nach FS-OTA hat meta-refresh nach 10s zur Startseite
+
 ### v2.2.0.8 (25.04.2026)
 - Fix: logFile.flush() aus logAppend() entfernt - verhinderte extremen Blockier beim FS-OTA Upload
 - Log wird jetzt alle 5 Sekunden im loop() geflusht und vor ESP.restart()
@@ -205,6 +211,12 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 - Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
 - Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
 - Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
+
+### v2.2.0.9 (25.04.2026)
+- Fix: Log-Datei wird vor LittleFS.end() geflusht und geschlossen (logFSready=false)
+- Fix: ERR_CONNECTION_RESET nach FS-OTA - delay 500ms auf 2000ms erhoeht
+- Fix: Log-Close vor delay statt nach ESP.restart()
+- Neu: Erfolgsseite nach FS-OTA hat meta-refresh nach 10s zur Startseite
 
 ### v2.2.0.8 (25.04.2026)
 - Fix: logFile.flush() aus logAppend() entfernt - verhinderte extremen Blockier beim FS-OTA Upload
