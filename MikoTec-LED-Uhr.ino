@@ -192,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.13";
+const char* firmware_version = "2.2.0.14";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1145,6 +1145,7 @@ void launchWeb(int webtype) {
     server.serveStatic("/settings.js", LittleFS, "/settings.js", "max-age=3600");
     server.serveStatic("/support.js",  LittleFS, "/support.js",  "max-age=3600");
     server.serveStatic("/timezone.js", LittleFS, "/timezone.js", "max-age=3600");
+    server.serveStatic("/colour.js",   LittleFS, "/colour.js",   "max-age=3600");
     // Log-Datei: alte log.txt -> log_prev.txt, neue log.txt oeffnen
     if (LittleFS.exists("/log.txt")) {
       if (LittleFS.exists("/log_prev.txt")) LittleFS.remove("/log_prev.txt");
