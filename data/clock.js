@@ -160,6 +160,22 @@ function fetchESPState() {
         minutecolor = new RGBColour(st.minR, st.minG, st.minB);
         blendpoint = st.blendpoint / 255;
         document.getElementById("blendpoint").value = st.blendpoint;
+        // Farb-Picker und hidden inputs mit Werten aus getstate aktualisieren
+        if (st.hourcolor) {
+          document.getElementById("hourcolor").value = st.hourcolor;
+          document.getElementById("hourcolorspectrum").value = st.hourcolor;
+          if ($("#hourcolorspectrum").spectrum) $("#hourcolorspectrum").spectrum("set", st.hourcolor);
+        }
+        if (st.minutecolor) {
+          document.getElementById("minutecolor").value = st.minutecolor;
+          document.getElementById("minutecolorspectrum").value = st.minutecolor;
+          if ($("#minutecolorspectrum").spectrum) $("#minutecolorspectrum").spectrum("set", st.minutecolor);
+        }
+        // Brightness Slider
+        if (document.getElementById("brightnessslider")) document.getElementById("brightnessslider").value = st.brightness;
+        if (document.getElementById("brightness")) document.getElementById("brightness").innerHTML = st.brightness;
+        // Firmware Version
+        if (document.getElementById("fw-version")) document.getElementById("fw-version").innerHTML = st.fw;
         lastFetchMillis = Date.now();
         espTimeLoaded = true;
         needRedraw = true;

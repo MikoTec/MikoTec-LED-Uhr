@@ -135,6 +135,12 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.2.0.12 (25.04.2026)
+- Fix: clock.js aktualisiert nach /getstate fetch die Spectrum Color Picker korrekt
+- Fix: hidden inputs hourcolor/minutecolor werden mit Werten aus getstate befuellt
+- Fix: Brightness Slider und Firmware-Version werden nach fetch gesetzt
+- ⚠️ Neues LittleFS-Image erforderlich: littlefs_v2.2.0.12.bin (clock.js geaendert)
+
 ### v2.2.0.11 (25.04.2026)
 - Fix: handleRoot, handleSettings, handleTimezone streamen sofort aus LittleFS
 - Kein PROGMEM-String mehr aufgebaut wenn LittleFS-Datei vorhanden - spart mehrere KB RAM
@@ -223,6 +229,12 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 - Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
 - Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
 - Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
+
+### v2.2.0.12 (25.04.2026)
+- Fix: clock.js aktualisiert nach /getstate fetch die Spectrum Color Picker korrekt
+- Fix: hidden inputs hourcolor/minutecolor werden mit Werten aus getstate befuellt
+- Fix: Brightness Slider und Firmware-Version werden nach fetch gesetzt
+- ⚠️ Neues LittleFS-Image erforderlich: littlefs_v2.2.0.12.bin (clock.js geaendert)
 
 ### v2.2.0.11 (25.04.2026)
 - Fix: handleRoot, handleSettings, handleTimezone streamen sofort aus LittleFS
