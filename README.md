@@ -135,6 +135,13 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.1.0.17 (Test)
+- Sonnenzeiten API integriert (api.sunrise-sunset.org / sonnenzeiten.org)
+- Neue Funktion fetchSunriseSunset(): holt Sonnenauf- und -untergang täglich per HTTP, gecacht in apiSunriseMinutes/apiSunsetMinutes
+- Neue Funktion getSunTimes(): liefert gecachte API-Werte oder Fallback auf lokale Berechnung
+- Alle calcSunriseSunset()-Aufrufe (handleRoot, Loop, getstate) durch getSunTimes() ersetzt
+- API-Abruf erfolgt einmal täglich zusammen mit NTP forceUpdate
+
 ### v2.1.0.16 (Test)
 - Fix: Heap-Überlauf in handleRoot und handleSettings durch Menü-Einbindung
 - $menu wird jetzt als erstes replace eingefügt (vor allen anderen replaces)

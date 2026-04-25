@@ -183,7 +183,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.16";
+const char* firmware_version = "2.1.0.17";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -255,6 +255,11 @@ const unsigned long updateCheckInterval = 14400000; // 4 Stunden in Millisekunde
 
 bool DSTchecked = 0;
 
+// Sonnenzeiten API Cache
+int apiSunriseMinutes = -1;  // -1 = noch nicht geladen
+int apiSunsetMinutes  = -1;
+int apiCacheDay       = -1;  // Tag für den der Cache gilt
+
 
 
 const int restartDelay = 3; //minimal time for button press to reset in sec
@@ -293,6 +298,75 @@ int autoSleep = 0; // 0=manuell, 1=automatisch (Sonnenauf-/untergang)
 unsigned long lastInteraction;
 
 // Sonnenauf-/untergang Berechnung
+// Sonnenzeiten per API holen (sunrise-sunset.org / sonnenzeiten.org)
+// Ergebnis wird in apiSunriseMinutes / apiSunsetMinutes gecacht (UTC + tz)
+void fetchSunriseSunset(float lat, float lng, float tz) {
+  if (WiFi.status() != WL_CONNECTED) return;
+  WiFiClient apiClient;
+  HTTPClient http;
+  char url[128];
+  // Datum aus NTP-Zeit bauen
+  time_t t = NTPclient.getEpochTime();
+  struct tm *ti = gmtime(&t);
+  snprintf(url, sizeof(url),
+    "http://api.sunrise-sunset.org/json?lat=%.4f&lng=%.4f&date=%04d-%02d-%02d&formatted=0",
+    lat, lng,
+    ti->tm_year + 1900, ti->tm_mon + 1, ti->tm_mday);
+
+  http.begin(apiClient, url);
+  int code = http.GET();
+  if (code == 200) {
+    String body = http.getString();
+    // sunrise: "sunrise":"2026-04-25T04:13:53+00:00"
+    int si = body.indexOf("\"sunrise\":\"");
+    int ei = body.indexOf("\"sunset\":\"");
+    if (si > 0 && ei > 0) {
+      // Stunden und Minuten aus ISO-String extrahieren (Position 11..15 nach Schlüssel)
+      String riseStr = body.substring(si + 11, si + 27); // "2026-04-25T04:13"
+      String setStr  = body.substring(ei + 10, ei + 26);
+      int riseH = riseStr.substring(11, 13).toInt();
+      int riseM = riseStr.substring(14, 16).toInt();
+      int setH  = setStr.substring(11, 13).toInt();
+      int setM  = setStr.substring(14, 16).toInt();
+      // UTC → Lokalzeit
+      int riseLocal = riseH * 60 + riseM + (int)(tz * 60);
+      int setLocal  = setH  * 60 + setM  + (int)(tz * 60);
+      // Mitternacht-Rollover
+      if (riseLocal < 0)   riseLocal += 1440;
+      if (riseLocal >= 1440) riseLocal -= 1440;
+      if (setLocal  < 0)   setLocal  += 1440;
+      if (setLocal  >= 1440) setLocal -= 1440;
+      apiSunriseMinutes = riseLocal;
+      apiSunsetMinutes  = setLocal;
+      apiCacheDay       = ti->tm_mday;
+      logTS(); dualOut.print("[SUN-API] Sonnenaufgang: ");
+      dualOut.print(riseLocal / 60); dualOut.print(":"); if (riseLocal%60<10) dualOut.print("0"); dualOut.println(riseLocal % 60);
+      logTS(); dualOut.print("[SUN-API] Sonnenuntergang: ");
+      dualOut.print(setLocal / 60); dualOut.print(":"); if (setLocal%60<10) dualOut.print("0"); dualOut.println(setLocal % 60);
+    }
+  } else {
+    logTS(); dualOut.print("[SUN-API] Fehler: HTTP "); dualOut.println(code);
+  }
+  http.end();
+}
+
+// Liefert gecachte oder frisch berechnete Sonnenzeiten (Minuten ab Mitternacht, Lokalzeit)
+void getSunTimes(int dayOfYear, float lat, float lng, float tz, int &sunriseMin, int &sunsetMin) {
+  time_t t = NTPclient.getEpochTime();
+  struct tm *ti = gmtime(&t);
+  // Cache gültig wenn Tag übereinstimmt und Werte gesetzt
+  if (apiSunriseMinutes >= 0 && apiCacheDay == ti->tm_mday) {
+    sunriseMin = apiSunriseMinutes;
+    sunsetMin  = apiSunsetMinutes;
+    return;
+  }
+  // Fallback: lokale Berechnung
+  int srH, srM, ssH, ssM;
+  calcSunriseSunset(dayOfYear, lat, lng, tz, srH, srM, ssH, ssM);
+  sunriseMin = srH * 60 + srM;
+  sunsetMin  = ssH * 60 + ssM;
+}
+
 void calcSunriseSunset(int dayOfYear, float lat, float lng, float tz, int &sunriseH, int &sunriseM, int &sunsetH, int &sunsetM) {
   // Vereinfachter Algorithmus basierend auf NOAA
   float radLat = lat * PI / 180.0;
@@ -545,6 +619,8 @@ void setup() {
   if (webMode == 1) {
     NTPclient.begin();
     NTPclient.forceUpdate();
+    // Sonnenzeiten täglich per API aktualisieren
+    fetchSunriseSunset(latitude, longitude, timezone + DSTtime);
     time_t ntpTime = NTPclient.getEpochTime();
     logTS(); dualOut.print("NTP Erstabfrage: ");
     dualOut.println(ntpTime);
@@ -1775,7 +1851,10 @@ void nightCheck() {
 
     float tz = timezone + DSTtime;
     int sunriseH, sunriseM, sunsetH, sunsetM;
-    calcSunriseSunset(doy, latitude, longitude, tz, sunriseH, sunriseM, sunsetH, sunsetM);
+    int srMin, ssMin;
+    getSunTimes(doy, latitude, longitude, tz, srMin, ssMin);
+    sunriseH = srMin / 60; sunriseM = srMin % 60;
+    sunsetH  = ssMin / 60; sunsetM  = ssMin % 60;
 
     // Globale sleep/wake Variablen aktualisieren
     sleep = sunsetH;
@@ -2260,10 +2339,8 @@ void updateface() {
         if (y % 4 == 0 && (y % 100 != 0 || y % 400 == 0)) daysInMonth[2] = 29;
         for (int i = 1; i < m; i++) doy += daysInMonth[i];
         float tz = timezone + DSTtime;
-        int sunriseH, sunriseM, sunsetH, sunsetM;
-        calcSunriseSunset(doy, latitude, longitude, tz, sunriseH, sunriseM, sunsetH, sunsetM);
-        int sunriseMinutes = sunriseH * 60 + sunriseM;
-        int sunsetMinutes = sunsetH * 60 + sunsetM;
+        int sunriseMinutes, sunsetMinutes;
+        getSunTimes(doy, latitude, longitude, tz, sunriseMinutes, sunsetMinutes);
         int nowMinutes = hour() * 60 + minute();
         if (nowMinutes >= sunriseMinutes && nowMinutes <= sunsetMinutes && sunsetMinutes > sunriseMinutes) {
           float sunProgress = (float)(nowMinutes - sunriseMinutes) / (float)(sunsetMinutes - sunriseMinutes);
@@ -2970,10 +3047,10 @@ void handleGetState() {
   if (gsY % 4 == 0 && (gsY % 100 != 0 || gsY % 400 == 0)) gsDIM[2] = 29;
   for (int i = 1; i < gsM; i++) gsDoy += gsDIM[i];
   float gsTz = timezone + DSTtime;
-  int gsRH, gsRM, gsSH, gsSM;
-  calcSunriseSunset(gsDoy, latitude, longitude, gsTz, gsRH, gsRM, gsSH, gsSM);
-  json += "\"sunriseMinutes\":" + String(gsRH * 60 + gsRM) + ",";
-  json += "\"sunsetMinutes\":" + String(gsSH * 60 + gsSM) + ",";
+  int gsSunriseMin2, gsSunsetMin2;
+  getSunTimes(gsDoy, latitude, longitude, gsTz, gsSunriseMin2, gsSunsetMin2);
+  json += "\"sunriseMinutes\":" + String(gsSunriseMin2) + ",";
+  json += "\"sunsetMinutes\":" + String(gsSunsetMin2) + ",";
   json += "\"hourmarks\":" + String(hourmarks) + ",";
   json += "\"pixelCount\":" + String(pixelCount) + ",";
   json += "\"brightness\":" + String(brightness) + ",";
