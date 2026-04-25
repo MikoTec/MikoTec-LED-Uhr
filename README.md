@@ -106,6 +106,11 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.15 (26.04.2026)
+- Fix: clock.js liest Startfarben nicht mehr aus hidden inputs - direkt als RGBColour gesetzt
+- Fix: Farb-Picker Zuweisung in index.html bereinigt
+- ⚠️ Nur neues LittleFS-Image erforderlich: littlefs_v2.2.0.15.bin
+
 ### v2.2.0.14 (26.04.2026)
 - Fix: RGBColour nicht definiert - colour.js aus colourjs.h extrahiert und in data/ hinzugefuegt
 - index.html: colour.js wird vor clock.js geladen

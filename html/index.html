@@ -76,10 +76,12 @@
 // Zustand von /getstate laden und Formular befüllen
 fetch('/getstate').then(r=>r.json()).then(function(d){
   document.getElementById('fw-version').innerText = d.fw || '--';
-  document.getElementById('hourcolor').value = d.hourcolor || '#ff0000';
-  document.getElementById('hourcolorspectrum').value = d.hourcolor || '#ff0000';
-  document.getElementById('minutecolor').value = d.minutecolor || '#0000ff';
-  document.getElementById('minutecolorspectrum').value = d.minutecolor || '#0000ff';
+  var hc = d.hourcolor || '#ff0000';
+  var mc = d.minutecolor || '#0000ff';
+  document.getElementById('hourcolor').value = hc;
+  document.getElementById('hourcolorspectrum').value = hc;
+  document.getElementById('minutecolor').value = mc;
+  document.getElementById('minutecolorspectrum').value = mc;
   document.getElementById('blendpoint').value = d.blendpoint || 128;
   document.getElementById('bpval').innerText = d.blendpoint || 128;
   document.getElementById('brightness').value = d.brightness || 100;

@@ -421,14 +421,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   ctx = document.getElementById("canvas").getContext('2d');
 
-  // Farben aus hidden inputs lesen (werden durch fetchESPState ueberschrieben)
-  var c = document.getElementById("hourcolor").value;
-  c = parseHEXcolour(c);
-  hourcolor = new RGBColour(c[0], c[1], c[2]);
-
-  c = document.getElementById("minutecolor").value;
-  c = parseHEXcolour(c);
-  minutecolor = new RGBColour(c[0], c[1], c[2]);
+  // Startfarben - werden sofort durch fetchESPState ueberschrieben
+  hourcolor = new RGBColour(255, 0, 0);
+  minutecolor = new RGBColour(0, 0, 255);
 
   // Canvas auf volle Breite skalieren
   canvas.style.width ='100%';
