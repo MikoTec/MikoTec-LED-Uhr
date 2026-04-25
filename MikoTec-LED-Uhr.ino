@@ -185,7 +185,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.5";
+const char* firmware_version = "2.2.0.6";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1260,26 +1260,25 @@ void setUpServerHandle() {
         dualOut.print(fsWriteAddr, HEX);
         dualOut.print(" Groesse: ");
         dualOut.println(fsSize);
-        // Partition sektorweise loeschen (Sektorgroesse 4096)
-        uint32_t sectors = (fsSize + 4095) / 4096;
-        for (uint32_t i = 0; i < sectors; i++) {
-          ESP.flashEraseSector((fsWriteAddr / 4096) + i);
-        }
-        logTS(); dualOut.println("[FS-OTA] Partition geloescht");
+        // Kein Vorab-Loeschen mehr - Sektoren werden einzeln vor dem Schreiben geloescht
       } else if (upload.status == UPLOAD_FILE_WRITE) {
         if (!fsUploadError) {
-          // flashWrite benoetigt 4-Byte-Alignment und Vielfaches von 4 Bytes
           uint32_t len = upload.currentSize;
           uint8_t* buf = upload.buf;
           // Puffer auf 4 Bytes auffullen falls noetig
           uint8_t aligned[HTTP_UPLOAD_BUFLEN + 4];
           memcpy(aligned, buf, len);
-          while (len % 4 != 0) aligned[len++] = 0xFF;
-          if (!ESP.flashWrite(fsWriteAddr, (uint32_t*)aligned, len)) {
+          uint32_t alignedLen = len;
+          while (alignedLen % 4 != 0) aligned[alignedLen++] = 0xFF;
+          // Sektor loeschen wenn wir an dessen Anfang sind
+          if (fsWriteAddr % 4096 == 0) {
+            ESP.flashEraseSector(fsWriteAddr / 4096);
+          }
+          if (!ESP.flashWrite(fsWriteAddr, (uint32_t*)aligned, alignedLen)) {
             fsUploadError = true;
             logTS(); dualOut.println("[FS-OTA] flashWrite Fehler!");
           }
-          fsWriteAddr += len;
+          fsWriteAddr += alignedLen;
         }
       } else if (upload.status == UPLOAD_FILE_END) {
         if (!fsUploadError) {

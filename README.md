@@ -135,6 +135,12 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.2.0.6 (25.04.2026)
+- Fix: LittleFS OTA-Upload blockierte nicht mehr durch Vorab-Loeschen aller Sektoren
+- Sektoren werden jetzt einzeln geloescht direkt bevor sie beschrieben werden (auf 4096-Byte-Grenze)
+- Verhindert HTTP-Timeout beim Upload durch zu langen Blocker (~45s vorher)
+- Neues LittleFS-Image: littlefs_v2.2.0.6.bin (15 Dateien)
+
 ### v2.2.0.5 (25.04.2026)
 - Fix: LittleFS OTA-Upload komplett neu implementiert
 - Statt Update-Mechanismus (der Magic Byte 0xE9 erwartet) wird jetzt ESP.flashEraseSector() und ESP.flashWrite() direkt verwendet
@@ -186,6 +192,12 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 - Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
 - Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
 - Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
+
+### v2.2.0.6 (25.04.2026)
+- Fix: LittleFS OTA-Upload blockierte nicht mehr durch Vorab-Loeschen aller Sektoren
+- Sektoren werden jetzt einzeln geloescht direkt bevor sie beschrieben werden (auf 4096-Byte-Grenze)
+- Verhindert HTTP-Timeout beim Upload durch zu langen Blocker (~45s vorher)
+- Neues LittleFS-Image: littlefs_v2.2.0.6.bin (15 Dateien)
 
 ### v2.2.0.5 (25.04.2026)
 - Fix: LittleFS OTA-Upload komplett neu implementiert
