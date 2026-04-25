@@ -135,6 +135,11 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.1.0.19 (Test)
+- Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
+- Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
+- Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
+
 ### v2.1.0.18 (Test)
 - Fix: Heap-Warning durch 82-fache replace()-Schleife in handleSettings (Timezone-Dropdown)
 - Timezone-Select wird jetzt per JS gesetzt (document.getElementById("timezone").value) statt 82 String-Operationen

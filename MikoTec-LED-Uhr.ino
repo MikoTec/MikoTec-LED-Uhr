@@ -183,7 +183,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.18";
+const char* firmware_version = "2.1.0.19";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -304,38 +304,31 @@ void fetchSunriseSunset(float lat, float lng, float tz) {
   if (WiFi.status() != WL_CONNECTED) return;
   WiFiClient apiClient;
   HTTPClient http;
-  char url[128];
-  // Datum aus NTP-Zeit bauen
-  time_t t = NTPclient.getEpochTime();
-  struct tm *ti = gmtime(&t);
+  char url[160];
+  // Open-Meteo API: HTTP, keine Auth, Lokalzeit direkt
+  // Zeitzone als UTC-Offset übergeben (z.B. Europe%2FBerlin wäre besser, aber UTC+X reicht)
   snprintf(url, sizeof(url),
-    "http://api.sunrise-sunset.org/json?lat=%.4f&lng=%.4f&date=%04d-%02d-%02d&formatted=0",
-    lat, lng,
-    ti->tm_year + 1900, ti->tm_mon + 1, ti->tm_mday);
+    "http://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&daily=sunrise,sunset&timezone=auto&forecast_days=1",
+    lat, lng);
 
   http.begin(apiClient, url);
   int code = http.GET();
   if (code == 200) {
     String body = http.getString();
-    // sunrise: "sunrise":"2026-04-25T04:13:53+00:00"
-    int si = body.indexOf("\"sunrise\":\"");
-    int ei = body.indexOf("\"sunset\":\"");
+    // "sunrise":["2026-04-25T06:15"],"sunset":["2026-04-25T20:43"]
+    int si = body.indexOf("\"sunrise\":[\"");
+    int ei = body.indexOf("\"sunset\":[\"");
     if (si > 0 && ei > 0) {
-      // Stunden und Minuten aus ISO-String extrahieren (Position 11..15 nach Schlüssel)
-      String riseStr = body.substring(si + 11, si + 27); // "2026-04-25T04:13"
-      String setStr  = body.substring(ei + 10, ei + 26);
-      int riseH = riseStr.substring(11, 13).toInt();
-      int riseM = riseStr.substring(14, 16).toInt();
-      int setH  = setStr.substring(11, 13).toInt();
-      int setM  = setStr.substring(14, 16).toInt();
-      // UTC → Lokalzeit
-      int riseLocal = riseH * 60 + riseM + (int)(tz * 60);
-      int setLocal  = setH  * 60 + setM  + (int)(tz * 60);
-      // Mitternacht-Rollover
-      if (riseLocal < 0)   riseLocal += 1440;
-      if (riseLocal >= 1440) riseLocal -= 1440;
-      if (setLocal  < 0)   setLocal  += 1440;
-      if (setLocal  >= 1440) setLocal -= 1440;
+      // Format: "2026-04-25T06:15" — 16 Zeichen nach dem Schlüssel+Prefix
+      int riseH = body.substring(si + 12 + 11, si + 12 + 13).toInt();
+      int riseM = body.substring(si + 12 + 14, si + 12 + 16).toInt();
+      int setH  = body.substring(ei + 11 + 11, ei + 11 + 13).toInt();
+      int setM  = body.substring(ei + 11 + 14, ei + 11 + 16).toInt();
+      // API gibt Lokalzeit zurück (timezone=auto) — keine Umrechnung nötig
+      int riseLocal = riseH * 60 + riseM;
+      int setLocal  = setH  * 60 + setM;
+      time_t t = NTPclient.getEpochTime();
+      struct tm *ti = gmtime(&t);
       apiSunriseMinutes = riseLocal;
       apiSunsetMinutes  = setLocal;
       apiCacheDay       = ti->tm_mday;
@@ -343,6 +336,8 @@ void fetchSunriseSunset(float lat, float lng, float tz) {
       dualOut.print(riseLocal / 60); dualOut.print(":"); if (riseLocal%60<10) dualOut.print("0"); dualOut.println(riseLocal % 60);
       logTS(); dualOut.print("[SUN-API] Sonnenuntergang: ");
       dualOut.print(setLocal / 60); dualOut.print(":"); if (setLocal%60<10) dualOut.print("0"); dualOut.println(setLocal % 60);
+    } else {
+      logTS(); dualOut.println("[SUN-API] Parse-Fehler");
     }
   } else {
     logTS(); dualOut.print("[SUN-API] Fehler: HTTP "); dualOut.println(code);
@@ -885,7 +880,7 @@ void writeInitalConfig() {
   delay(10);
   writeLatLong(175, 51.17); //default to Solingen
   writeLatLong(177, 7.08);//default to Solingen
-  EEPROM.write(179, 1);//timezone default CET (UTC+1) Solingen
+  EEPROM.write(179, 34);//timezone default CET (UTC+1) Solingen
   EEPROM.write(180, 0);//default randommode off
   EEPROM.write(181, 0); //default hourmarks to off
   EEPROM.write(182, 22); //default to sleep at 22:00
@@ -1820,7 +1815,10 @@ void handleRoot() {
     }
   }
   
-  server.send(200, "text/html", toSend);
+  server.setContentLength(toSend.length());
+  server.send(200, "text/html", "");
+  server.sendContent(toSend);
+  toSend = "";  // RAM sofort freigeben
 
   logTS(); dualOut.println("Sending handleRoot");
   EEPROM.commit();
