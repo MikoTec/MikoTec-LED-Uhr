@@ -183,7 +183,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.1.0.19";
+const char* firmware_version = "2.1.0.20";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -255,10 +255,10 @@ const unsigned long updateCheckInterval = 14400000; // 4 Stunden in Millisekunde
 
 bool DSTchecked = 0;
 
-// Sonnenzeiten API Cache
-int apiSunriseMinutes = -1;  // -1 = noch nicht geladen
+// Sonnenzeiten API Cache (Open-Meteo)
+int apiSunriseMinutes = -1;
 int apiSunsetMinutes  = -1;
-int apiCacheDay       = -1;  // Tag für den der Cache gilt
+int apiCacheDay       = -1;
 
 
 
@@ -298,33 +298,25 @@ int autoSleep = 0; // 0=manuell, 1=automatisch (Sonnenauf-/untergang)
 unsigned long lastInteraction;
 
 // Sonnenauf-/untergang Berechnung
-// Sonnenzeiten per API holen (sunrise-sunset.org / sonnenzeiten.org)
-// Ergebnis wird in apiSunriseMinutes / apiSunsetMinutes gecacht (UTC + tz)
-void fetchSunriseSunset(float lat, float lng, float tz) {
+void fetchSunriseSunset(float lat, float lng) {
   if (WiFi.status() != WL_CONNECTED) return;
   WiFiClient apiClient;
   HTTPClient http;
   char url[160];
-  // Open-Meteo API: HTTP, keine Auth, Lokalzeit direkt
-  // Zeitzone als UTC-Offset übergeben (z.B. Europe%2FBerlin wäre besser, aber UTC+X reicht)
   snprintf(url, sizeof(url),
     "http://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&daily=sunrise,sunset&timezone=auto&forecast_days=1",
     lat, lng);
-
   http.begin(apiClient, url);
   int code = http.GET();
   if (code == 200) {
     String body = http.getString();
-    // "sunrise":["2026-04-25T06:15"],"sunset":["2026-04-25T20:43"]
     int si = body.indexOf("\"sunrise\":[\"");
     int ei = body.indexOf("\"sunset\":[\"");
     if (si > 0 && ei > 0) {
-      // Format: "2026-04-25T06:15" — 16 Zeichen nach dem Schlüssel+Prefix
       int riseH = body.substring(si + 12 + 11, si + 12 + 13).toInt();
       int riseM = body.substring(si + 12 + 14, si + 12 + 16).toInt();
       int setH  = body.substring(ei + 11 + 11, ei + 11 + 13).toInt();
       int setM  = body.substring(ei + 11 + 14, ei + 11 + 16).toInt();
-      // API gibt Lokalzeit zurück (timezone=auto) — keine Umrechnung nötig
       int riseLocal = riseH * 60 + riseM;
       int setLocal  = setH  * 60 + setM;
       time_t t = NTPclient.getEpochTime();
@@ -345,11 +337,9 @@ void fetchSunriseSunset(float lat, float lng, float tz) {
   http.end();
 }
 
-// Liefert gecachte oder frisch berechnete Sonnenzeiten (Minuten ab Mitternacht, Lokalzeit)
 void getSunTimes(int dayOfYear, float lat, float lng, float tz, int &sunriseMin, int &sunsetMin) {
   time_t t = NTPclient.getEpochTime();
   struct tm *ti = gmtime(&t);
-  // Cache gültig wenn Tag übereinstimmt und Werte gesetzt
   if (apiSunriseMinutes >= 0 && apiCacheDay == ti->tm_mday) {
     sunriseMin = apiSunriseMinutes;
     sunsetMin  = apiSunsetMinutes;
@@ -614,8 +604,7 @@ void setup() {
   if (webMode == 1) {
     NTPclient.begin();
     NTPclient.forceUpdate();
-    // Sonnenzeiten täglich per API aktualisieren
-    fetchSunriseSunset(latitude, longitude, timezone + DSTtime);
+    fetchSunriseSunset(latitude, longitude);
     time_t ntpTime = NTPclient.getEpochTime();
     logTS(); dualOut.print("NTP Erstabfrage: ");
     dualOut.println(ntpTime);
@@ -880,7 +869,7 @@ void writeInitalConfig() {
   delay(10);
   writeLatLong(175, 51.17); //default to Solingen
   writeLatLong(177, 7.08);//default to Solingen
-  EEPROM.write(179, 34);//timezone default CET (UTC+1) Solingen
+  EEPROM.write(179, 34);//timezone default CET (UTC+1) Solingen - case 34 = Amsterdam/Berlin/Bern
   EEPROM.write(180, 0);//default randommode off
   EEPROM.write(181, 0); //default hourmarks to off
   EEPROM.write(182, 22); //default to sleep at 22:00
@@ -1996,8 +1985,6 @@ void handleSettings() {
   dualOut.println(timeToText(wake, wakemin));
   
   String toSend = FPSTR(settings_html);
-  toSend.replace("$menu", FPSTR(menu_html));
-  // Timezone-Select per JS setzen (spart 82 replace()-Aufrufe)
   toSend.replace("$timezonevalue", String(timezonevalue));
   for (int i = 0; i < 5; i++) {
     if (i == hourmarks) {
@@ -3038,10 +3025,10 @@ void handleGetState() {
   if (gsY % 4 == 0 && (gsY % 100 != 0 || gsY % 400 == 0)) gsDIM[2] = 29;
   for (int i = 1; i < gsM; i++) gsDoy += gsDIM[i];
   float gsTz = timezone + DSTtime;
-  int gsSunriseMin2, gsSunsetMin2;
-  getSunTimes(gsDoy, latitude, longitude, gsTz, gsSunriseMin2, gsSunsetMin2);
-  json += "\"sunriseMinutes\":" + String(gsSunriseMin2) + ",";
-  json += "\"sunsetMinutes\":" + String(gsSunsetMin2) + ",";
+  int gsRH2, gsRM2, gsSH2, gsSM2;
+  getSunTimes(gsDoy, latitude, longitude, gsTz, gsRH2, gsSH2);
+  json += "\"sunriseMinutes\":" + String(gsRH2) + ",";
+  json += "\"sunsetMinutes\":" + String(gsSH2) + ",";
   json += "\"hourmarks\":" + String(hourmarks) + ",";
   json += "\"pixelCount\":" + String(pixelCount) + ",";
   json += "\"brightness\":" + String(brightness) + ",";

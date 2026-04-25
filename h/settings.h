@@ -163,7 +163,7 @@ toggleSleepFields();
 <li>
 <label>Zeitzone</label>
 <div class=form-field>
-<select name=timezone id=timezone onchange="">
+<select name=timezone id=timezone>
 <option value="1" > (GMT-12:00) Internationale Datumsgrenze West</option>     
 <option value="2" > (GMT-11:00) Midwayinseln, Samoa</option>      
 <option value="3" > (GMT-10:00) Hawaii</option>        

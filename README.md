@@ -135,10 +135,30 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.1.0.20 (Test)
+- Sauberer Merge aus v2.1.0.15 (stabil) mit allen Fixes aus v2.1.0.16–2.1.0.19
+- Fix: EEPROM.write(179, timezone) → timezonevalue an beiden Stellen (float→int Bug)
+- Fix: EEPROM Default timezone 1 (GMT-12) → 34 (UTC+1/CET Solingen)
+- Fix: 82-fache replace()-Schleife für Timezone-Dropdown → JS-Select (Heap-Ersparnis)
+- Fix: $menu als erstes replace in handleRoot und handleSettings
+- Fix: handleRoot auf sendContent() umgestellt (RAM wird sofort nach Senden freigegeben)
+- Neu: Open-Meteo API (HTTP) für Sonnenzeiten — fetchSunriseSunset() + getSunTimes() mit lokalem Fallback
+- Neu: html/ und css/ Ordner für v2.2.0.0 LittleFS-Vorbereitung angelegt
+
 ### v2.1.0.19 (INSTABIL — zurückgerollt auf v2.1.0.15)
 - Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
 - Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
 - Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
+
+### v2.1.0.20 (Test)
+- Sauberer Merge aus v2.1.0.15 (stabil) mit allen Fixes aus v2.1.0.16–2.1.0.19
+- Fix: EEPROM.write(179, timezone) → timezonevalue an beiden Stellen (float→int Bug)
+- Fix: EEPROM Default timezone 1 (GMT-12) → 34 (UTC+1/CET Solingen)
+- Fix: 82-fache replace()-Schleife für Timezone-Dropdown → JS-Select (Heap-Ersparnis)
+- Fix: $menu als erstes replace in handleRoot und handleSettings
+- Fix: handleRoot auf sendContent() umgestellt (RAM wird sofort nach Senden freigegeben)
+- Neu: Open-Meteo API (HTTP) für Sonnenzeiten — fetchSunriseSunset() + getSunTimes() mit lokalem Fallback
+- Neu: html/ und css/ Ordner für v2.2.0.0 LittleFS-Vorbereitung angelegt
 
 ### v2.1.0.19 (INSTABIL — zurückgerollt auf v2.1.0.15)
 - Fix: Sonnenzeiten API auf Open-Meteo (HTTP) umgestellt — sunrise-sunset.org leitet auf HTTPS um (HTTP 301, kein HTTPS auf ESP8266)
