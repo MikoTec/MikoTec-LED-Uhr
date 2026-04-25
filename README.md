@@ -135,6 +135,13 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.2.0.5 (25.04.2026)
+- Fix: LittleFS OTA-Upload komplett neu implementiert
+- Statt Update-Mechanismus (der Magic Byte 0xE9 erwartet) wird jetzt ESP.flashEraseSector() und ESP.flashWrite() direkt verwendet
+- Partition-Adresse wird aus Linker-Symbol _FS_start ermittelt (immer korrekt)
+- Damit funktioniert das Hochladen von rohen LittleFS-Images (.bin aus mklittlefs) ohne Fehler
+- Neues LittleFS-Image: littlefs_v2.2.0.5.bin (15 Dateien, Größe 0x1FA000)
+
 ### v2.2.0.4 (Test - LittleFS)
 - Fix: Update.end(false) statt end(true) — LittleFS-Image hat keinen MD5, end(true) schlug fehl
 - Bessere Fehlerausgabe: Update.getError() im Log
@@ -179,6 +186,13 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 - Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
 - Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
 - Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
+
+### v2.2.0.5 (25.04.2026)
+- Fix: LittleFS OTA-Upload komplett neu implementiert
+- Statt Update-Mechanismus (der Magic Byte 0xE9 erwartet) wird jetzt ESP.flashEraseSector() und ESP.flashWrite() direkt verwendet
+- Partition-Adresse wird aus Linker-Symbol _FS_start ermittelt (immer korrekt)
+- Damit funktioniert das Hochladen von rohen LittleFS-Images (.bin aus mklittlefs) ohne Fehler
+- Neues LittleFS-Image: littlefs_v2.2.0.5.bin (15 Dateien, Größe 0x1FA000)
 
 ### v2.2.0.4 (Test - LittleFS)
 - Fix: Update.end(false) statt end(true) — LittleFS-Image hat keinen MD5, end(true) schlug fehl

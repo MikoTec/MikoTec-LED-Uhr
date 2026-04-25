@@ -185,7 +185,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.4";
+const char* firmware_version = "2.2.0.5";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1226,6 +1226,7 @@ void setUpServerHandle() {
   });
 
   static bool fsUploadError = false;
+  static uint32_t fsWriteAddr = 0;
   server.on("/update_fs", HTTP_POST,
     [](){
       server.sendHeader("Connection", "close");
@@ -1245,29 +1246,45 @@ void setUpServerHandle() {
       }
     },
     [](){
+      extern uint32_t _FS_start;
+      extern uint32_t _FS_end;
       HTTPUpload& upload = server.upload();
       if (upload.status == UPLOAD_FILE_START) {
         logTS(); dualOut.println("[FS-OTA] Start");
         LittleFS.end();
-        // LittleFS Partition exakt aus ELF: _FS_end(0x405FA000) - _FS_start(0x40400000) = 0x1FA000
-        if (!Update.begin(0x1FA000, U_FS)) {
-          fsUploadError = true;
-          logTS(); dualOut.println("[FS-OTA] begin() fehlgeschlagen");
-        } else {
-          fsUploadError = false;
+        fsUploadError = false;
+        // Physikalische Flash-Adresse aus Linker-Symbol (mapped Adresse - 0x40200000)
+        fsWriteAddr = ((uint32_t)&_FS_start) - 0x40200000;
+        uint32_t fsSize = ((uint32_t)&_FS_end) - ((uint32_t)&_FS_start);
+        logTS(); dualOut.print("[FS-OTA] Partition: 0x");
+        dualOut.print(fsWriteAddr, HEX);
+        dualOut.print(" Groesse: ");
+        dualOut.println(fsSize);
+        // Partition sektorweise loeschen (Sektorgroesse 4096)
+        uint32_t sectors = (fsSize + 4095) / 4096;
+        for (uint32_t i = 0; i < sectors; i++) {
+          ESP.flashEraseSector((fsWriteAddr / 4096) + i);
         }
+        logTS(); dualOut.println("[FS-OTA] Partition geloescht");
       } else if (upload.status == UPLOAD_FILE_WRITE) {
-        if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-          fsUploadError = true;
+        if (!fsUploadError) {
+          // flashWrite benoetigt 4-Byte-Alignment und Vielfaches von 4 Bytes
+          uint32_t len = upload.currentSize;
+          uint8_t* buf = upload.buf;
+          // Puffer auf 4 Bytes auffullen falls noetig
+          uint8_t aligned[HTTP_UPLOAD_BUFLEN + 4];
+          memcpy(aligned, buf, len);
+          while (len % 4 != 0) aligned[len++] = 0xFF;
+          if (!ESP.flashWrite(fsWriteAddr, (uint32_t*)aligned, len)) {
+            fsUploadError = true;
+            logTS(); dualOut.println("[FS-OTA] flashWrite Fehler!");
+          }
+          fsWriteAddr += len;
         }
       } else if (upload.status == UPLOAD_FILE_END) {
-        if (Update.end(false)) {  // false = kein MD5-Check fuer FS-Image
+        if (!fsUploadError) {
           logTS(); dualOut.print("[FS-OTA] OK: ");
           dualOut.print(upload.totalSize); dualOut.println(" Bytes");
-        } else {
-          fsUploadError = true;
-          logTS(); dualOut.print("[FS-OTA] end() Fehler: ");
-          dualOut.println(Update.getError());
         }
       }
     }
