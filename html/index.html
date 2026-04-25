@@ -1,0 +1,68 @@
+<!DOCTYPE HTML>
+<html><head>
+  <meta http-equiv=Content-Type content='text/html; charset=utf-8' />
+  <meta name=viewport content='width=device-width, initial-scale=1.0'>
+<script src="/clock.js"></script>
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/menu.css">
+/* csswgradient wird per API gesetzt */
+</head>
+<body class=settings-page>
+<!-- MENU -->
+  <div style="text-align:center;background:#fff;padding:10px 0 5px 0;position:relative;z-index:10;">
+    <h1 style="margin:0;font-size:1.6em;color:#333;font-family:Abel,sans-serif;">MikoTec's LED Uhr</h1>
+    <p style="margin:2px 0 0 0;font-size:0.9em;color:#888;">Version <!-- version --></p>
+  </div>
+  <div id='canvasholder'>
+    <canvas id='canvas'></canvas>
+  </div>
+  <form action=/ method=GET>
+    <div class="color-section">
+      <div class="color-box">
+        <label>Stundenfarbe</label>
+        <input type='color' name = 'hourcolorspectrum' id='hourcolorspectrum' value='#ff0000'/>
+        <input type='hidden' name = 'hourcolor' id = 'hourcolor' value = '#ff0000'>
+      </div>
+      <div class="color-box">
+        <label>Minutenfarbe</label>
+        <input type='color' name='minutecolorspectrum' id='minutecolorspectrum' value='#0000ff'/>
+        <input type='hidden' name = 'minutecolor' id = 'minutecolor' value = '#0000ff'/>
+      </div>
+    </div>
+    <div class="slide-section">
+      <div class="point-slide">
+        <label>Überblendeffekt <span id="bpval" style="color:#999;font-size:0.85em;"></span></label>
+        <input type='range' id= 'blendpoint' name='blendpoint' min='0' max='255' value=128 oninput="document.getElementById('bpval').innerText=this.value">
+      </div>
+      <div class="point-slide">
+        <label>Helligkeit <span id="brval" style="color:#999;font-size:0.85em;"></span></label>
+        <input type='range' id= 'brightness' name='brightness' min='10' max=255 value=100 oninput="document.getElementById('brval').innerText=this.value">
+      </div>
+    </div>
+<script>document.getElementById('bpval').innerText=document.getElementById('blendpoint').value;document.getElementById('brval').innerText=document.getElementById('brightness').value;</script>
+    <div class="btn-box scheme1">
+      <input class='btn btn-sm' type='submit' name='submit' value='Speichern V1' />
+      <input class='btn btn-sm' type='submit' name='submit' value='Laden V1' />
+    </div>
+    <div class="btn-box scheme2">
+      <input class='btn btn-sm' type='submit' name='submit' value='Speichern V2' />
+      <input class='btn btn-sm' type='submit' name='submit' value='Laden V2' />
+    </div>
+    <div class="btn-box scheme3">
+      <input class='btn btn-sm' type='submit' name='submit' value='Speichern V3' />
+      <input class='btn btn-sm' type='submit' name='submit' value='Laden V3' />
+    </div>
+    <div class="btn-box scheme4">
+      <input class='btn btn-sm' type='submit' name='submit' value='Speichern V4' />
+      <input class='btn btn-sm' type='submit' name='submit' value='Laden V4' />
+    </div>
+    <div class="btn-box">
+    <!-- alarm -->
+    </div>
+    <div class="btn-footer">
+      <input class='btn btn-green' type=submit name=submit value='Update'/>
+    </div>
+  </form>
+<div class="bottomspacer">
+</body>
+</html>
