@@ -135,31 +135,31 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
-### v2.1.0.19 (Test)
+### v2.1.0.19 (INSTABIL — zurückgerollt auf v2.1.0.15)
 - Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
 - Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
 - Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
 
-### v2.1.0.19 (Test)
+### v2.1.0.19 (INSTABIL — zurückgerollt auf v2.1.0.15)
 - Fix: Sonnenzeiten API auf Open-Meteo (HTTP) umgestellt — sunrise-sunset.org leitet auf HTTPS um (HTTP 301, kein HTTPS auf ESP8266)
 - Open-Meteo liefert Lokalzeit direkt (timezone=auto), keine UTC-Umrechnung mehr nötig
 - Fix: EEPROM Default timezone von 1 (GMT-12) auf 34 (UTC+1/CET Solingen) geändert
 - handleRoot: server.sendContent() statt server.send() — RAM wird sofort nach dem Senden freigegeben
 
-### v2.1.0.18 (Test)
+### v2.1.0.18 (INSTABIL)
 - Fix: Heap-Warning durch 82-fache replace()-Schleife in handleSettings (Timezone-Dropdown)
 - Timezone-Select wird jetzt per JS gesetzt (document.getElementById("timezone").value) statt 82 String-Operationen
 - Fix: EEPROM.write(179, timezone) → timezonevalue an beiden Stellen (float statt int korrumpierte EEPROM-Wert)
 - toSend.reserve() Aufrufe entfernt (haben keinen positiven Effekt gehabt)
 
-### v2.1.0.17 (Test)
+### v2.1.0.17 (INSTABIL)
 - Sonnenzeiten API integriert (api.sunrise-sunset.org / sonnenzeiten.org)
 - Neue Funktion fetchSunriseSunset(): holt Sonnenauf- und -untergang täglich per HTTP, gecacht in apiSunriseMinutes/apiSunsetMinutes
 - Neue Funktion getSunTimes(): liefert gecachte API-Werte oder Fallback auf lokale Berechnung
 - Alle calcSunriseSunset()-Aufrufe (handleRoot, Loop, getstate) durch getSunTimes() ersetzt
 - API-Abruf erfolgt einmal täglich zusammen mit NTP forceUpdate
 
-### v2.1.0.16 (Test)
+### v2.1.0.16 (INSTABIL)
 - Fix: Heap-Überlauf in handleRoot und handleSettings durch Menü-Einbindung
 - $menu wird jetzt als erstes replace eingefügt (vor allen anderen replaces)
 - toSend.reserve() in handleRoot (4096) und handleSettings (16384) zur Vermeidung von Heap-Fragmentierung
