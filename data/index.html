@@ -23,12 +23,14 @@
   <div class="color-section">
     <div class="color-box">
       <label>Stundenfarbe</label>
-      <input type="color" name="hourcolorspectrum" id="hourcolorspectrum" value="#ff0000"/>
+      <div id="hourcolor-swatch" style="width:44px;height:44px;border-radius:4px;border:1px solid #ccc;background:#ff0000;cursor:pointer;margin:auto;" onclick="document.getElementById('hourcolorspectrum').click()"></div>
+      <input type="color" name="hourcolorspectrum" id="hourcolorspectrum" value="#ff0000" style="opacity:0;width:0;height:0;position:absolute;"/>
       <input type="hidden" name="hourcolor" id="hourcolor" value="#ff0000">
     </div>
     <div class="color-box">
       <label>Minutenfarbe</label>
-      <input type="color" name="minutecolorspectrum" id="minutecolorspectrum" value="#0000ff"/>
+      <div id="minutecolor-swatch" style="width:44px;height:44px;border-radius:4px;border:1px solid #ccc;background:#0000ff;cursor:pointer;margin:auto;" onclick="document.getElementById('minutecolorspectrum').click()"></div>
+      <input type="color" name="minutecolorspectrum" id="minutecolorspectrum" value="#0000ff" style="opacity:0;width:0;height:0;position:absolute;"/>
       <input type="hidden" name="minutecolor" id="minutecolor" value="#0000ff"/>
     </div>
   </div>
@@ -80,8 +82,10 @@ fetch('/getstate').then(r=>r.json()).then(function(d){
   var mc = d.minutecolor || '#0000ff';
   document.getElementById('hourcolor').value = hc;
   document.getElementById('hourcolorspectrum').value = hc;
+  document.getElementById('hourcolor-swatch').style.background = hc;
   document.getElementById('minutecolor').value = mc;
   document.getElementById('minutecolorspectrum').value = mc;
+  document.getElementById('minutecolor-swatch').style.background = mc;
   document.getElementById('blendpoint').value = d.blendpoint || 128;
   document.getElementById('bpval').innerText = d.blendpoint || 128;
   document.getElementById('brightness').value = d.brightness || 100;
@@ -105,9 +109,11 @@ fetch('/getstate').then(r=>r.json()).then(function(d){
 // Farbwähler synchronisieren
 document.getElementById('hourcolorspectrum').addEventListener('input',function(){
   document.getElementById('hourcolor').value=this.value;
+  document.getElementById('hourcolor-swatch').style.background=this.value;
 });
 document.getElementById('minutecolorspectrum').addEventListener('input',function(){
   document.getElementById('minutecolor').value=this.value;
+  document.getElementById('minutecolor-swatch').style.background=this.value;
 });
 </script>
 </body>
