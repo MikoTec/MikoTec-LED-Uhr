@@ -416,50 +416,23 @@ function parseHEXcolour(color) {
     return output;
 }
 
-//$(function(){
-jQuery(document).ready(function($){
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById("canvas")) {
 
-  //alert(document.body.style.backgroundColor););
- if (document.getElementById("canvas")) {
+  ctx = document.getElementById("canvas").getContext('2d');
 
-
-
-  ctx = $("#canvas")[0].getContext('2d');
-  $("#hourcolorspectrum").spectrum({
-    flat: true,
-    preferredFormat: "hex",
-    showButtons: false,
-    showInput: true,
-    move: function(color) {c=color.toRgb(); hourcolor = new RGBColour(c.r, c.g, c.b); 
-                           document.getElementById("hourcolor").value=document.getElementById("hourcolorspectrum").value;},
-    change: function(color) {document.getElementById("hourcolor").value=document.getElementById("hourcolorspectrum").value;}
-  });
-    
-  $("#minutecolorspectrum").spectrum({
-    flat: true,
-    preferredFormat: "hex",
-    showInput: true,
-    showButtons: false,
-    //color: minutecolor.getCSSIntegerRGB(),
-    move: function(color) {c=color.toRgb(); minutecolor = new RGBColour(c.r, c.g, c.b);
-                            document.getElementById("minutecolor").value=document.getElementById("minutecolorspectrum").value;},
-    change: function(color) {document.getElementById("minutecolor").value=document.getElementById("minutecolorspectrum").value;}
-    
-  });
-
-  c = document.getElementById("hourcolor").value;  
+  // Farben aus hidden inputs lesen (werden durch fetchESPState ueberschrieben)
+  var c = document.getElementById("hourcolor").value;
   c = parseHEXcolour(c);
   hourcolor = new RGBColour(c[0], c[1], c[2]);
 
-  c = document.getElementById("minutecolor").value;  
+  c = document.getElementById("minutecolor").value;
   c = parseHEXcolour(c);
   minutecolor = new RGBColour(c[0], c[1], c[2]);
 
-
-  // Make it visually fill the positioned parent
+  // Canvas auf volle Breite skalieren
   canvas.style.width ='100%';
   canvas.style.height='100%';
-  // ...then set the internal size to match
   canvas.width  = canvas.offsetWidth;
   canvas.height = canvas.width;
 
@@ -467,13 +440,11 @@ jQuery(document).ready(function($){
   height = (width)+10;
   needRedraw = true;
 
-
-  /* setup */
   drawRadius = height/2 * 0.95;
   innerRadius = drawRadius * 0.5;
   fetchESPState();
   setInterval(fetchESPState, 5000);
   tick();
   setInterval(tick, 100);
- }
-})
+  }
+});

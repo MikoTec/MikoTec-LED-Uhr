@@ -106,6 +106,13 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.13 (26.04.2026)
+- Fix: clock.js jQuery(document).ready() durch natives DOMContentLoaded ersetzt
+- Fix: Spectrum Color Picker entfernt — index.html nutzt native input type="color"
+- Fix: $("#canvas")[0] durch document.getElementById("canvas") ersetzt
+- Kein jQuery mehr erforderlich auf der Startseite
+- ⚠️ Neues LittleFS-Image erforderlich: littlefs_v2.2.0.13.bin (clock.js geändert)
+
 ### v2.2.0.12 (25.04.2026)
 - Fix: clock.js aktualisiert nach /getstate fetch die Spectrum Color Picker korrekt
 - Fix: hidden inputs hourcolor/minutecolor werden mit Werten aus getstate befüllt
