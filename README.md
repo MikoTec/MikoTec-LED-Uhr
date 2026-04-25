@@ -135,6 +135,14 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.2.0.7 (25.04.2026)
+- Neu: Log-Persistenz in LittleFS - alle Log-Ausgaben werden in /log.txt geschrieben
+- Beim Neustart wird /log.txt zu /log_prev.txt umbenannt (Log des letzten Boots bleibt erhalten)
+- /getlog liefert weiterhin den aktuellen RAM-Buffer
+- /getlog?prev=1 liefert den Log vom letzten Boot aus LittleFS
+- /log_prev.txt direkt im Browser downloadbar
+- Log-Datei wird vor ESP.restart() sauber geschlossen
+
 ### v2.2.0.6 (25.04.2026)
 - Fix: LittleFS OTA-Upload blockierte nicht mehr durch Vorab-Loeschen aller Sektoren
 - Sektoren werden jetzt einzeln geloescht direkt bevor sie beschrieben werden (auf 4096-Byte-Grenze)
@@ -192,6 +200,14 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 - Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
 - Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
 - Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
+
+### v2.2.0.7 (25.04.2026)
+- Neu: Log-Persistenz in LittleFS - alle Log-Ausgaben werden in /log.txt geschrieben
+- Beim Neustart wird /log.txt zu /log_prev.txt umbenannt (Log des letzten Boots bleibt erhalten)
+- /getlog liefert weiterhin den aktuellen RAM-Buffer
+- /getlog?prev=1 liefert den Log vom letzten Boot aus LittleFS
+- /log_prev.txt direkt im Browser downloadbar
+- Log-Datei wird vor ESP.restart() sauber geschlossen
 
 ### v2.2.0.6 (25.04.2026)
 - Fix: LittleFS OTA-Upload blockierte nicht mehr durch Vorab-Loeschen aller Sektoren

@@ -78,16 +78,24 @@ NTPClient NTPclient(ntpUDP, "pool.ntp.org");
 char logBuffer[LOG_BUFFER_SIZE];
 int logWritePos = 0;
 bool logWrapped = false;
+bool logFSready = false;  // true sobald LittleFS bereit und Log-Datei offen
+File logFile;             // globales Handle fuer /log.txt in LittleFS
 
 void logAppend(const char* str) {
-  while (*str) {
-    logBuffer[logWritePos] = *str;
+  const char* p = str;
+  while (*p) {
+    logBuffer[logWritePos] = *p;
     logWritePos++;
     if (logWritePos >= LOG_BUFFER_SIZE) {
       logWritePos = 0;
       logWrapped = true;
     }
-    str++;
+    p++;
+  }
+  // Zusaetzlich in LittleFS persistieren
+  if (logFSready && logFile) {
+    logFile.print(str);
+    logFile.flush();
   }
 }
 
@@ -185,7 +193,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.6";
+const char* firmware_version = "2.2.0.7";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1132,6 +1140,24 @@ void launchWeb(int webtype) {
     server.serveStatic("/settings.js", LittleFS, "/settings.js", "max-age=3600");
     server.serveStatic("/support.js",  LittleFS, "/support.js",  "max-age=3600");
     server.serveStatic("/timezone.js", LittleFS, "/timezone.js", "max-age=3600");
+    // Log-Datei: alte log.txt -> log_prev.txt, neue log.txt oeffnen
+    if (LittleFS.exists("/log.txt")) {
+      if (LittleFS.exists("/log_prev.txt")) LittleFS.remove("/log_prev.txt");
+      LittleFS.rename("/log.txt", "/log_prev.txt");
+    }
+    logFile = LittleFS.open("/log.txt", "w");
+    if (logFile) {
+      logFSready = true;
+      // Bisherigen RAM-Buffer in Datei schreiben
+      String buf = getLogContent();
+      logFile.print(buf);
+      logFile.flush();
+      logTS(); dualOut.println("[LittleFS] Log-Datei geoeffnet: /log.txt");
+    } else {
+      logTS(); dualOut.println("[LittleFS] WARN: Log-Datei konnte nicht geoeffnet werden");
+    }
+    server.serveStatic("/log.txt",      LittleFS, "/log.txt");
+    server.serveStatic("/log_prev.txt", LittleFS, "/log_prev.txt");
   } else {
     logTS(); dualOut.println("[LittleFS] FEHLER: Dateisystem nicht gefunden!");
   }
@@ -1242,6 +1268,7 @@ void setUpServerHandle() {
           "<p style='margin:16px 0;'>Uhr startet neu...</p>"
           "</div></body></html>");
         delay(500);
+        if (logFSready && logFile) { logFile.flush(); logFile.close(); }
         ESP.restart();
       }
     },
@@ -3111,7 +3138,18 @@ void handleSupport() {
 }
 
 void handleGetLog() {
-  server.send(200, "text/plain", getLogContent());
+  // ?prev=1 liefert den Log vom letzten Boot (log_prev.txt aus LittleFS)
+  if (server.hasArg("prev") && server.arg("prev") == "1") {
+    if (logFSready && LittleFS.exists("/log_prev.txt")) {
+      File f = LittleFS.open("/log_prev.txt", "r");
+      server.streamFile(f, "text/plain");
+      f.close();
+    } else {
+      server.send(404, "text/plain", "Kein vorheriger Log vorhanden.");
+    }
+  } else {
+    server.send(200, "text/plain", getLogContent());
+  }
 }
 
 void handleGetSysInfo() {
