@@ -135,6 +135,12 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 
 ## Changelog
 
+### v2.2.0.10 (25.04.2026)
+- Neu: FS-OTA Erfolgsseite zeigt zwei Buttons: Log herunterladen + Uhr neu starten
+- Log-Snapshot wird vor Neustart gesichert und als fs_ota_log.txt zum Download angeboten
+- Neustart erst auf Knopfdruck - kein Log geht mehr verloren
+- Neues LittleFS-Image: littlefs_v2.2.0.10.bin
+
 ### v2.2.0.9 (25.04.2026)
 - Fix: Log-Datei wird vor LittleFS.end() geflusht und geschlossen (logFSready=false)
 - Fix: ERR_CONNECTION_RESET nach FS-OTA - delay 500ms auf 2000ms erhoeht
@@ -211,6 +217,12 @@ Dieses Projekt basiert auf "The Light Clock" und steht unter der GNU General Pub
 - Fix: Sonnenzeiten-API HTTP 301 Redirect → auf Open-Meteo (api.open-meteo.com) umgestellt, reines HTTP, Lokalzeit direkt ohne UTC-Umrechnung
 - Fix: Default-Timezone von 1 (GMT-12!) auf 34 (UTC+1/CET Solingen) korrigiert
 - Fix: handleRoot nutzt sendContent() statt send(), gibt RAM sofort nach dem Senden frei → weniger Heap-Druck
+
+### v2.2.0.10 (25.04.2026)
+- Neu: FS-OTA Erfolgsseite zeigt zwei Buttons: Log herunterladen + Uhr neu starten
+- Log-Snapshot wird vor Neustart gesichert und als fs_ota_log.txt zum Download angeboten
+- Neustart erst auf Knopfdruck - kein Log geht mehr verloren
+- Neues LittleFS-Image: littlefs_v2.2.0.10.bin
 
 ### v2.2.0.9 (25.04.2026)
 - Fix: Log-Datei wird vor LittleFS.end() geflusht und geschlossen (logFSready=false)
