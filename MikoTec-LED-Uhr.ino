@@ -192,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.28";
+const char* firmware_version = "2.2.0.29";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1268,22 +1268,11 @@ void setUpServerHandle() {
         server.send(500, "text/plain", "Fehler beim Dateisystem-Update!");
       } else {
         // Log-Inhalt vor Neustart sichern
-        String logSnapshot = getLogContent();
-        logSnapshot += "\n[FS-OTA] Upload abgeschlossen - Log gesichert vor Neustart\n";
-        String html = "<!DOCTYPE html><html><head><meta charset='utf-8'>"
-          "<link rel=stylesheet href='/style.css'></head>"
-          "<body class='settings-page'>"
-          "<div id='rcorners2' style='max-width:480px;margin:40px auto;text-align:center;'>"
-          "<label class='section-head' style='color:#4CAF50;'>Dateisystem aktualisiert!</label>"
-          "<p style='margin:16px 0;'>Log vor dem Neustart sichern, dann Uhr neu starten.</p>"
-          "<a class='btn btn-default' href='/fs_ota_log' style='margin:8px;'>Log herunterladen</a>"
-          "<a class='btn btn-default' href='/fs_ota_restart' style='margin:8px;background:#e53935;color:#fff;'>Uhr neu starten</a>"
-          "</div></body></html>";
-        // Log-Snapshot fuer Download bereitstellen (statische Variable)
         static String fsOtaLogSnapshot;
-        fsOtaLogSnapshot = logSnapshot;
-        // Handler fuer Log-Download registrieren
-        server.on("/fs_ota_log", [&fsOtaLogSnapshot](){
+        fsOtaLogSnapshot = getLogContent();
+        fsOtaLogSnapshot += "\n[FS-OTA] Upload abgeschlossen - Log gesichert vor Neustart\n";
+        // Handler fuer Log-Download registrieren (kein LittleFS noetig)
+        server.on("/fs_ota_log", [](){
           server.sendHeader("Content-Disposition", "attachment; filename=fs_ota_log.txt");
           server.send(200, "text/plain", fsOtaLogSnapshot);
         });
@@ -1292,14 +1281,31 @@ void setUpServerHandle() {
           server.send(200, "text/html",
             "<!DOCTYPE html><html><head><meta charset='utf-8'>"
             "<meta http-equiv='refresh' content='10;url=/'></head>"
-            "<body class='settings-page'>"
-            "<div id='rcorners2' style='max-width:420px;margin:40px auto;text-align:center;'>"
-            "<label class='section-head'>Uhr startet neu...</label>"
+            "<body style='font-family:sans-serif;text-align:center;margin-top:60px;'>"
+            "<h2>Uhr startet neu...</h2>"
             "<p>Weiterleitung in 10 Sekunden</p>"
-            "</div></body></html>");
-          delay(2000);
+            "</body></html>");
+          delay(500);
           ESP.restart();
         });
+        // Erfolgsseite komplett inline - kein CSS/JS aus LittleFS (ist nicht mehr gemountet)
+        String html = "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+          "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+          "<style>"
+          "body{font-family:Abel,sans-serif;background:#f5f5f5;margin:0;padding:20px;}"
+          "h2{color:#4CAF50;letter-spacing:2px;text-transform:uppercase;}"
+          ".box{background:#fff;max-width:480px;margin:40px auto;padding:30px;border-radius:8px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.1);}"
+          ".btn{display:inline-block;margin:8px;padding:10px 20px;border-radius:4px;text-decoration:none;font-family:Abel,sans-serif;letter-spacing:1px;text-transform:uppercase;font-size:14px;cursor:pointer;}"
+          ".btn-green{background:#4CAF50;color:#fff;}"
+          ".btn-red{background:#e53935;color:#fff;}"
+          ".btn-default{background:#333;color:#fff;}"
+          "</style></head>"
+          "<body><div class='box'>"
+          "<h2>Dateisystem aktualisiert!</h2>"
+          "<p>Log vor dem Neustart sichern, dann Uhr neu starten.</p>"
+          "<a class='btn btn-default' href='/fs_ota_log'>Log herunterladen</a><br>"
+          "<a class='btn btn-red' href='/fs_ota_restart'>Uhr neu starten</a>"
+          "</div></body></html>";
         server.send(200, "text/html", html);
       }
     },

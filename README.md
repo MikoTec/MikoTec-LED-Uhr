@@ -106,6 +106,11 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.29 (26.04.2026)
+- Fix: LittleFS-OTA Erfolgsseite vollständig inline (kein CSS/JS aus LittleFS nach dem Flash)
+- Fix: Log-Download und Neustart-Button funktionieren zuverlässig nach jedem FS-Flash
+- Nur Firmware-Update nötig, kein neues LittleFS-Image
+
 ### v2.2.0.28 (26.04.2026)
 - Fix: Zeitzone Manuell-Tab zeigt jetzt korrekten UTC-Versatz (z.B. 1 für MEZ) statt internem Index (31)
 - Fix: /getsettings liefert jetzt auch timezone (UTC-float)
