@@ -2,8 +2,8 @@
 <html>
 <head>
 <title>Zeitzone</title>
-<meta name=viewport content="width=device-width, initial-scale=1">
-<meta http-equiv=Content-Type content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <link rel="stylesheet" href="/style.css">
 <link rel="stylesheet" href="/menu.css">
 <style>
@@ -74,8 +74,8 @@ select.tz-input {
 }
 </style>
 </head>
-<body class=settings-page>
-<!-- MENU -->
+<body class="settings-page">
+<div id="menu-placeholder"></div>
 
 <div id="rcorners2" style="max-width:480px;margin:20px auto;">
   <label class="section-head">Zeitzone einstellen</label>
@@ -88,46 +88,46 @@ select.tz-input {
 
   <!-- Tab: Suche -->
   <div id="GPS" class="tz-pane active">
-    <form action=/ method=GET>
+    <form action="/" method="GET">
     <div class="tz-search-row">
-      <input type=text id=searchAddr placeholder="Adresse oder Stadt eingeben...">
-      <button type=button class="btn btn-sm" onclick="searchLocation()">Suchen</button>
+      <input type="text" id="searchAddr" placeholder="Adresse oder Stadt eingeben...">
+      <button type="button" class="btn btn-sm" onclick="searchLocation()">Suchen</button>
     </div>
-    <span id=searchStatus></span>
+    <span id="searchStatus"></span>
     <label>Breitengrad</label>
-    <input class="tz-input" type=text name=latitude id=latitude value=<!-- lat -->>
-    <label>Laengengrad</label>
-    <input class="tz-input" type=text name=longitude id=longitude value=<!-- lng -->>
+    <input class="tz-input" type="text" name="latitude" id="latitude" value="">
+    <label>Längengrad</label>
+    <input class="tz-input" type="text" name="longitude" id="longitude" value="">
     <div style="text-align:center;margin-top:10px;">
-      <input class="btn btn-default" type=submit name=submit value='Update Timezone'>
+      <input class="btn btn-default" type="submit" name="submit" value="Update Timezone">
     </div>
     </form>
   </div>
 
   <!-- Tab: Manuell -->
   <div id="Manual" class="tz-pane">
-    <form action=/ method=GET>
-    <label>UTC Versatz (z.B. 1 fuer MEZ, 2 fuer MESZ)</label>
-    <input class="tz-input" type=text name=timezone id=timezone value=<!-- tz -->>
+    <form action="/" method="GET">
+    <label>UTC Versatz (z.B. 1 für MEZ, 2 für MESZ)</label>
+    <input class="tz-input" type="text" name="timezone" id="timezone" value="">
     <div style="text-align:center;margin-top:10px;">
-      <input class="btn btn-default" type=submit name=submit value='Update Timezone'>
+      <input class="btn btn-default" type="submit" name="submit" value="Update Timezone">
     </div>
     </form>
   </div>
 
   <!-- Tab: Stadt -->
   <div id="City" class="tz-pane">
-    <form action=/ method=GET>
-    <label>Stadt auswaehlen</label>
-    <select class="tz-input" id=citysel onchange="cityChanged()">
-      <option value="">-- Stadt waehlen --</option>
+    <form action="/" method="GET">
+    <label>Stadt auswählen</label>
+    <select class="tz-input" id="citysel" onchange="cityChanged()">
+      <option value="">-- Stadt wählen --</option>
       <option value="52.52,13.41">Berlin</option>
-      <option value="48.14,11.58">Muenchen</option>
+      <option value="48.14,11.58">München</option>
       <option value="53.55,9.99">Hamburg</option>
-      <option value="50.94,6.96">Koeln</option>
+      <option value="50.94,6.96">Köln</option>
       <option value="50.11,8.68">Frankfurt</option>
       <option value="48.78,9.18">Stuttgart</option>
-      <option value="51.23,6.78">Duesseldorf</option>
+      <option value="51.23,6.78">Düsseldorf</option>
       <option value="51.51,7.47">Dortmund</option>
       <option value="51.45,7.01">Essen</option>
       <option value="51.17,7.08">Solingen</option>
@@ -135,8 +135,8 @@ select.tz-input {
       <option value="51.34,12.37">Leipzig</option>
       <option value="51.05,13.74">Dresden</option>
       <option value="48.40,10.00">Ulm</option>
-      <option value="49.45,11.08">Nuernberg</option>
-      <option value="47.37,8.54">Zuerich</option>
+      <option value="49.45,11.08">Nürnberg</option>
+      <option value="47.37,8.54">Zürich</option>
       <option value="48.21,16.37">Wien</option>
       <option value="46.95,7.45">Bern</option>
       <option value="51.50,-0.13">London</option>
@@ -156,16 +156,17 @@ select.tz-input {
       <option value="35.69,139.69">Tokyo</option>
       <option value="-33.87,151.21">Sydney</option>
     </select>
-    <input type=text name=latitude id=citylat style="display:none">
-    <input type=text name=longitude id=citylng style="display:none">
+    <input type="text" name="latitude" id="citylat" style="display:none">
+    <input type="text" name="longitude" id="citylng" style="display:none">
     <div style="text-align:center;margin-top:10px;">
-      <input class="btn btn-default" type=submit name=submit value='Update Timezone'>
+      <input class="btn btn-default" type="submit" name="submit" value="Update Timezone">
     </div>
     </form>
   </div>
 
 </div>
 
+<script src="/menu.js"></script>
 <script src="/timezone.js"></script>
 </body>
 </html>

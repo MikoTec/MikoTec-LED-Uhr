@@ -1,4 +1,3 @@
-// Zeitzone JavaScript
 function showTab(id, btn) {
   var panes = document.getElementsByClassName("tz-pane");
   for (var i = 0; i < panes.length; i++) panes[i].className = "tz-pane";
@@ -7,6 +6,7 @@ function showTab(id, btn) {
   for (var i = 0; i < tabs.length; i++) tabs[i].className = "tz-tab";
   btn.className = "tz-tab active";
 }
+
 function searchLocation() {
   var addr = document.getElementById("searchAddr").value;
   if (!addr) { document.getElementById("searchStatus").innerText = "Bitte Adresse eingeben"; return; }
@@ -27,13 +27,20 @@ function searchLocation() {
   };
   xhr.send();
 }
+
 function cityChanged() {
   var s = document.getElementById("citysel").value;
   if (s != "") {
     var p = s.split(",");
     document.getElementById("citylat").value = p[0];
     document.getElementById("citylng").value = p[1];
-    document.getElementById("latitude").value = p[0];
-    document.getElementById("longitude").value = p[1];
   }
 }
+
+document.addEventListener('DOMContentLoaded', function(){
+  fetch('/getsettings').then(r=>r.json()).then(function(d){
+    if(d.timezonevalue!=null) document.getElementById('timezone').value = d.timezonevalue;
+    if(d.latitude!=null)  document.getElementById('latitude').value  = d.latitude;
+    if(d.longitude!=null) document.getElementById('longitude').value = d.longitude;
+  }).catch(function(){});
+});

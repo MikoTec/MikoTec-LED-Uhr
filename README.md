@@ -106,6 +106,11 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.27 (26.04.2026)
+- Fix: timezone.html — Menü eingebunden, menu.js geladen, aktuelle Werte per JS befüllt
+- Fix: /getsettings liefert jetzt auch latitude und longitude
+- ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.27.bin
+
 ### v2.2.0.26 (26.04.2026)
 - Fix: menu.js fehlte in settings.html — Menü war nicht sichtbar
 - ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.26.bin
