@@ -106,6 +106,11 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.25 (26.04.2026)
+- Fix: Inline-Scripts aus settings.html entfernt — toggleSleepFields() wurde vor settings.js geladen und verursachte ReferenceError der das gesamte JS stoppte
+- Fix: Alle JS-Funktionen in settings.js, alles läuft unter DOMContentLoaded
+- ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.25.bin
+
 ### v2.2.0.24 (26.04.2026)
 - Debug: /getsettings loggt jetzt den kompletten JSON-Response (zur Diagnose Checkbox-Problem)
 - ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.24.bin

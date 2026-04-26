@@ -6,25 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="/style.css">
 <link rel="stylesheet" href="/menu.css">
-<script type="text/javascript">
-function CheckClockType(val){
-  var pixcount=document.getElementById('pixelCount');
-  var power=document.getElementById('powerType');
-  switch(val) {
-    case '1':
-      document.getElementById('pixelCountli').style.display='none';
-      document.getElementById('powerTypeli').style.display='none';
-      pixcount.value=120; power.value=1; break;
-    case '2':
-      document.getElementById('pixelCountli').style.display='none';
-      document.getElementById('powerTypeli').style.display='none';
-      pixcount.value=60; power.value=2; break;
-    case '3':
-      document.getElementById('pixelCountli').style.display='block';
-      document.getElementById('powerTypeli').style.display='block'; break;
-  }
-}
-</script>
 </head>
 <body class="settings-page">
 <div id="menu-placeholder"></div>
@@ -57,7 +38,7 @@ function CheckClockType(val){
 <li class="checkbox">
 <input id="showsunpointhidden" type="hidden" name="showsunpointhidden" value="0">
 <input id="showsunpoint" type="checkbox" name="showsunpoint">
-<label for="showsunpoint">Sonnenpunkt <span data-tooltip="Zeigt die aktuelle Sonnenposition als goldenen LED-Punkt (nur tagsüber sichtbar, Breitengrad/Längengrad erforderlich)" class="tooltip" style="cursor:help;">&#9432;</span></label>
+<label for="showsunpoint">Sonnenpunkt <span data-tooltip="Zeigt die aktuelle Sonnenposition als goldenen LED-Punkt" class="tooltip" style="cursor:help;">&#9432;</span></label>
 </li>
 <li class="checkbox">
 <input id="dawnbreakhidden" type="hidden" name="dawnbreakhidden" value="0">
@@ -83,11 +64,7 @@ function CheckClockType(val){
 <input type="range" name="nightbrightness" id="nightbrightness" min="0" max="100" value="10">
 <span id="nbval">10%</span>
 </div>
-<script>
-var nb=document.querySelector('input[name=nightbrightness]');
-nb.oninput=function(){document.getElementById('nbval').innerText=this.value+'%';};
-</script>
-<label data-tooltip="Manuell: Feste Zeiten verwenden. Automatisch: Sonnenauf- und untergang berechnen (Breitengrad/Laengengrad erforderlich)" class="tooltip">Schlafsteuerung</label>
+<label data-tooltip="Manuell: Feste Zeiten. Automatisch: Sonnenauf-/untergang" class="tooltip">Schlafsteuerung</label>
 <div class="form-field">
 <select name="autosleep" id="autosleep" onchange="toggleSleepFields()">
 <option value="0">Manuell</option>
@@ -105,13 +82,6 @@ nb.oninput=function(){document.getElementById('nbval').innerText=this.value+'%';
 </div>
 </div>
 </li>
-<script>
-function toggleSleepFields(){
-  var v=document.getElementById('autosleep').value;
-  document.getElementById('manualsleep').style.display=(v=='0')?'block':'none';
-}
-toggleSleepFields();
-</script>
 
 <li>
 <label>Hemisphäre</label>
