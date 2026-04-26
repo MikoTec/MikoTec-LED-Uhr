@@ -1,5 +1,3 @@
-// Einstellungen JavaScript
-
 function CheckClockType(val) {
   var pixcount = document.getElementById('pixelCount');
   var power = document.getElementById('maxbright');
@@ -18,6 +16,17 @@ function CheckClockType(val) {
   }
 }
 
+function toggleSleepFields() {
+  var v = document.getElementById('autosleep').value;
+  document.getElementById('manualsleep').style.display = (v == '0') ? 'block' : 'none';
+}
+
+// Nacht-Helligkeit Slider Live-Anzeige
+var nb = document.getElementById('nightbrightness');
+if (nb) {
+  nb.oninput = function() { document.getElementById('nbval').innerText = this.value + '%'; };
+}
+
 // Zeit per getstate aktualisieren
 function updateTime() {
   fetch('/getstate').then(r=>r.json()).then(function(d){
@@ -34,19 +43,45 @@ fetch('/getsettings').then(r=>r.json()).then(function(d){
   if(d.clockname)  document.getElementById('clockname').value  = d.clockname;
   if(d.hourmarks != null) document.getElementById('hourmarks').value = d.hourmarks;
   if(d.sleeptype != null) document.getElementById('sleeptype').value = d.sleeptype;
-  if(d.sleep != null) document.getElementById('sleep').value = d.sleep;
-  if(d.sleepmin != null) document.getElementById('sleepmin').value = d.sleepmin;
-  if(d.wake != null) document.getElementById('wake').value = d.wake;
-  if(d.wakemin != null) document.getElementById('wakemin').value = d.wakemin;
-  if(d.nightbrightness != null) document.getElementById('nightbrightness').value = d.nightbrightness;
+  if(d.nightbrightness != null) {
+    document.getElementById('nightbrightness').value = d.nightbrightness;
+    document.getElementById('nbval').innerText = d.nightbrightness + '%';
+  }
+  // sleep/wake als time-Felder: "HH:MM"
+  if(d.sleep != null && d.sleepmin != null) {
+    var sh = (d.sleep < 10 ? '0' : '') + d.sleep;
+    var sm = (d.sleepmin < 10 ? '0' : '') + d.sleepmin;
+    document.getElementById('sleep').value = sh + ':' + sm;
+  }
+  if(d.wake != null && d.wakemin != null) {
+    var wh = (d.wake < 10 ? '0' : '') + d.wake;
+    var wm = (d.wakemin < 10 ? '0' : '') + d.wakemin;
+    document.getElementById('wake').value = wh + ':' + wm;
+  }
   if(d.hemisphere != null) document.getElementById('hemisphere').value = d.hemisphere;
   if(d.DSTauto != null) document.getElementById('DSTauto').value = d.DSTauto;
-  if(d.showseconds) document.getElementById('showseconds').checked = d.showseconds == 1;
+  if(d.showseconds != null) document.getElementById('showseconds').checked = d.showseconds == 1;
   if(d.showsunpoint != null) document.getElementById('showsunpoint').checked = d.showsunpoint == 1;
   if(d.dawnbreak != null) document.getElementById('dawnbreak').checked = d.dawnbreak == 1;
-  if(d.autosleep != null) document.getElementById('autosleep').checked = d.autosleep == 1;
-  if(d.maxBrightness) document.getElementById('maxbright').value = d.maxBrightness;
+  if(d.autosleep != null) {
+    document.getElementById('autosleep').value = d.autosleep;
+    toggleSleepFields();
+  }
+  if(d.maxBrightness != null) {
+    document.getElementById('maxbright').value = d.maxBrightness;
+    // clocktype ableiten
+    if(d.pixelCount == 120 && d.maxBrightness == 255) {
+      document.getElementById('clocktype').value = '1';
+      document.getElementById('pixelCountli').style.display='none';
+      document.getElementById('powerTypeli').style.display='none';
+    } else if(d.pixelCount == 60 && d.maxBrightness == 100) {
+      document.getElementById('clocktype').value = '2';
+      document.getElementById('pixelCountli').style.display='none';
+      document.getElementById('powerTypeli').style.display='none';
+    }
+  }
 }).catch(function(){});
 
 setInterval(updateTime, 1000);
 updateTime();
+toggleSleepFields();

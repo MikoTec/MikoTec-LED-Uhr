@@ -192,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.18";
+const char* firmware_version = "2.2.0.19";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -2114,19 +2114,17 @@ void handleSettings() {
     dualOut.println(nightBrightness);
   }
   if (server.hasArg("sleep")) {
-    sleep = server.arg("sleep").toInt();
+    String sleepstring = server.arg("sleep");
+    sleep = sleepstring.substring(0, 2).toInt();
+    sleepmin = sleepstring.substring(3).toInt();
     EEPROM.write(182, sleep);
-  }
-  if (server.hasArg("sleepmin")) {
-    sleepmin = server.arg("sleepmin").toInt();
     EEPROM.write(183, sleepmin);
   }
   if (server.hasArg("wake")) {
-    wake = server.arg("wake").toInt();
+    String wakestring = server.arg("wake");
+    wake = wakestring.substring(0, 2).toInt();
+    wakemin = wakestring.substring(3).toInt();
     EEPROM.write(189, wake);
-  }
-  if (server.hasArg("wakemin")) {
-    wakemin = server.arg("wakemin").toInt();
     EEPROM.write(190, wakemin);
     nightCheck();
   }

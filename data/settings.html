@@ -104,40 +104,40 @@
 </li>
 
 <li>
+<label data-tooltip="Helligkeit der Uhr im Schlafmodus (0=aus, 100=voll)" class="tooltip">Nacht-Helligkeit</label>
+<div class="form-field">
+<input type="range" name="nightbrightness" id="nightbrightness" min="0" max="100" value="10">
+<span id="nbval">10%</span>
+</div>
+</li>
+
+<li>
 <label>Schlafsteuerung</label>
 <div class="form-field">
-<input type="hidden" name="autosleephidden" value="1">
-<input type="checkbox" name="autosleep" id="autosleep"> Automatisch (Sonnenstand)
+<select name="autosleep" id="autosleep" onchange="toggleSleepFields()">
+<option value="0">Manuell</option>
+<option value="1">Automatisch (Sonne)</option>
+</select>
 </div>
 </li>
 
+<div id="manualsleep">
 <li>
 <label>Schlafzeit Von</label>
-<div class="form-field">
-<input type="number" name="sleep" id="sleep" min="0" max="23" value="22"> :
-<input type="number" name="sleepmin" id="sleepmin" min="0" max="59" value="0">
-</div>
+<div class="form-field"><input type="time" name="sleep" id="sleep" value="22:00"></div>
 </li>
-
 <li>
 <label>Schlafzeit Bis</label>
-<div class="form-field">
-<input type="number" name="wake" id="wake" min="0" max="23" value="7"> :
-<input type="number" name="wakemin" id="wakemin" min="0" max="59" value="0">
+<div class="form-field"><input type="time" name="wake" id="wake" value="07:00"></div>
+</li>
 </div>
-</li>
 
 <li>
-<label>Nacht-Helligkeit %</label>
-<div class="form-field"><input type="number" name="nightbrightness" id="nightbrightness" min="0" max="100" value="10"></div>
-</li>
-
-<li>
-<label>Hemisphere</label>
+<label>Hemisphäre</label>
 <div class="form-field">
 <select name="hemisphere" id="hemisphere">
 <option value="0">Nordhalbkugel</option>
-<option value="1">Suedhalbkugel</option>
+<option value="1">Südhalbkugel</option>
 </select>
 </div>
 </li>
@@ -159,5 +159,6 @@
 </ul>
 </form>
 </div>
+<script src="/settings.js"></script>
 </body>
 </html>

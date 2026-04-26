@@ -106,6 +106,11 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.19 (26.04.2026)
+- Fix: Settings-Seite Layout wiederhergestellt (Slider für Nacht-Helligkeit, time-Felder für Schlafzeiten, Autosleep-Toggle)
+- Fix: sleep/wake werden wieder als type=time Felder (HH:MM) verarbeitet
+- ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.19.bin
+
 ### v2.2.0.18 (26.04.2026)
 - Fix: /getsettings Endpunkt hinzugefügt — Settings-Seite wurde leer angezeigt (LittleFS-Architektur)
 - Fix: sleep/sleepmin und wake/wakemin werden jetzt korrekt als separate Felder verarbeitet
