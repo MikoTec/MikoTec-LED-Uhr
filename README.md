@@ -106,6 +106,13 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.30 (26.04.2026)
+- Fix: index.html - Alarm Einstellungen Button entfernt (erscheint nur noch wenn Alarm aktiv)
+- Fix: hilfe.html - Menü eingebunden, menu.js geladen
+- Fix: support.html - Menü eingebunden, menu.js geladen
+- Fix: settings.html - ⓘ Icons entfernt, Tooltips auf standard .tooltip Klasse umgestellt
+- ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.30.bin
+
 ### v2.2.0.29 (26.04.2026)
 - Fix: LittleFS-OTA Erfolgsseite vollständig inline (kein CSS/JS aus LittleFS nach dem Flash)
 - Fix: Log-Download und Neustart-Button funktionieren zuverlässig nach jedem FS-Flash

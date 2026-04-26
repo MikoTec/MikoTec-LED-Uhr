@@ -96,7 +96,7 @@ fetch('/getstate').then(r=>r.json()).then(function(d){
   if(d.alarmactive){
     alarmBox.innerHTML = '<a class="btn btn-default" href="/?alarmoff=1">Cancel Alarm</a>';
   } else {
-    alarmBox.innerHTML = '<a class="btn btn-default" href="/alarm">Alarm Einstellungen</a>';
+    alarmBox.innerHTML = '';
   }
   // Farbverlaeufe fuer Scheme-Buttons direkt setzen
   if(d.schemes){
