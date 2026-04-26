@@ -106,6 +106,12 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.32 (26.04.2026)
+- Fix: settings.html - Sonnenpunkt/Sonnenaufgang tooltip auf span statt label (Checkbox war nicht klickbar)
+- Neu: LittleFS-Version wird beim Start im Log ausgegeben ([LittleFS] FS-Version: x.x.x.xx)
+- Neu: fs_version.txt im LittleFS-Image zur Versionserkennung
+- ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.32.bin
+
 ### v2.2.0.31 (26.04.2026)
 - Fix: settings.html - Sonnenpunkt/Sonnenaufgang Checkboxen sichtbar (for-Attribut entfernt, Label überdeckte Checkbox)
 - ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.31.bin

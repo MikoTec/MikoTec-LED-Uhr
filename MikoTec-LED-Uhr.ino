@@ -192,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.31";
+const char* firmware_version = "2.2.0.32";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1138,6 +1138,13 @@ void launchWeb(int webtype) {
   // LittleFS initialisieren
   if (LittleFS.begin()) {
     logTS(); dualOut.println("[LittleFS] Dateisystem bereit");
+    // LittleFS-Version ausgeben
+    if (LittleFS.exists("/fs_version.txt")) {
+      File fv = LittleFS.open("/fs_version.txt", "r");
+      String fsVer = fv.readString();
+      fv.close();
+      logTS(); dualOut.println("[LittleFS] FS-Version: " + fsVer);
+    }
     server.serveStatic("/style.css",   LittleFS, "/style.css",   "max-age=3600");
     server.serveStatic("/menu.css",    LittleFS, "/menu.css",    "max-age=3600");
     server.serveStatic("/clock.js",    LittleFS, "/clock.js",    "max-age=3600");
