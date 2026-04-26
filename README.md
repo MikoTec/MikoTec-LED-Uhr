@@ -106,6 +106,10 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.31 (26.04.2026)
+- Fix: settings.html - Sonnenpunkt/Sonnenaufgang Checkboxen sichtbar (for-Attribut entfernt, Label überdeckte Checkbox)
+- ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.31.bin
+
 ### v2.2.0.30 (26.04.2026)
 - Fix: index.html - Alarm Einstellungen Button entfernt (erscheint nur noch wenn Alarm aktiv)
 - Fix: hilfe.html - Menü eingebunden, menu.js geladen
