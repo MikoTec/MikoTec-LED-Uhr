@@ -192,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.21";
+const char* firmware_version = "2.2.0.22";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1179,7 +1179,8 @@ void setUpServerHandle() {
   server.on("/description.xml", ssdpResponder);
   server.on("/cleareeprom", webHandleClearRom);
   server.on("/cleareepromsure", webHandleClearRomSure);
-  server.on("/settings", handleSettings);
+  server.on("/settings", HTTP_GET, handleSettings);
+  server.on("/settings", HTTP_POST, handleSettings);
   server.on("/timezone", handleTimezone);
   server.on("/clockmenustyle.css", handleCSS);
   server.on("/spectrum.css", handlespectrumCSS);
@@ -2095,6 +2096,12 @@ void handleSettings() {
   if (server.hasArg("submit")) {
     logTS(); dualOut.print("Submit: ");
     dualOut.println(server.arg("submit"));
+    logTS(); dualOut.print("Anzahl Args: ");
+    dualOut.println(server.args());
+    for (int i = 0; i < server.args(); i++) {
+      dualOut.print("  "); dualOut.print(server.argName(i));
+      dualOut.print("="); dualOut.println(server.arg(i));
+    }
   }
   if (server.hasArg("hourmarks")) {
     String hourmarksstring = server.arg("hourmarks");

@@ -106,6 +106,12 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.22 (26.04.2026)
+- Fix: Formular-Submit auf POST umgestellt (GET-URL war zu lang für ESP8266 → Parameter wurden abgeschnitten)
+- Fix: /settings für HTTP_GET und HTTP_POST registriert
+- Debug: alle Args werden beim Submit geloggt (zur Diagnose)
+- ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.22.bin
+
 ### v2.2.0.21 (26.04.2026)
 - Fix: Checkboxen werden jetzt korrekt gesetzt (parseInt statt ==1 Vergleich)
 - Fix: sleep/sleepmin/wake/wakemin in /getsettings direkt aus EEPROM (nicht aus Laufzeit-Variable die AutoSleep überschreibt)
