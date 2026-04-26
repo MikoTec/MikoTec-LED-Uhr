@@ -106,6 +106,11 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.28 (26.04.2026)
+- Fix: Zeitzone Manuell-Tab zeigt jetzt korrekten UTC-Versatz (z.B. 1 für MEZ) statt internem Index (31)
+- Fix: /getsettings liefert jetzt auch timezone (UTC-float)
+- ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.28.bin
+
 ### v2.2.0.27 (26.04.2026)
 - Fix: timezone.html — Menü eingebunden, menu.js geladen, aktuelle Werte per JS befüllt
 - Fix: /getsettings liefert jetzt auch latitude und longitude

@@ -39,7 +39,7 @@ function cityChanged() {
 
 document.addEventListener('DOMContentLoaded', function(){
   fetch('/getsettings').then(r=>r.json()).then(function(d){
-    if(d.timezonevalue!=null) document.getElementById('timezone').value = d.timezonevalue;
+    if(d.timezone!=null)  document.getElementById('timezone').value  = d.timezone;
     if(d.latitude!=null)  document.getElementById('latitude').value  = d.latitude;
     if(d.longitude!=null) document.getElementById('longitude').value = d.longitude;
   }).catch(function(){});
