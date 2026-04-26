@@ -108,7 +108,7 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ### v2.2.0.24 (26.04.2026)
 - Debug: /getsettings loggt jetzt den kompletten JSON-Response (zur Diagnose Checkbox-Problem)
-- Nur Firmware-Update nötig, kein neues LittleFS-Image
+- ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.24.bin
 
 ### v2.2.0.23 (26.04.2026)
 - Fix: powerType wird jetzt in handleSettings korrekt verarbeitet (Formular schickt powerType, nicht maxbright)
