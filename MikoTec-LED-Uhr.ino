@@ -192,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.17";
+const char* firmware_version = "2.2.0.18";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1191,6 +1191,7 @@ void setUpServerHandle() {
   server.on("/timeset", webHandleTimeSet);
   server.on("/gettime", handleGetTime);
   server.on("/getstate", handleGetState);
+  server.on("/getsettings", handleGetSettings);
   server.on("/alarm", webHandleAlarm);
   server.on("/reflection", webHandleReflection);
   server.on("/dawn", webHandleDawn);
@@ -2113,17 +2114,19 @@ void handleSettings() {
     dualOut.println(nightBrightness);
   }
   if (server.hasArg("sleep")) {
-    String sleepstring = server.arg("sleep");
-    sleep = sleepstring.substring(0, 2).toInt();
-    sleepmin = sleepstring.substring(3).toInt();
+    sleep = server.arg("sleep").toInt();
     EEPROM.write(182, sleep);
+  }
+  if (server.hasArg("sleepmin")) {
+    sleepmin = server.arg("sleepmin").toInt();
     EEPROM.write(183, sleepmin);
   }
   if (server.hasArg("wake")) {
-    String wakestring = server.arg("wake");
-    wake = wakestring.substring(0, 2).toInt();
-    wakemin = wakestring.substring(3).toInt();
+    wake = server.arg("wake").toInt();
     EEPROM.write(189, wake);
+  }
+  if (server.hasArg("wakemin")) {
+    wakemin = server.arg("wakemin").toInt();
     EEPROM.write(190, wakemin);
     nightCheck();
   }
@@ -2155,6 +2158,17 @@ void handleSettings() {
     String autoStr = server.arg("autosleep");
     autoSleep = autoStr.toInt();
     EEPROM.write(233, autoSleep);
+  }
+  if (server.hasArg("pixelCount")) {
+    pixelCount = server.arg("pixelCount").toInt();
+    ChangeNeoPixels(pixelCount, clockPin);
+    EEPROM.write(230, pixelCount);
+  }
+  if (server.hasArg("maxbright")) {
+    maxBrightness = server.arg("maxbright").toInt();
+    brightness = maxBrightness;
+    EEPROM.write(191, brightness);
+    EEPROM.write(231, maxBrightness);
   }
   if (server.hasArg("clockname")) {
     String tempclockname = server.arg("clockname");
@@ -3285,6 +3299,28 @@ void handleGetState() {
     if (i < 4) json += ",";
   }
   json += "]";
+  json += "}";
+  server.send(200, "application/json", json);
+}
+
+void handleGetSettings() {
+  String json = "{";
+  json += "\"pixelCount\":" + String(pixelCount) + ",";
+  json += "\"maxBrightness\":" + String((int)maxBrightness) + ",";
+  json += "\"clockname\":\"" + clockname + "\",";
+  json += "\"hourmarks\":" + String(hourmarks) + ",";
+  json += "\"sleeptype\":" + String(sleeptype) + ",";
+  json += "\"sleep\":" + String(sleep) + ",";
+  json += "\"sleepmin\":" + String(sleepmin) + ",";
+  json += "\"wake\":" + String(wake) + ",";
+  json += "\"wakemin\":" + String(wakemin) + ",";
+  json += "\"nightbrightness\":" + String(int(nightBrightness)) + ",";
+  json += "\"hemisphere\":" + String(hemisphere) + ",";
+  json += "\"DSTauto\":" + String(DSTauto ? 1 : 0) + ",";
+  json += "\"showseconds\":" + String(showseconds ? 1 : 0) + ",";
+  json += "\"showsunpoint\":" + String(showSunPoint ? 1 : 0) + ",";
+  json += "\"dawnbreak\":" + String(dawnbreak ? 1 : 0) + ",";
+  json += "\"autosleep\":" + String(autoSleep ? 1 : 0);
   json += "}";
   server.send(200, "application/json", json);
 }

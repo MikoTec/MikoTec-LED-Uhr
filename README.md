@@ -106,6 +106,12 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.18 (26.04.2026)
+- Fix: /getsettings Endpunkt hinzugefügt — Settings-Seite wurde leer angezeigt (LittleFS-Architektur)
+- Fix: sleep/sleepmin und wake/wakemin werden jetzt korrekt als separate Felder verarbeitet
+- Fix: pixelCount und maxbright werden jetzt in handleSettings gespeichert
+- Nur Firmware-Update nötig, kein neues LittleFS-Image
+
 ### v2.2.0.17 (26.04.2026)
 - Neu: /getstate liefert 4 Farbschemata aus EEPROM als schemes-Array
 - Scheme-Buttons zeigen Farbverlauf Stundenfarbe -> Minutenfarbe aus EEPROM
