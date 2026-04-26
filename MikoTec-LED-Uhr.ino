@@ -192,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.22";
+const char* firmware_version = "2.2.0.23";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -2174,6 +2174,18 @@ void handleSettings() {
     brightness = maxBrightness;
     EEPROM.write(191, brightness);
     EEPROM.write(231, maxBrightness);
+  }
+  if (server.hasArg("powerType")) {
+    int pt = server.arg("powerType").toInt();
+    maxBrightness = (pt == 1) ? 255 : 100;
+    brightness = maxBrightness;
+    EEPROM.write(191, brightness);
+    EEPROM.write(231, maxBrightness);
+  }
+  if (server.hasArg("timezone")) {
+    timezonevalue = server.arg("timezone").toInt();
+    EEPROM.write(179, timezonevalue);
+    interpretTimeZone(timezonevalue);
   }
   if (server.hasArg("clockname")) {
     String tempclockname = server.arg("clockname");
