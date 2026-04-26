@@ -192,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.23";
+const char* firmware_version = "2.2.0.24";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -3341,6 +3341,7 @@ void handleGetSettings() {
   json += "\"dawnbreak\":" + String(dawnbreak ? 1 : 0) + ",";
   json += "\"autosleep\":" + String(autoSleep ? 1 : 0);
   json += "}";
+  logTS(); dualOut.println("[SETTINGS] " + json);
   server.send(200, "application/json", json);
 }
 
