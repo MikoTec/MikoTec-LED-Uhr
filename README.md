@@ -106,6 +106,11 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.21 (26.04.2026)
+- Fix: Checkboxen werden jetzt korrekt gesetzt (parseInt statt ==1 Vergleich)
+- Fix: sleep/sleepmin/wake/wakemin in /getsettings direkt aus EEPROM (nicht aus Laufzeit-Variable die AutoSleep überschreibt)
+- ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.21.bin
+
 ### v2.2.0.20 (26.04.2026)
 - Fix: Settings-Seite exakt nach v2.1.0.20-Vorlage wiederhergestellt (Layout, Zeitzone-Dropdown, DST-Checkbox, Zeit-setzen-Button)
 - Fix: timezonevalue und DSTtime in /getsettings ergänzt

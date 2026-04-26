@@ -22,9 +22,9 @@ if(nb){nb.oninput=function(){document.getElementById('nbval').innerText=this.val
 
 fetch('/getsettings').then(r=>r.json()).then(function(d){
   if(d.hourmarks!=null) document.getElementById('hourmarks').value=d.hourmarks;
-  if(d.showseconds!=null) document.getElementById('showseconds').checked=d.showseconds==1;
-  if(d.showsunpoint!=null) document.getElementById('showsunpoint').checked=d.showsunpoint==1;
-  if(d.dawnbreak!=null) document.getElementById('dawnbreak').checked=d.dawnbreak==1;
+  document.getElementById('showseconds').checked = (parseInt(d.showseconds)===1);
+  document.getElementById('showsunpoint').checked = (parseInt(d.showsunpoint)===1);
+  document.getElementById('dawnbreak').checked = (parseInt(d.dawnbreak)===1);
   if(d.sleeptype!=null) document.getElementById('sleeptype').value=d.sleeptype;
   if(d.nightbrightness!=null){
     document.getElementById('nightbrightness').value=d.nightbrightness;
@@ -46,7 +46,7 @@ fetch('/getsettings').then(r=>r.json()).then(function(d){
   }
   if(d.hemisphere!=null) document.getElementById('hemisphere').value=d.hemisphere;
   if(d.timezonevalue!=null) document.getElementById('timezone').value=d.timezonevalue;
-  if(d.DSTtime!=null) document.getElementById('DST').checked=d.DSTtime==1;
+  document.getElementById('DST').checked = (parseInt(d.DSTtime)===1);
   if(d.pixelCount!=null&&d.maxBrightness!=null){
     if(d.pixelCount==120&&d.maxBrightness==255){
       document.getElementById('clocktype').value='1';
@@ -69,7 +69,7 @@ fetch('/getsettings').then(r=>r.json()).then(function(d){
     }
   }
   if(d.clockname!=null) document.getElementById('clockname').value=d.clockname;
-}).catch(function(){});
+}).catch(function(e){console.error('getsettings fehler:',e);});
 
 setInterval(updateTime,1000);
 updateTime();

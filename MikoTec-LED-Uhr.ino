@@ -192,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.20";
+const char* firmware_version = "2.2.0.21";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -3308,10 +3308,10 @@ void handleGetSettings() {
   json += "\"clockname\":\"" + clockname + "\",";
   json += "\"hourmarks\":" + String(hourmarks) + ",";
   json += "\"sleeptype\":" + String(sleeptype) + ",";
-  json += "\"sleep\":" + String(sleep) + ",";
-  json += "\"sleepmin\":" + String(sleepmin) + ",";
-  json += "\"wake\":" + String(wake) + ",";
-  json += "\"wakemin\":" + String(wakemin) + ",";
+  json += "\"sleep\":" + String(EEPROM.read(182)) + ",";
+  json += "\"sleepmin\":" + String(EEPROM.read(183)) + ",";
+  json += "\"wake\":" + String(EEPROM.read(189)) + ",";
+  json += "\"wakemin\":" + String(EEPROM.read(190)) + ",";
   json += "\"nightbrightness\":" + String(int(nightBrightness)) + ",";
   json += "\"hemisphere\":" + String(hemisphere) + ",";
   json += "\"DSTauto\":" + String(DSTauto ? 1 : 0) + ",";
