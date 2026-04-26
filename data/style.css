@@ -242,6 +242,11 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e0e0e0', end
     .checkbox .tooltip:hover:after{
         bottom: 30px;
         left: -30%;
+        padding: 10px 15px;
+        text-transform: none;
+        font-size: 13px;
+        line-height: 1.5;
+        width: 220px;
     }
     
     .tooltip:hover:after{

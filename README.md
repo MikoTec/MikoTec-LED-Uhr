@@ -106,6 +106,10 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.33 (26.04.2026)
+- Fix: style.css - Tooltip in checkbox-Kontext mit mehr Padding und normalem Text (wie Nacht-Helligkeit)
+- ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.33.bin
+
 ### v2.2.0.32 (26.04.2026)
 - Fix: settings.html - Sonnenpunkt/Sonnenaufgang tooltip auf span statt label (Checkbox war nicht klickbar)
 - Neu: LittleFS-Version wird beim Start im Log ausgegeben ([LittleFS] FS-Version: x.x.x.xx)
