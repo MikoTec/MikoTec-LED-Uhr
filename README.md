@@ -106,6 +106,11 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.20 (26.04.2026)
+- Fix: Settings-Seite exakt nach v2.1.0.20-Vorlage wiederhergestellt (Layout, Zeitzone-Dropdown, DST-Checkbox, Zeit-setzen-Button)
+- Fix: timezonevalue und DSTtime in /getsettings ergänzt
+- ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.20.bin
+
 ### v2.2.0.19 (26.04.2026)
 - Fix: Settings-Seite Layout wiederhergestellt (Slider für Nacht-Helligkeit, time-Felder für Schlafzeiten, Autosleep-Toggle)
 - Fix: sleep/wake werden wieder als type=time Felder (HH:MM) verarbeitet

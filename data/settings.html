@@ -1,60 +1,44 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<title>Einstellungen</title>
+<title>Einstell.</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="/style.css">
 <link rel="stylesheet" href="/menu.css">
+<script type="text/javascript">
+function CheckClockType(val){
+  var pixcount=document.getElementById('pixelCount');
+  var power=document.getElementById('powerType');
+  switch(val) {
+    case '1':
+      document.getElementById('pixelCountli').style.display='none';
+      document.getElementById('powerTypeli').style.display='none';
+      pixcount.value=120; power.value=1; break;
+    case '2':
+      document.getElementById('pixelCountli').style.display='none';
+      document.getElementById('powerTypeli').style.display='none';
+      pixcount.value=60; power.value=2; break;
+    case '3':
+      document.getElementById('pixelCountli').style.display='block';
+      document.getElementById('powerTypeli').style.display='block'; break;
+  }
+}
+</script>
 </head>
 <body class="settings-page">
 <div id="menu-placeholder"></div>
-
-<div style="font-size:32px;font-weight:bold;letter-spacing:2px;margin-bottom:10px;font-family:Abel,sans-serif;">
+<div style="font-size:32px;font-weight:bold;letter-spacing:2px;margin-bottom:10px;font-family:Abel,sans-serif">
 <span id="esptime" onclick="window.location='/game'" style="cursor:pointer">--:--:--</span>
 </div>
 <div style="margin-bottom:20px">
-<span id="fwver" style="font-size:13px;color:#999;"></span>
+<input type="time" id="mantime" step="1" style="font-size:18px;padding:8px;border-radius:3px;border:1px solid rgba(0,0,0,0.15)">
+<button type="button" onclick="setManualTime()" style="font-size:14px;padding:9px 15px;background:#111;color:#fff;border:0;border-radius:3px;cursor:pointer;font-family:Abel,sans-serif;text-transform:uppercase;letter-spacing:1px">Zeit setzen</button>
 </div>
-
-<div id="rcorners2">
-<label class="section-head">Einstellungen</label>
 <form class="form-verticle" action="/settings" method="GET">
 <ul>
-
 <li>
-<label>Uhrentyp</label>
-<div class="form-field">
-<select name="clocktype" id="clocktype" onchange="CheckClockType(this.value)">
-<option value="0">Benutzerdefiniert</option>
-<option value="1">Original (120 LEDs / Netz)</option>
-<option value="2">Mini (60 LEDs / USB)</option>
-</select>
-</div>
-</li>
-
-<li id="pixelCountli">
-<label>LED Anzahl</label>
-<div class="form-field"><input type="number" name="pixelCount" id="pixelCount" min="1" max="255" value="60"></div>
-</li>
-
-<li id="powerTypeli">
-<label>Stromversorgung</label>
-<div class="form-field">
-<select name="maxbright" id="maxbright">
-<option value="100" id="maxbright100">USB (max. 100)</option>
-<option value="255" id="maxbright255">Netz (max. 255)</option>
-</select>
-</div>
-</li>
-
-<li>
-<label>Uhrenname (mDNS)</label>
-<div class="form-field"><input type="text" name="clockname" id="clockname" maxlength="20" value=""></div>
-</li>
-
-<li>
-<label>Std-Marken</label>
+<label>Std-Marken:</label>
 <div class="form-field">
 <select name="hourmarks" id="hourmarks">
 <option value="0">Keine</option>
@@ -65,32 +49,25 @@
 </select>
 </div>
 </li>
-
-<li>
-<label>Sekunden anzeigen</label>
-<div class="form-field">
-<input type="hidden" name="showsecondshidden" value="1">
-<input type="checkbox" name="showseconds" id="showseconds">
-</div>
+<li class="checkbox">
+<input id="showsecondshidden" type="hidden" name="showsecondshidden" value="0">
+<input id="showseconds" type="checkbox" name="showseconds">
+<label for="showseconds">Sekunden</label>
+</li>
+<li class="checkbox">
+<input id="showsunpointhidden" type="hidden" name="showsunpointhidden" value="0">
+<input id="showsunpoint" type="checkbox" name="showsunpoint">
+<label for="showsunpoint">Sonnenpunkt <span data-tooltip="Zeigt die aktuelle Sonnenposition als goldenen LED-Punkt (nur tagsüber sichtbar, Breitengrad/Längengrad erforderlich)" class="tooltip" style="cursor:help;">&#9432;</span></label>
+</li>
+<li class="checkbox">
+<input id="dawnbreakhidden" type="hidden" name="dawnbreakhidden" value="0">
+<input id="dawnbreak" type="checkbox" name="dawnbreak">
+<label for="dawnbreak">Sonnenaufgang <span data-tooltip="Simuliere den Sonnenaufgang eine Std. vor Einschalten der vollen Tagesuhrzeit" class="tooltip" style="cursor:help;">&#9432;</span></label>
 </li>
 
-<li>
-<label>Sonnenpunkt</label>
-<div class="form-field">
-<input type="hidden" name="showsunpointhidden" value="1">
-<input type="checkbox" name="showsunpoint" id="showsunpoint">
-</div>
-</li>
+<label data-tooltip="Nachts nur LED Punkte anzeigen" class="tooltip section-head">Schlaf:</label>
 
-<li>
-<label>Sonnenaufgang</label>
-<div class="form-field">
-<input type="hidden" name="dawnbreakhidden" value="1">
-<input type="checkbox" name="dawnbreak" id="dawnbreak">
-</div>
-</li>
-
-<li>
+<li id="rcorners2">
 <label>Schlaf-Typ</label>
 <div class="form-field">
 <select name="sleeptype" id="sleeptype">
@@ -101,36 +78,40 @@
 <option value="4">Aus</option>
 </select>
 </div>
-</li>
-
-<li>
-<label data-tooltip="Helligkeit der Uhr im Schlafmodus (0=aus, 100=voll)" class="tooltip">Nacht-Helligkeit</label>
+<label data-tooltip="Helligkeit der Uhr im Schlafmodus (0=komplett aus, 100=volle Helligkeit)" class="tooltip">Nacht-Helligkeit</label>
 <div class="form-field">
 <input type="range" name="nightbrightness" id="nightbrightness" min="0" max="100" value="10">
 <span id="nbval">10%</span>
 </div>
-</li>
-
-<li>
-<label>Schlafsteuerung</label>
+<script>
+var nb=document.querySelector('input[name=nightbrightness]');
+nb.oninput=function(){document.getElementById('nbval').innerText=this.value+'%';};
+</script>
+<label data-tooltip="Manuell: Feste Zeiten verwenden. Automatisch: Sonnenauf- und untergang berechnen (Breitengrad/Laengengrad erforderlich)" class="tooltip">Schlafsteuerung</label>
 <div class="form-field">
 <select name="autosleep" id="autosleep" onchange="toggleSleepFields()">
 <option value="0">Manuell</option>
 <option value="1">Automatisch (Sonne)</option>
 </select>
 </div>
-</li>
-
 <div id="manualsleep">
-<li>
-<label>Schlafzeit Von</label>
-<div class="form-field"><input type="time" name="sleep" id="sleep" value="22:00"></div>
-</li>
-<li>
-<label>Schlafzeit Bis</label>
-<div class="form-field"><input type="time" name="wake" id="wake" value="07:00"></div>
-</li>
+<label>Von</label>
+<div class="form-field">
+<input type="time" name="sleep" id="sleep" value="22:00">
 </div>
+<label>Bis</label>
+<div class="form-field">
+<input type="time" name="wake" id="wake" value="07:00">
+</div>
+</div>
+</li>
+<script>
+function toggleSleepFields(){
+  var v=document.getElementById('autosleep').value;
+  document.getElementById('manualsleep').style.display=(v=='0')?'block':'none';
+}
+toggleSleepFields();
+</script>
 
 <li>
 <label>Hemisphäre</label>
@@ -141,15 +122,126 @@
 </select>
 </div>
 </li>
-
 <li>
-<label>Sommerzeit</label>
+<label>Zeitzone</label>
 <div class="form-field">
-<select name="DSTauto" id="DSTauto">
-<option value="1">Automatisch</option>
-<option value="0">Manuell</option>
+<select name="timezone" id="timezone">
+<option value="1">(GMT-12:00) Internationale Datumsgrenze West</option>
+<option value="2">(GMT-11:00) Midwayinseln, Samoa</option>
+<option value="3">(GMT-10:00) Hawaii</option>
+<option value="4">(GMT-09:00) Alaska</option>
+<option value="5">(GMT-08:00) Pazifische Zeit (US &amp; Kanada)</option>
+<option value="6">(GMT-08:00) Tijuana, Baja California</option>
+<option value="7">(GMT-07:00) Arizona</option>
+<option value="8">(GMT-07:00) Chihuahua, La Paz, Mazatlan</option>
+<option value="9">(GMT-07:00) Gebirgszeit (US &amp; Kanada)</option>
+<option value="10">(GMT-06:00) Zentralamerika</option>
+<option value="11">(GMT-06:00) Zentrale Zeit (US &amp; Kanada)</option>
+<option value="12">(GMT-06:00) Guadalajara, Mexico City, Monterrey</option>
+<option value="13">(GMT-06:00) Saskatchewan</option>
+<option value="14">(GMT-05:00) Bogota, Lima, Quito, Rio Branco</option>
+<option value="15">(GMT-05:00) Östliche Zeit (US &amp; Kanada)</option>
+<option value="16">(GMT-05:00) Indiana (Ost)</option>
+<option value="17">(GMT-04:00) Atlantische Zeit (Kanada)</option>
+<option value="18">(GMT-04:00) Caracas, La Paz</option>
+<option value="19">(GMT-04:00) Manaus</option>
+<option value="20">(GMT-04:00) Santiago</option>
+<option value="21">(GMT-03:30) Newfoundland</option>
+<option value="22">(GMT-03:00) Brasilia</option>
+<option value="23">(GMT-03:00) Buenos Aires, Georgetown</option>
+<option value="24">(GMT-03:00) Greenland</option>
+<option value="25">(GMT-03:00) Montevideo</option>
+<option value="26">(GMT-02:00) Mittelatlantik</option>
+<option value="27">(GMT-01:00) Kapverdische Inseln</option>
+<option value="28">(GMT-01:00) Azores</option>
+<option value="29">(GMT+00:00) Casablanca, Monrovia, Reykjavik</option>
+<option value="30">(GMT+00:00) Greenwich: Dublin, Edinburgh, Lissabon, London</option>
+<option value="31">(GMT+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna</option>
+<option value="32">(GMT+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague</option>
+<option value="33">(GMT+01:00) Brussels, Copenhagen, Madrid, Paris</option>
+<option value="34">(GMT+01:00) Sarajevo, Skopje, Warsaw, Zagreb</option>
+<option value="35">(GMT+01:00) Westliches Zentralafrika</option>
+<option value="36">(GMT+02:00) Amman</option>
+<option value="37">(GMT+02:00) Athens, Bucharest, Istanbul</option>
+<option value="38">(GMT+02:00) Beirut</option>
+<option value="39">(GMT+02:00) Cairo</option>
+<option value="40">(GMT+02:00) Harare, Pretoria</option>
+<option value="41">(GMT+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius</option>
+<option value="42">(GMT+02:00) Jerusalem</option>
+<option value="43">(GMT+02:00) Minsk</option>
+<option value="44">(GMT+02:00) Windhoek</option>
+<option value="45">(GMT+03:00) Kuwait, Riyadh, Baghdad</option>
+<option value="46">(GMT+03:00) Moscow, St. Petersburg, Volgograd</option>
+<option value="47">(GMT+03:00) Nairobi</option>
+<option value="48">(GMT+03:00) Tbilisi</option>
+<option value="49">(GMT+03:30) Tehran</option>
+<option value="50">(GMT+04:00) Abu Dhabi, Muscat</option>
+<option value="51">(GMT+04:00) Baku</option>
+<option value="52">(GMT+04:00) Yerevan</option>
+<option value="53">(GMT+04:30) Kabul</option>
+<option value="54">(GMT+05:00) Yekaterinburg</option>
+<option value="55">(GMT+05:00) Islamabad, Karachi, Tashkent</option>
+<option value="56">(GMT+05:30) Sri Jayawardenapura</option>
+<option value="57">(GMT+05:30) Chennai, Kolkata, Mumbai, New Delhi</option>
+<option value="58">(GMT+05:45) Kathmandu</option>
+<option value="59">(GMT+06:00) Almaty, Novosibirsk</option>
+<option value="60">(GMT+06:00) Astana, Dhaka</option>
+<option value="61">(GMT+06:30) Yangon (Rangoon)</option>
+<option value="62">(GMT+07:00) Bangkok, Hanoi, Jakarta</option>
+<option value="63">(GMT+07:00) Krasnoyarsk</option>
+<option value="64">(GMT+08:00) Beijing, Chongqing, Hong Kong, Urumqi</option>
+<option value="65">(GMT+08:00) Kuala Lumpur, Singapore</option>
+<option value="66">(GMT+08:00) Irkutsk, Ulaan Bataar</option>
+<option value="67">(GMT+08:00) Perth</option>
+<option value="68">(GMT+08:00) Taipei</option>
+<option value="69">(GMT+09:00) Osaka, Sapporo, Tokyo</option>
+<option value="70">(GMT+09:00) Seoul</option>
+<option value="71">(GMT+09:00) Yakutsk</option>
+<option value="72">(GMT+09:30) Adelaide</option>
+<option value="73">(GMT+09:30) Darwin</option>
+<option value="74">(GMT+10:00) Brisbane</option>
+<option value="75">(GMT+10:00) Canberra, Melbourne, Sydney</option>
+<option value="76">(GMT+10:00) Hobart</option>
+<option value="77">(GMT+10:00) Guam, Port Moresby</option>
+<option value="78">(GMT+10:00) Vladivostok</option>
+<option value="79">(GMT+11:00) Magadan, Solomon Is., New Caledonia</option>
+<option value="80">(GMT+12:00) Auckland, Wellington</option>
+<option value="81">(GMT+12:00) Fiji, Kamchatka, Marshall Is.</option>
+<option value="82">(GMT+13:00) Nuku'alofa</option>
 </select>
 </div>
+</li>
+<li class="checkbox">
+<input id="DSThidden" type="hidden" name="DSThidden" value="0">
+<input id="DST" type="checkbox" name="DST">
+<label for="DST">Sommerzeit</label>
+</li>
+<li>
+<label>Uhrentyp</label>
+<div class="form-field">
+<select name="clocktype" id="clocktype" onchange="CheckClockType(this.value)">
+<option value="1">Original</option>
+<option value="2">Mini</option>
+<option value="3">Benutzerdefiniert</option>
+</select>
+</div>
+</li>
+<li id="pixelCountli" style="display:none">
+<input name="pixelCount" id="pixelCount" type="number" value="60" min="1" max="255">
+<label for="pixelCount">Anzahl LEDs</label>
+</li>
+<li id="powerTypeli" style="display:none">
+<label>Strom</label>
+<div class="form-field">
+<select name="powerType" id="powerType">
+<option value="1">Netzstrom</option>
+<option value="2">USB-Strom</option>
+</select>
+</div>
+</li>
+<li class="form-field">
+<input id="clockname" name="clockname" value="" type="text" autocorrect="off" autocapitalize="none">
+<label data-tooltip="Netzwerkname der Uhr" class="tooltip section-head" for="clockname">Uhrenname</label>
 </li>
 
 <label class="hide-mobile">&nbsp;</label>
@@ -158,7 +250,6 @@
 </div>
 </ul>
 </form>
-</div>
 <script src="/settings.js"></script>
 </body>
 </html>
