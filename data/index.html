@@ -48,19 +48,19 @@
     document.getElementById('bpval').innerText=document.getElementById('blendpoint').value;
     document.getElementById('brval').innerText=document.getElementById('brightness').value;
   </script>
-  <div class="btn-box scheme1" id="scheme-box-1" style="background:linear-gradient(to right,#ff0000,#0000ff);border-radius:6px;padding:4px;">
+  <div class="btn-box scheme1" id="scheme-box-1" style="background:transparent;border-radius:6px;padding:4px;">
     <input class="btn btn-sm" type="submit" name="submit" value="Speichern V1" />
     <input class="btn btn-sm" type="submit" name="submit" value="Laden V1" />
   </div>
-  <div class="btn-box scheme2" id="scheme-box-2" style="background:linear-gradient(to right,#ff0000,#0000ff);border-radius:6px;padding:4px;">
+  <div class="btn-box scheme2" id="scheme-box-2" style="background:transparent;border-radius:6px;padding:4px;">
     <input class="btn btn-sm" type="submit" name="submit" value="Speichern V2" />
     <input class="btn btn-sm" type="submit" name="submit" value="Laden V2" />
   </div>
-  <div class="btn-box scheme3" id="scheme-box-3" style="background:linear-gradient(to right,#ff0000,#0000ff);border-radius:6px;padding:4px;">
+  <div class="btn-box scheme3" id="scheme-box-3" style="background:transparent;border-radius:6px;padding:4px;">
     <input class="btn btn-sm" type="submit" name="submit" value="Speichern V3" />
     <input class="btn btn-sm" type="submit" name="submit" value="Laden V3" />
   </div>
-  <div class="btn-box scheme4" id="scheme-box-4" style="background:linear-gradient(to right,#ff0000,#0000ff);border-radius:6px;padding:4px;">
+  <div class="btn-box scheme4" id="scheme-box-4" style="background:transparent;border-radius:6px;padding:4px;">
     <input class="btn btn-sm" type="submit" name="submit" value="Speichern V4" />
     <input class="btn btn-sm" type="submit" name="submit" value="Laden V4" />
   </div>
@@ -75,37 +75,39 @@
 <script src="/clock.js"></script>
 <script src="/menu.js"></script>
 <script>
-// Zustand von /getstate laden und Formular befüllen
-fetch('/getstate').then(r=>r.json()).then(function(d){
-  document.getElementById('fw-version').innerText = d.fw || '--';
-  var hc = d.hourcolor || '#ff0000';
-  var mc = d.minutecolor || '#0000ff';
-  document.getElementById('hourcolor').value = hc;
-  document.getElementById('hourcolorspectrum').value = hc;
-  document.getElementById('hourcolor-swatch').style.background = hc;
-  document.getElementById('minutecolor').value = mc;
-  document.getElementById('minutecolorspectrum').value = mc;
-  document.getElementById('minutecolor-swatch').style.background = mc;
-  document.getElementById('blendpoint').value = d.blendpoint || 128;
-  document.getElementById('bpval').innerText = d.blendpoint || 128;
-  document.getElementById('brightness').value = d.brightness || 100;
-  document.getElementById('brval').innerText = d.brightness || 100;
-  document.getElementById('brightness').max = d.maxBrightness || 255;
-  // Alarm-Box
-  var alarmBox = document.getElementById('alarm-box');
-  if(d.alarmactive){
-    alarmBox.innerHTML = '<a class="btn btn-default" href="/?alarmoff=1">Cancel Alarm</a>';
-  } else {
-    alarmBox.innerHTML = '';
-  }
-  // Farbverlaeufe fuer Scheme-Buttons direkt setzen
-  if(d.schemes){
-    d.schemes.forEach(function(s,i){
-      var box = document.getElementById('scheme-box-'+(i+1));
-      if(box) box.style.background = 'linear-gradient(to right, '+s.h+' 0%, '+s.m+' 100%)';
-    });
-  }
-});
+function loadState(retry) {
+  fetch('/getstate').then(r=>r.json()).then(function(d){
+    document.getElementById('fw-version').innerText = d.fw || '--';
+    var hc = d.hourcolor || '#ff0000';
+    var mc = d.minutecolor || '#0000ff';
+    document.getElementById('hourcolor').value = hc;
+    document.getElementById('hourcolorspectrum').value = hc;
+    document.getElementById('hourcolor-swatch').style.background = hc;
+    document.getElementById('minutecolor').value = mc;
+    document.getElementById('minutecolorspectrum').value = mc;
+    document.getElementById('minutecolor-swatch').style.background = mc;
+    document.getElementById('blendpoint').value = d.blendpoint || 128;
+    document.getElementById('bpval').innerText = d.blendpoint || 128;
+    document.getElementById('brightness').value = d.brightness || 100;
+    document.getElementById('brval').innerText = d.brightness || 100;
+    document.getElementById('brightness').max = d.maxBrightness || 255;
+    var alarmBox = document.getElementById('alarm-box');
+    if(d.alarmactive){
+      alarmBox.innerHTML = '<a class="btn btn-default" href="/?alarmoff=1">Cancel Alarm</a>';
+    } else {
+      alarmBox.innerHTML = '';
+    }
+    if(d.schemes){
+      d.schemes.forEach(function(s,i){
+        var box = document.getElementById('scheme-box-'+(i+1));
+        if(box) box.style.background = 'linear-gradient(to right, '+s.h+' 0%, '+s.m+' 100%)';
+      });
+    }
+  }).catch(function(){
+    if(retry > 0) setTimeout(function(){ loadState(retry-1); }, 3000);
+  });
+}
+loadState(3);
 // Farbwähler synchronisieren
 document.getElementById('hourcolorspectrum').addEventListener('input',function(){
   document.getElementById('hourcolor').value=this.value;

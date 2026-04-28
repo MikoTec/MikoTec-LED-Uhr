@@ -106,6 +106,11 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.38 (28.04.2026)
+- Fix: Startseite - Default-Gradient auf Scheme-Buttons entfernt (war sichtbar wenn /getstate langsam antwortet)
+- Fix: Startseite - /getstate Retry bis zu 3x alle 3 Sekunden wenn OTA-Check blockiert
+- ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.38.bin
+
 ### v2.2.0.37 (28.04.2026)
 - Fix: Mondmodus wird nur noch einmal pro Minute aktualisiert (bei Minutenwechsel) statt jede Sekunde
 - Reduziert Show()-Aufrufe von 60x/min auf 1x/min im Mondmodus - weniger UART1-Aktivität
