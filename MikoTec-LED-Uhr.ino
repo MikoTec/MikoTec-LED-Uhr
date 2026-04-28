@@ -192,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.34";
+const char* firmware_version = "2.2.0.35";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -978,6 +978,7 @@ void initWiFi() {
     WiFi.disconnect();
     delay(100);
     WiFi.mode(WIFI_STA);
+    WiFi.setSleepMode(WIFI_NONE_SLEEP);
     logTS(); dualOut.print("Connecting to WiFi ");
     dualOut.println(esid);
     WiFi.begin(esid.c_str(), epass.c_str());

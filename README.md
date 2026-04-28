@@ -106,6 +106,10 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.35 (28.04.2026)
+- Fix: WiFi.setSleepMode(WIFI_NONE_SLEEP) gesetzt - verhindert WiFi-Beacon-Interrupts die WS2812 UART1-Timing stören
+- Nur Firmware-Update nötig, kein neues LittleFS-Image
+
 ### v2.2.0.34 (27.04.2026)
 - Fix: style.css - .checkbox .tooltip:hover:after Überschreiber entfernt, Standard-Tooltip gilt jetzt überall gleich
 - ⚠️ Firmware UND neues LittleFS-Image erforderlich: littlefs_v2.2.0.34.bin
