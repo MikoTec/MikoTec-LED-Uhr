@@ -192,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.36";
+const char* firmware_version = "2.2.0.37";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -722,9 +722,12 @@ void loop() {
       }
     }
     prevsecond = second();
-    updateface();
-    if (clockmode == night && sleeptype == moonphase) delay(1);
-    if(clockleds) clockleds->Show();
+    bool skipDraw = (clockmode == night && sleeptype == moonphase && second() != 0);
+    if (!skipDraw) {
+      updateface();
+      if (clockmode == night && sleeptype == moonphase) delay(1);
+      if(clockleds) clockleds->Show();
+    }
   }
   loopcounter++;
 

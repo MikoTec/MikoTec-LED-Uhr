@@ -106,6 +106,11 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.37 (28.04.2026)
+- Fix: Mondmodus wird nur noch einmal pro Minute aktualisiert (bei Minutenwechsel) statt jede Sekunde
+- Reduziert Show()-Aufrufe von 60x/min auf 1x/min im Mondmodus - weniger UART1-Aktivität
+- Nur Firmware-Update nötig, kein neues LittleFS-Image
+
 ### v2.2.0.36 (28.04.2026)
 - Fix: delay(1) vor Show() nur im Mondmodus - UART1 kann sauber leeren vor dem nächsten Frame
 - Nur Firmware-Update nötig, kein neues LittleFS-Image
