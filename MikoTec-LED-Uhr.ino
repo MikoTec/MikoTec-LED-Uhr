@@ -179,7 +179,6 @@ void logMemory() {
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 // Forward Declarations
-void readDSTtime();
 String StringIPaddress(IPAddress myaddr);
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght);
 void interpretTimeZone(int timezonename);
@@ -192,7 +191,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.39";
+const char* firmware_version = "2.2.0.40";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -246,7 +245,6 @@ NeoPixelBusType* clockleds = NULL; // NeoPixelBus(pixelCount, clockPin);  //Cloc
 time_t getNTPtime(void);
 //NTP NTPclient;
 Ticker NTPsyncclock;
-WiFiClient DSTclient;
 Ticker alarmtick;
 int alarmprogress = 0;
 Ticker pulseBrightnessTicker;
@@ -254,7 +252,6 @@ Ticker gamestartticker;
 int pulseBrightnessCounter =0;
 Ticker dawntick;//a ticker to establish how far through dawn we are
 int dawnprogress = 0;
-const char* DSTTimeServer = "api.timezonedb.com";
 
 // Auto-Update Konfiguration
 const char* update_version_url = "http://yzdlcru01ktmqlzy.myfritz.net:8080/updates/version.json";
@@ -606,9 +603,6 @@ void setup() {
   // Setze den Zeit-Offset (Sekunden) erst hier im Setup
   NTPclient.setTimeOffset((timezone + DSTtime) * 3600);
   NTPclient.begin();
-  if (DSTauto == 1) {
-    readDSTtime();
-  }
   //initialise the NTP clock sync function
   if (webMode == 1) {
     NTPclient.begin();
@@ -1859,7 +1853,6 @@ void handleRoot() {
     writeLatLong(177, longitude);
     DSTauto = 1;
     EEPROM.write(185, 1); //tell the system that DST is auto adjusting
-    readDSTtime();
     EEPROM.write(179, timezonevalue);  // Fix: timezonevalue (int) statt timezone (float)
   }
 
@@ -3467,103 +3460,6 @@ String StringIPaddress(IPAddress myaddr)
   return LocalIP;
 }
 //----------------------------------------DST adjusting functions------------------------------------------------------------------
-void connectToDSTServer() {
-  String GETString;
-  // attempt to connect, and wait a millisecond:
-
-  logTS(); dualOut.println("Connecting to DST server");
-  DSTclient.connect("api.timezonedb.com", 80);
-
-  if (DSTclient.connect("api.timezonedb.com", 80)) {
-    // make HTTP GET request to timezonedb.com:
-    GETString += "GET /?lat=";
-    GETString += latitude;
-    GETString += "&lng=";
-    GETString += longitude;
-    GETString += "&key=AX6GA4Y3762L HTTP/1.1";
-
-    DSTclient.println(GETString);
-    dualOut.println(GETString);
-    DSTclient.println("Host: api.timezonedb.com");
-    logTS(); dualOut.println("Host: api.timezonedb.com");
-    DSTclient.println("Connection: close\r\n");
-    logTS(); dualOut.println("Connection: close\r\n");
-    //DSTclient.print("Accept-Encoding: identity\r\n");
-    //DSTclient.print("Host: api.geonames.org\r\n");
-    //DSTclient.print("User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; Windows NT 5.1)\r\n");
-    //DSTclient.print("Connection: close\r\n\r\n");
-
-    int i = 0;
-    while ((!DSTclient.available()) && (i < 1000)) {
-      delay(10);
-      i++;
-    }
-  }
-}
-
-void readDSTtime() {
-  float oldtimezone = timezone;
-  String currentLine = "";
-  bool readingUTCOffset = false;
-  String UTCOffset;
-  connectToDSTServer();
-  logTS(); dualOut.print("DST.connected: ");
-  dualOut.println(DSTclient.connected());
-  logTS(); dualOut.print("DST.available: ");
-  dualOut.println(DSTclient.available());
-
-  while (DSTclient.connected()) {
-    if (DSTclient.available()) {
-
-      // read incoming bytes:
-      char inChar = DSTclient.read();
-      // add incoming byte to end of line:
-      currentLine += inChar;
-
-      // if you're currently reading the bytes of a UTC offset,
-      // add them to the UTC offset String:
-      if (readingUTCOffset) {//the section below has flagged that we're getting the UTC offset from server here
-        if (inChar != '<') {
-          UTCOffset += inChar;
-        }
-        else {
-          // if you got a "<" character,
-          // you've reached the end of the UTC offset:
-          readingUTCOffset = false;
-          logTS(); dualOut.print("UTC Offset in seconds: ");
-          dualOut.println(UTCOffset);
-          //update the internal time-zone
-          timezone = UTCOffset.toInt() / 3600;
-          adjustTime((timezone - oldtimezone) * 3600);
-          NTPclient.setTimeOffset((timezone + DSTtime) * 3600);
-          //setTime(NTPclient.getEpochTime());
-
-          // close the connection to the server:
-          DSTclient.stop();
-        }
-      }
-
-      // if you get a newline, clear the line:
-      if (inChar == '\n') {
-
-        dualOut.println(currentLine);
-        currentLine = "";
-      }
-      // if the current line ends with <text>, it will
-      // be followed by the tweet:
-      if ( currentLine.endsWith("<gmtOffset>")) {
-        // UTC offset is beginning. Clear the tweet string:
-
-        dualOut.println(currentLine);
-        readingUTCOffset = true;
-        UTCOffset = "";
-      }
-
-
-    }
-  }
-}
-
 void interpretTimeZone(int timezonename) {
   switch (timezonename) {
     case 1: timezone = -12; break;

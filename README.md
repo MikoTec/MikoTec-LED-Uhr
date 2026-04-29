@@ -106,6 +106,12 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.40 (29.04.2026)
+- Entfernt: connectToDSTServer() und readDSTtime() - timezonedb.com API war nicht erreichbar und unnötig
+- Entfernt: WiFiClient DSTclient, DSTTimeServer Konstante, Forward-Deklaration
+- DST wird weiterhin intern berechnet (DSTauto)
+- Nur Firmware-Update nötig, kein neues LittleFS-Image
+
 ### v2.2.0.39 (29.04.2026)
 - Fix: Mondmodus - volles weißes Ring-Bug behoben: litLEDs + fadeZone*2 konnte pixelCount übersteigen
   wodurch alle LEDs weiß wurden. litLEDs wird jetzt auf pixelCount - fadeZone*2 begrenzt.
