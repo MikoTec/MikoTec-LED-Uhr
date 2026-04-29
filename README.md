@@ -106,6 +106,11 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.2.0.39 (29.04.2026)
+- Fix: Mondmodus - volles weißes Ring-Bug behoben: litLEDs + fadeZone*2 konnte pixelCount übersteigen
+  wodurch alle LEDs weiß wurden. litLEDs wird jetzt auf pixelCount - fadeZone*2 begrenzt.
+- Nur Firmware-Update nötig, kein neues LittleFS-Image
+
 ### v2.2.0.38 (28.04.2026)
 - Fix: Startseite - Default-Gradient auf Scheme-Buttons entfernt (war sichtbar wenn /getstate langsam antwortet)
 - Fix: Startseite - /getstate Retry bis zu 3x alle 3 Sekunden wenn OTA-Check blockiert

@@ -192,7 +192,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.38";
+const char* firmware_version = "2.2.0.39";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -2984,6 +2984,11 @@ void moon() {
   // Anzahl beleuchteter LEDs basierend auf Beleuchtung
   int litLEDs = (int)(illumination * pixelCount);
 
+  // Sicherstellen dass litLEDs + fadeZone*2 nicht pixelCount übersteigt
+  int fadeZone = pixelCount / 20;
+  if (fadeZone < 2) fadeZone = 2;
+  if (litLEDs > pixelCount - fadeZone * 2) litLEDs = pixelCount - fadeZone * 2;
+
   // Position: Nordhalbkugel wächst rechts, Südhalbkugel wächst links
   // phase < 15 = zunehmend, phase >= 15 = abnehmend
   bool waxing = (phase < 15);
@@ -3014,8 +3019,6 @@ void moon() {
   }
 
   // Beleuchtete LEDs setzen mit weichem Rand
-  int fadeZone = pixelCount / 20; // sanfter Übergang am Rand
-  if (fadeZone < 2) fadeZone = 2;
 
   for (int i = 0; i < litLEDs + fadeZone * 2; i++) {
     int ledIdx;
