@@ -78,6 +78,8 @@ char mqttPass[32] = "";
 unsigned long lastMqttReconnect = 0;
 unsigned long lastMqttPublish = 0;
 bool mqttDiscoverySent = false;
+int mqttPrevClockmode = -1;
+int mqttPrevSleeptype = -1;
 // EEPROM Layout MQTT (ab 236):
 // 236: mqttEnabled (1 byte)
 // 237-238: mqttPort (2 bytes, high/low)
@@ -210,7 +212,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.3";
+const char* firmware_version = "2.3.0.4";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -769,12 +771,25 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     logTS(); dualOut.println("[MQTT] Clockmode: " + msg);
   }
   else if (t == base + "power") {
-    // Home Assistant Light Entity: ON/OFF
     if (msg == "ON") {
-      if (clockmode == night) clockmode = normal;
+      // Vorherigen Zustand wiederherstellen
+      if (mqttPrevClockmode >= 0) {
+        clockmode = mqttPrevClockmode;
+        sleeptype = mqttPrevSleeptype;
+        mqttPrevClockmode = -1;
+        mqttPrevSleeptype = -1;
+      } else {
+        clockmode = normal;
+      }
       logTS(); dualOut.println("[MQTT] Power ON");
     } else if (msg == "OFF") {
+      // Zustand merken, dann komplett ausschalten
+      if (clockmode != night || sleeptype != black) {
+        mqttPrevClockmode = clockmode;
+        mqttPrevSleeptype = sleeptype;
+      }
       clockmode = night;
+      sleeptype = black;
       logTS(); dualOut.println("[MQTT] Power OFF");
     }
   }
