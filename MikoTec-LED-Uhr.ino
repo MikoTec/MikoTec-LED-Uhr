@@ -240,7 +240,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.9";
+const char* firmware_version = "2.3.0.10";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1337,9 +1337,6 @@ void loadMqttConfig() {
   logTS(); dualOut.println("  Broker: " + String(mqttBroker));
   logTS(); dualOut.println("  Port: " + String(mqttPort));
   logTS(); dualOut.println("  User: " + String(mqttUser));
-  betaChannel = EEPROM.read(367);
-  if (betaChannel > 1) betaChannel = false;
-  logTS(); dualOut.println("  Beta-Channel: " + String(betaChannel ? "Ja" : "Nein"));
 }
 
 void saveMqttConfig() {
@@ -1359,7 +1356,6 @@ void saveMqttConfig() {
   for (int i = 0; i < 32; i++) {
     EEPROM.write(335 + i, (i < (int)strlen(mqttPass)) ? mqttPass[i] : 0);
   }
-  EEPROM.write(367, betaChannel ? 1 : 0);
   EEPROM.commit();
   logTS(); dualOut.println("[MQTT] Config gespeichert");
 }
@@ -1371,8 +1367,7 @@ void handleGetMqtt() {
   json += "\"broker\":\"" + String(mqttBroker) + "\",";
   json += "\"port\":" + String(mqttPort) + ",";
   json += "\"user\":\"" + String(mqttUser) + "\",";
-  json += "\"connected\":" + String(mqttClient.connected() ? 1 : 0) + ",";
-  json += "\"beta\":" + String(betaChannel ? 1 : 0);
+  json += "\"connected\":" + String(mqttClient.connected() ? 1 : 0);
   json += "}";
   server.send(200, "application/json", json);
 }
@@ -1662,6 +1657,11 @@ void loadConfig() {
 
   // MQTT Konfiguration laden
   loadMqttConfig();
+
+  // Beta-Channel laden (unabhaengig von MQTT)
+  betaChannel = EEPROM.read(367);
+  if (betaChannel > 1) betaChannel = false;
+  logTS(); dualOut.println("Beta-Channel: " + String(betaChannel ? "Ja" : "Nein"));
 }
 
 void writeInitalConfig() {

@@ -109,6 +109,13 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.10 (01.05.2026)
+- Fix: Beta-Channel komplett von MQTT entkoppelt
+- Beta wird in loadConfig() eigenstaendig geladen (EEPROM 367)
+- Beta wird ueber normales Settings-Formular gespeichert
+- MQTT liest Beta nur noch aus dem State (keine Speicherung ueber MQTT Config)
+- Nur Firmware-Update noetig
+
 ### v2.3.0.9 (01.05.2026)
 - Beta-Toggle in normales Settings-Formular verschoben (wird mit Speichern gesichert)
 - Beta-Toggle auch ohne MQTT nutzbar
