@@ -80,6 +80,8 @@ unsigned long lastMqttPublish = 0;
 bool mqttDiscoverySent = false;
 int mqttPrevClockmode = -1;
 int mqttPrevSleeptype = -1;
+String mqttAvailableVersion = "";
+String mqttAvailableFile = "";
 // EEPROM Layout MQTT (ab 236):
 // 236: mqttEnabled (1 byte)
 // 237-238: mqttPort (2 bytes, high/low)
@@ -237,7 +239,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.5";
+const char* firmware_version = "2.3.0.6";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -563,6 +565,11 @@ void checkForUpdate() {
   logTS(); dualOut.print("[OTA] Dateiname:            ");
   dualOut.println(remoteFile);
   
+  // MQTT Update-Status speichern und publishen
+  mqttAvailableVersion = remoteVersion;
+  mqttAvailableFile = remoteFile;
+  mqttPublishUpdateState();
+  
   if (!isNewerVersion(remoteVersion)) {
     logTS(); dualOut.println("[OTA] Firmware ist aktuell. Kein Update noetig.");
     dualOut.println("==============================");
@@ -818,9 +825,36 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
       logTS(); dualOut.println("[MQTT] Power OFF");
     }
   }
+  else if (t == base + "update") {
+    if (msg == "install" || msg == "INSTALL" || msg == "PRESS") {
+      logTS(); dualOut.println("[MQTT] Update per MQTT ausgeloest");
+      mqttPublishState();
+      checkForUpdate();
+      return; // checkForUpdate kann reboot ausloesen
+    } else if (msg == "check") {
+      logTS(); dualOut.println("[MQTT] Update-Check per MQTT ausgeloest");
+      checkForUpdate();
+    }
+  }
 
   // Nach jeder Aenderung sofort State publishen
   mqttPublishState();
+}
+
+void mqttPublishUpdateState() {
+  if (!mqttClient.connected()) return;
+  String base = mqttBaseTopic();
+  String json = "{";
+  json += "\"installed_version\":\"" + String(firmware_version) + "\",";
+  if (mqttAvailableVersion.length() > 0 && isNewerVersion(mqttAvailableVersion)) {
+    json += "\"latest_version\":\"" + mqttAvailableVersion + "\",";
+    json += "\"title\":\"MikoTec LED Uhr\",";
+    json += "\"release_url\":\"https://github.com/MikoTec/MikoTec-LED-Uhr\"";
+  } else {
+    json += "\"latest_version\":\"" + String(firmware_version) + "\"";
+  }
+  json += "}";
+  mqttClient.publish((base + "/update_state").c_str(), json.c_str(), true);
 }
 
 void mqttPublishState() {
@@ -1049,6 +1083,24 @@ void mqttPublishDiscovery() {
     mqttClient.publish(topic.c_str(), json.c_str(), true);
     logTS(); dualOut.println("[MQTT] Discovery: " + topic);
   }
+
+  // --- 12) Update: Firmware ---
+  {
+    String topic = "homeassistant/update/" + uid + "_firmware_update/config";
+    String json = "{";
+    json += "\"name\":\"Firmware Update\",";
+    json += "\"uniq_id\":\"" + uid + "_firmware_update\",";
+    json += "\"stat_t\":\"" + base + "/update_state\",";
+    json += "\"cmd_t\":\"" + base + "/set/update\",";
+    json += "\"payload_install\":\"install\",";
+    json += "\"latest_version_topic\":\"" + base + "/update_state\",";
+    json += "\"latest_version_template\":\"{{ value_json.latest_version }}\",";
+    json += "\"entity_picture\":\"https://brands.home-assistant.io/_/mqtt/icon.png\",";
+    json += "\"ic\":\"mdi:update\",";
+    json += avail + "," + dev + "}";
+    mqttClient.publish(topic.c_str(), json.c_str(), true);
+    logTS(); dualOut.println("[MQTT] Discovery: " + topic);
+  }
 }
 
 bool mqttReconnect() {
@@ -1086,6 +1138,7 @@ bool mqttReconnect() {
     }
     // Initialen State publishen
     mqttPublishState();
+    mqttPublishUpdateState();
     return true;
   } else {
     logTS(); dualOut.println("[MQTT] Verbindung fehlgeschlagen, rc=" + String(mqttClient.state()));

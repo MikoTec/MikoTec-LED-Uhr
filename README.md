@@ -109,6 +109,13 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.6 (01.05.2026)
+- NEU: Firmware Update Entity in Home Assistant
+- Zeigt installierte vs. verfuegbare Version an
+- Update per Knopfdruck aus Home Assistant ausloesbar
+- MQTT Topics: lightclock/<name>/update_state und lightclock/<name>/set/update
+- Nur Firmware-Update noetig
+
 ### v2.3.0.5 (01.05.2026)
 - NEU: Log-Ausgabe wird live per MQTT gepublisht (Topic: lightclock/<name>/log)
 - Jede Log-Zeile wird als eigene MQTT-Nachricht gesendet
