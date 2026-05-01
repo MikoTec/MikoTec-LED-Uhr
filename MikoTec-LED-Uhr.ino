@@ -71,6 +71,7 @@ NTPClient NTPclient(ntpUDP, "pool.ntp.org");
 WiFiClient mqttWifiClient;
 PubSubClient mqttClient(mqttWifiClient);
 bool mqttEnabled = false;
+bool betaChannel = false; // EEPROM 367: Beta-Updates aktivieren
 char mqttBroker[64] = "";
 int mqttPort = 1883;
 char mqttUser[32] = "";
@@ -239,7 +240,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.7";
+const char* firmware_version = "2.3.0.8";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -536,40 +537,48 @@ void checkForUpdate() {
   logTS(); dualOut.print("[OTA] Inhalt: ");
   dualOut.println(payload);
   
+  // Prefix bestimmen: stable oder beta
+  String prefix = betaChannel ? "beta" : "stable";
+  logTS(); dualOut.println("[OTA] Update-Kanal: " + prefix);
+  
   // Firmware-Version aus JSON parsen
-  int vStart = payload.indexOf("\"version\"");
+  String vKey = "\"" + prefix + "_version\"";
+  int vStart = payload.indexOf(vKey);
   if (vStart == -1) {
-    logTS(); dualOut.println("[OTA] FEHLER: version.json ungueltig - kein version-Feld gefunden.");
+    logTS(); dualOut.println("[OTA] FEHLER: version.json ungueltig - kein " + prefix + "_version Feld gefunden.");
     dualOut.println("==============================");
     return;
   }
-  vStart = payload.indexOf("\"", vStart + 9) + 1;
+  vStart = payload.indexOf("\"", vStart + vKey.length()) + 1;
   int vEnd = payload.indexOf("\"", vStart);
   String remoteVersion = payload.substring(vStart, vEnd);
   
   // Firmware-Dateiname aus JSON parsen
-  int fStart = payload.indexOf("\"file\"");
+  String fKey = "\"" + prefix + "_file\"";
+  int fStart = payload.indexOf(fKey);
   if (fStart == -1) {
-    logTS(); dualOut.println("[OTA] FEHLER: version.json ungueltig - kein file-Feld gefunden.");
+    logTS(); dualOut.println("[OTA] FEHLER: version.json ungueltig - kein " + prefix + "_file Feld gefunden.");
     dualOut.println("==============================");
     return;
   }
-  fStart = payload.indexOf("\"", fStart + 6) + 1;
+  fStart = payload.indexOf("\"", fStart + fKey.length()) + 1;
   int fEnd = payload.indexOf("\"", fStart);
   String remoteFile = payload.substring(fStart, fEnd);
   
   // LittleFS-Version aus JSON parsen
   String remoteFsVersion = "";
   String remoteFsFile = "";
-  int fsStart = payload.indexOf("\"littlefs_version\"");
+  String fsKey = "\"" + prefix + "_fs_version\"";
+  int fsStart = payload.indexOf(fsKey);
   if (fsStart != -1) {
-    fsStart = payload.indexOf("\"", fsStart + 18) + 1;
+    fsStart = payload.indexOf("\"", fsStart + fsKey.length()) + 1;
     int fsEnd = payload.indexOf("\"", fsStart);
     remoteFsVersion = payload.substring(fsStart, fsEnd);
   }
-  int ffStart = payload.indexOf("\"littlefs_file\"");
+  String ffKey = "\"" + prefix + "_fs_file\"";
+  int ffStart = payload.indexOf(ffKey);
   if (ffStart != -1) {
-    ffStart = payload.indexOf("\"", ffStart + 15) + 1;
+    ffStart = payload.indexOf("\"", ffStart + ffKey.length()) + 1;
     int ffEnd = payload.indexOf("\"", ffStart);
     remoteFsFile = payload.substring(ffStart, ffEnd);
   }
@@ -907,6 +916,13 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
       logTS(); dualOut.println("[MQTT] Power OFF");
     }
   }
+  else if (t == base + "beta") {
+    betaChannel = (msg == "1" || msg == "true" || msg == "ON");
+    EEPROM.begin(512);
+    EEPROM.write(367, betaChannel ? 1 : 0);
+    EEPROM.commit();
+    logTS(); dualOut.println("[MQTT] Beta-Channel: " + String(betaChannel ? "Ja" : "Nein"));
+  }
   else if (t == base + "update") {
     if (msg == "install" || msg == "INSTALL" || msg == "PRESS") {
       logTS(); dualOut.println("[MQTT] Update per MQTT ausgeloest");
@@ -971,7 +987,8 @@ void mqttPublishState() {
   json += "\"blendpoint\":" + String(blendpoint) + ",";
   json += "\"hourcolor\":\"" + String(hcHex) + "\",";
   json += "\"minutecolor\":\"" + String(mcHex) + "\",";
-  json += "\"fw\":\"" + String(firmware_version) + "\"";
+  json += "\"fw\":\"" + String(firmware_version) + "\",";
+  json += "\"beta\":" + String(betaChannel ? 1 : 0);
   json += "}";
 
   mqttClient.publish((base + "/state").c_str(), json.c_str(), true);
@@ -1166,7 +1183,22 @@ void mqttPublishDiscovery() {
     logTS(); dualOut.println("[MQTT] Discovery: " + topic);
   }
 
-  // --- 12) Update: Firmware ---
+  // --- 12) Switch: Beta-Channel ---
+  {
+    String topic = "homeassistant/switch/" + uid + "_beta/config";
+    String json = "{";
+    json += "\"name\":\"Beta-Updates\",";
+    json += "\"uniq_id\":\"" + uid + "_beta\",";
+    json += "\"cmd_t\":\"" + base + "/set/beta\",";
+    json += "\"stat_t\":\"" + base + "/state\",";
+    json += "\"val_tpl\":\"{{ 'ON' if value_json.beta == 1 else 'OFF' }}\",";
+    json += "\"ic\":\"mdi:flask-outline\",";
+    json += avail + "," + dev + "}";
+    mqttClient.publish(topic.c_str(), json.c_str(), true);
+    logTS(); dualOut.println("[MQTT] Discovery: " + topic);
+  }
+
+  // --- 13) Update: Firmware ---
   {
     String topic = "homeassistant/update/" + uid + "_firmware_update/config";
     String json = "{";
@@ -1265,6 +1297,9 @@ void loadMqttConfig() {
   logTS(); dualOut.println("  Broker: " + String(mqttBroker));
   logTS(); dualOut.println("  Port: " + String(mqttPort));
   logTS(); dualOut.println("  User: " + String(mqttUser));
+  betaChannel = EEPROM.read(367);
+  if (betaChannel > 1) betaChannel = false;
+  logTS(); dualOut.println("  Beta-Channel: " + String(betaChannel ? "Ja" : "Nein"));
 }
 
 void saveMqttConfig() {
@@ -1284,6 +1319,7 @@ void saveMqttConfig() {
   for (int i = 0; i < 32; i++) {
     EEPROM.write(335 + i, (i < (int)strlen(mqttPass)) ? mqttPass[i] : 0);
   }
+  EEPROM.write(367, betaChannel ? 1 : 0);
   EEPROM.commit();
   logTS(); dualOut.println("[MQTT] Config gespeichert");
 }
@@ -1295,7 +1331,8 @@ void handleGetMqtt() {
   json += "\"broker\":\"" + String(mqttBroker) + "\",";
   json += "\"port\":" + String(mqttPort) + ",";
   json += "\"user\":\"" + String(mqttUser) + "\",";
-  json += "\"connected\":" + String(mqttClient.connected() ? 1 : 0);
+  json += "\"connected\":" + String(mqttClient.connected() ? 1 : 0) + ",";
+  json += "\"beta\":" + String(betaChannel ? 1 : 0);
   json += "}";
   server.send(200, "application/json", json);
 }
@@ -1324,6 +1361,9 @@ void handleSetMqtt() {
     String p = server.arg("mqtt_pass");
     strncpy(mqttPass, p.c_str(), 31);
     mqttPass[31] = '\0';
+  }
+  if (server.hasArg("beta_channel")) {
+    betaChannel = (server.arg("beta_channel") == "1");
   }
   saveMqttConfig();
 
@@ -1618,6 +1658,7 @@ void writeInitalConfig() {
   EEPROM.write(237, (1883 >> 8) & 0xFF); //default MQTT port high byte
   EEPROM.write(238, 1883 & 0xFF); //default MQTT port low byte
   for (int i = 239; i < 367; i++) { EEPROM.write(i, 0); } //clear MQTT broker/user/pass
+  EEPROM.write(367, 0); //default beta channel off
 
 
   for (int i = 195; i < 228; i++) {//zero (instead of null) the values where clockname will be written.

@@ -109,6 +109,14 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.8 (01.05.2026)
+- NEU: Stable/Beta Update-Kanal
+- version.json neues Format: stable_version/file/fs_version/fs_file + beta_version/file/fs_version/fs_file
+- EEPROM 367: Beta-Channel Einstellung (persistent)
+- Einstellbar ueber Webinterface (Settings) und MQTT (Switch-Entity)
+- Update-Check waehlt automatisch stable oder beta je nach Einstellung
+- Firmware-Update UND neues LittleFS-Image noetig
+
 ### v2.3.0.7 (01.05.2026)
 - NEU: Automatisches LittleFS-Update aus version.json
 - Parst littlefs_version und littlefs_file aus version.json
