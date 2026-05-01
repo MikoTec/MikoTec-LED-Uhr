@@ -210,7 +210,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.2";
+const char* firmware_version = "2.3.0.3";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -733,7 +733,13 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     }
   }
   else if (t == base + "hourmarks") {
-    int val = msg.toInt();
+    int val = -1;
+    if (msg == "Keine") val = 0;
+    else if (msg == "Mittag") val = 1;
+    else if (msg == "Quadranten") val = 2;
+    else if (msg == "Stunden") val = 3;
+    else if (msg == "Abdunkeln") val = 4;
+    else val = msg.toInt();
     if (val >= 0 && val <= 4) {
       hourmarks = val;
       EEPROM.begin(512);
@@ -800,6 +806,12 @@ void mqttPublishState() {
   json += "\"showseconds\":" + String(showseconds ? 1 : 0) + ",";
   json += "\"showsunpoint\":" + String(showSunPoint ? 1 : 0) + ",";
   json += "\"hourmarks\":" + String(hourmarks) + ",";
+  String hmName = "Keine";
+  if (hourmarks == 1) hmName = "Mittag";
+  else if (hourmarks == 2) hmName = "Quadranten";
+  else if (hourmarks == 3) hmName = "Stunden";
+  else if (hourmarks == 4) hmName = "Abdunkeln";
+  json += "\"hourmarks_name\":\"" + hmName + "\",";
   json += "\"blendpoint\":" + String(blendpoint) + ",";
   json += "\"hourcolor\":\"" + String(hcHex) + "\",";
   json += "\"minutecolor\":\"" + String(mcHex) + "\",";
@@ -914,8 +926,8 @@ void mqttPublishDiscovery() {
     json += "\"uniq_id\":\"" + uid + "_hourmarks\",";
     json += "\"cmd_t\":\"" + base + "/set/hourmarks\",";
     json += "\"stat_t\":\"" + base + "/state\",";
-    json += "\"val_tpl\":\"{{ value_json.hourmarks }}\",";
-    json += "\"ops\":[\"0\",\"1\",\"2\",\"3\",\"4\"],";
+    json += "\"val_tpl\":\"{{ value_json.hourmarks_name }}\",";
+    json += "\"ops\":[\"Keine\",\"Mittag\",\"Quadranten\",\"Stunden\",\"Abdunkeln\"],";
     json += "\"ic\":\"mdi:clock-digital\",";
     json += avail + "," + dev + "}";
     mqttClient.publish(topic.c_str(), json.c_str(), true);
@@ -953,28 +965,32 @@ void mqttPublishDiscovery() {
     logTS(); dualOut.println("[MQTT] Discovery: " + topic);
   }
 
-  // --- 9) Sensor: Stundenfarbe ---
+  // --- 9) Text: Stundenfarbe ---
   {
-    String topic = "homeassistant/sensor/" + uid + "_hourcolor/config";
+    String topic = "homeassistant/text/" + uid + "_hourcolor/config";
     String json = "{";
     json += "\"name\":\"Stundenfarbe\",";
     json += "\"uniq_id\":\"" + uid + "_hourcolor\",";
+    json += "\"cmd_t\":\"" + base + "/set/hourcolor\",";
     json += "\"stat_t\":\"" + base + "/state\",";
     json += "\"val_tpl\":\"{{ value_json.hourcolor }}\",";
+    json += "\"min\":7,\"max\":7,";
     json += "\"ic\":\"mdi:palette\",";
     json += avail + "," + dev + "}";
     mqttClient.publish(topic.c_str(), json.c_str(), true);
     logTS(); dualOut.println("[MQTT] Discovery: " + topic);
   }
 
-  // --- 10) Sensor: Minutenfarbe ---
+  // --- 10) Text: Minutenfarbe ---
   {
-    String topic = "homeassistant/sensor/" + uid + "_minutecolor/config";
+    String topic = "homeassistant/text/" + uid + "_minutecolor/config";
     String json = "{";
     json += "\"name\":\"Minutenfarbe\",";
     json += "\"uniq_id\":\"" + uid + "_minutecolor\",";
+    json += "\"cmd_t\":\"" + base + "/set/minutecolor\",";
     json += "\"stat_t\":\"" + base + "/state\",";
     json += "\"val_tpl\":\"{{ value_json.minutecolor }}\",";
+    json += "\"min\":7,\"max\":7,";
     json += "\"ic\":\"mdi:palette-outline\",";
     json += avail + "," + dev + "}";
     mqttClient.publish(topic.c_str(), json.c_str(), true);
@@ -1007,7 +1023,10 @@ bool mqttReconnect() {
       uid.replace("-", "_");
       String oldTopic = "homeassistant/light/" + uid + "/config";
       mqttClient.publish(oldTopic.c_str(), "", true);
-      logTS(); dualOut.println("[MQTT] Alte Light-Discovery entfernt");
+      // Alte Sensor-Discoveries entfernen (jetzt Text statt Sensor)
+      mqttClient.publish(("homeassistant/sensor/" + uid + "_hourcolor/config").c_str(), "", true);
+      mqttClient.publish(("homeassistant/sensor/" + uid + "_minutecolor/config").c_str(), "", true);
+      logTS(); dualOut.println("[MQTT] Alte Discoveries entfernt");
 
       mqttPublishDiscovery();
       mqttDiscoverySent = true;

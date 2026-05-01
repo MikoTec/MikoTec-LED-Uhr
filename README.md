@@ -109,6 +109,12 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.3 (01.05.2026)
+- Stundenmarken-Auswahl zeigt Namen statt Zahlen (Keine, Mittag, Quadranten, Stunden, Abdunkeln)
+- Stundenfarbe und Minutenfarbe jetzt als Text-Entity (einstellbar per Hex, z.B. #ff0000)
+- Alte Sensor-Discoveries werden automatisch entfernt
+- Nur Firmware-Update noetig
+
 ### v2.3.0.2 (01.05.2026)
 - MQTT Discovery umgebaut: Device mit mehreren Entities statt Light-Entity
 - Entities: Power (Switch), Helligkeit (Number), Modus (Select), Sekunden (Switch), Sonnenpunkt (Switch), Stundenmarken (Select), Blendpoint (Number), Firmware (Sensor), Stundenfarbe (Sensor), Minutenfarbe (Sensor)
