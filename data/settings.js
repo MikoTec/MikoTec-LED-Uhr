@@ -86,4 +86,50 @@ document.addEventListener('DOMContentLoaded', function(){
 
   setInterval(updateTime,1000);
   updateTime();
+
+  // MQTT Config laden
+  fetch('/getmqtt').then(r=>r.json()).then(function(d){
+    document.getElementById('mqtt_enabled').checked=(d.enabled===1);
+    if(d.broker) document.getElementById('mqtt_broker').value=d.broker;
+    if(d.port) document.getElementById('mqtt_port').value=d.port;
+    if(d.user) document.getElementById('mqtt_user').value=d.user;
+    var st=document.getElementById('mqttStatus');
+    if(d.enabled===1){
+      st.innerText=d.connected===1?'Status: Verbunden':'Status: Nicht verbunden';
+      st.style.color=d.connected===1?'#4CAF50':'#f44336';
+    } else {
+      st.innerText='Status: Deaktiviert';
+      st.style.color='#888';
+    }
+  }).catch(function(){});
 });
+
+function saveMqtt(){
+  var fd=new FormData();
+  fd.append('mqtt_enabled',document.getElementById('mqtt_enabled').checked?'1':'0');
+  fd.append('mqtt_broker',document.getElementById('mqtt_broker').value);
+  fd.append('mqtt_port',document.getElementById('mqtt_port').value);
+  fd.append('mqtt_user',document.getElementById('mqtt_user').value);
+  fd.append('mqtt_pass',document.getElementById('mqtt_pass').value);
+  fetch('/setmqtt',{method:'POST',body:fd}).then(r=>r.json()).then(function(d){
+    if(d.ok===1){
+      var st=document.getElementById('mqttStatus');
+      st.innerText='Gespeichert! Verbinde...';
+      st.style.color='#ff9800';
+      setTimeout(function(){
+        fetch('/getmqtt').then(r=>r.json()).then(function(d2){
+          if(d2.enabled===1){
+            st.innerText=d2.connected===1?'Status: Verbunden':'Status: Nicht verbunden';
+            st.style.color=d2.connected===1?'#4CAF50':'#f44336';
+          } else {
+            st.innerText='Status: Deaktiviert';
+            st.style.color='#888';
+          }
+        });
+      },3000);
+    }
+  }).catch(function(e){
+    document.getElementById('mqttStatus').innerText='Fehler beim Speichern';
+    document.getElementById('mqttStatus').style.color='#f44336';
+  });
+}

@@ -61,10 +61,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <WiFiUdp.h>
 #include <NTPClient.h>
+#include <PubSubClient.h>
 
 WiFiUDP ntpUDP;
 // Hier nur ganz einfach ohne die Berechnungen:
 NTPClient NTPclient(ntpUDP, "pool.ntp.org");
+
+// ---- MQTT ----
+WiFiClient mqttWifiClient;
+PubSubClient mqttClient(mqttWifiClient);
+bool mqttEnabled = false;
+char mqttBroker[64] = "";
+int mqttPort = 1883;
+char mqttUser[32] = "";
+char mqttPass[32] = "";
+unsigned long lastMqttReconnect = 0;
+unsigned long lastMqttPublish = 0;
+bool mqttDiscoverySent = false;
+// EEPROM Layout MQTT (ab 236):
+// 236: mqttEnabled (1 byte)
+// 237-238: mqttPort (2 bytes, high/low)
+// 239-302: mqttBroker (64 bytes)
+// 303-334: mqttUser (32 bytes)
+// 335-366: mqttPass (32 bytes)
 
 #ifndef _max
 #define _max(a,b) ((a)>(b)?(a):(b))
@@ -191,7 +210,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.2.0.40";
+const char* firmware_version = "2.3.0.0";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -647,6 +666,320 @@ void setup() {
     logTS(); dualOut.println("[OTA] Erster Update-Check in 30 Sekunden...");
   }
 
+  // MQTT initialisieren wenn aktiviert und WiFi verbunden
+  if (mqttEnabled && webMode == 1 && strlen(mqttBroker) > 0) {
+    mqttClient.setServer(mqttBroker, mqttPort);
+    mqttClient.setCallback(mqttCallback);
+    mqttClient.setBufferSize(512);
+    logTS(); dualOut.println("[MQTT] Client konfiguriert: " + String(mqttBroker) + ":" + String(mqttPort));
+  }
+
+}
+
+// ---- MQTT Funktionen ----
+
+String mqttBaseTopic() {
+  return "lightclock/" + clockname;
+}
+
+void mqttCallback(char* topic, byte* payload, unsigned int length) {
+  String t = String(topic);
+  String msg = "";
+  for (unsigned int i = 0; i < length; i++) {
+    msg += (char)payload[i];
+  }
+  logTS(); dualOut.println("[MQTT] Empfangen: " + t + " = " + msg);
+
+  String base = mqttBaseTopic() + "/set/";
+
+  if (t == base + "brightness") {
+    int val = msg.toInt();
+    if (val >= 0 && val <= 100) {
+      brightness = _max(10, val);
+      EEPROM.begin(512);
+      EEPROM.write(191, brightness);
+      EEPROM.commit();
+      logTS(); dualOut.println("[MQTT] Helligkeit: " + String(brightness));
+    }
+  }
+  else if (t == base + "hourcolor") {
+    msg.replace("%23", "#");
+    getRGB(msg, hourcolor);
+    EEPROM.begin(512);
+    EEPROM.write(100, hourcolor.R);
+    EEPROM.write(101, hourcolor.G);
+    EEPROM.write(102, hourcolor.B);
+    EEPROM.commit();
+    logTS(); dualOut.println("[MQTT] Stundenfarbe: " + msg);
+  }
+  else if (t == base + "minutecolor") {
+    msg.replace("%23", "#");
+    getRGB(msg, minutecolor);
+    EEPROM.begin(512);
+    EEPROM.write(103, minutecolor.R);
+    EEPROM.write(104, minutecolor.G);
+    EEPROM.write(105, minutecolor.B);
+    EEPROM.commit();
+    logTS(); dualOut.println("[MQTT] Minutenfarbe: " + msg);
+  }
+  else if (t == base + "blendpoint") {
+    int val = msg.toInt();
+    if (val >= 0 && val <= 100) {
+      blendpoint = val;
+      EEPROM.begin(512);
+      EEPROM.write(106, blendpoint);
+      EEPROM.commit();
+      logTS(); dualOut.println("[MQTT] Blendpoint: " + String(blendpoint));
+    }
+  }
+  else if (t == base + "hourmarks") {
+    int val = msg.toInt();
+    if (val >= 0 && val <= 4) {
+      hourmarks = val;
+      EEPROM.begin(512);
+      EEPROM.write(181, hourmarks);
+      EEPROM.commit();
+      logTS(); dualOut.println("[MQTT] Stundenmarken: " + String(hourmarks));
+    }
+  }
+  else if (t == base + "showseconds") {
+    showseconds = (msg == "1" || msg == "true" || msg == "ON");
+    EEPROM.begin(512);
+    EEPROM.write(184, showseconds);
+    EEPROM.commit();
+    logTS(); dualOut.println("[MQTT] Sekunden: " + String(showseconds));
+  }
+  else if (t == base + "showsunpoint") {
+    showSunPoint = (msg == "1" || msg == "true" || msg == "ON");
+    EEPROM.begin(512);
+    EEPROM.write(235, showSunPoint);
+    EEPROM.commit();
+    logTS(); dualOut.println("[MQTT] Sonnenpunkt: " + String(showSunPoint));
+  }
+  else if (t == base + "clockmode") {
+    if (msg == "normal") clockmode = normal;
+    else if (msg == "night") clockmode = night;
+    else if (msg == "dawn") { clockmode = dawnmode; dawnprogress = 0; dawntick.attach(14, dawnadvance); }
+    logTS(); dualOut.println("[MQTT] Clockmode: " + msg);
+  }
+  else if (t == base + "power") {
+    // Home Assistant Light Entity: ON/OFF
+    if (msg == "ON") {
+      if (clockmode == night) clockmode = normal;
+      logTS(); dualOut.println("[MQTT] Power ON");
+    } else if (msg == "OFF") {
+      clockmode = night;
+      logTS(); dualOut.println("[MQTT] Power OFF");
+    }
+  }
+
+  // Nach jeder Aenderung sofort State publishen
+  mqttPublishState();
+}
+
+void mqttPublishState() {
+  if (!mqttClient.connected()) return;
+
+  String base = mqttBaseTopic();
+  char hcHex[8], mcHex[8];
+  snprintf(hcHex, sizeof(hcHex), "#%02x%02x%02x", hourcolor.R, hourcolor.G, hourcolor.B);
+  snprintf(mcHex, sizeof(mcHex), "#%02x%02x%02x", minutecolor.R, minutecolor.G, minutecolor.B);
+
+  // State JSON fuer Home Assistant
+  String json = "{";
+  json += "\"state\":\"" + String(clockmode != night ? "ON" : "OFF") + "\",";
+  json += "\"brightness\":" + String(map(brightness, 0, 100, 0, 255)) + ",";
+  json += "\"color\":{\"r\":" + String(hourcolor.R) + ",\"g\":" + String(hourcolor.G) + ",\"b\":" + String(hourcolor.B) + "},";
+  json += "\"clockmode\":" + String(clockmode) + ",";
+  json += "\"showseconds\":" + String(showseconds ? 1 : 0) + ",";
+  json += "\"showsunpoint\":" + String(showSunPoint ? 1 : 0) + ",";
+  json += "\"hourmarks\":" + String(hourmarks) + ",";
+  json += "\"blendpoint\":" + String(blendpoint) + ",";
+  json += "\"hourcolor\":\"" + String(hcHex) + "\",";
+  json += "\"minutecolor\":\"" + String(mcHex) + "\",";
+  json += "\"fw\":\"" + String(firmware_version) + "\"";
+  json += "}";
+
+  mqttClient.publish((base + "/state").c_str(), json.c_str(), true);
+}
+
+void mqttPublishDiscovery() {
+  if (!mqttClient.connected()) return;
+
+  String uid = "mikotec_" + clockname;
+  uid.replace("-", "_");
+  String discoveryTopic = "homeassistant/light/" + uid + "/config";
+  String base = mqttBaseTopic();
+
+  String json = "{";
+  json += "\"name\":\"MikoTec LED Uhr " + clockname + "\",";
+  json += "\"unique_id\":\"" + uid + "\",";
+  json += "\"command_topic\":\"" + base + "/set/power\",";
+  json += "\"state_topic\":\"" + base + "/state\",";
+  json += "\"state_value_template\":\"{{ value_json.state }}\",";
+  json += "\"brightness_command_topic\":\"" + base + "/set/brightness\",";
+  json += "\"brightness_state_topic\":\"" + base + "/state\",";
+  json += "\"brightness_value_template\":\"{{ value_json.brightness }}\",";
+  json += "\"brightness_scale\":255,";
+  json += "\"rgb_command_topic\":\"" + base + "/set/hourcolor\",";
+  json += "\"rgb_command_template\":\"#{{ '%02x' % red }}{{ '%02x' % green }}{{ '%02x' % blue }}\",";
+  json += "\"rgb_state_topic\":\"" + base + "/state\",";
+  json += "\"rgb_value_template\":\"{{ value_json.color.r }},{{ value_json.color.g }},{{ value_json.color.b }}\",";
+  json += "\"json_attributes_topic\":\"" + base + "/state\",";
+  json += "\"device\":{";
+  json += "\"identifiers\":[\"" + uid + "\"],";
+  json += "\"name\":\"MikoTec LED Uhr\",";
+  json += "\"model\":\"Light Clock\",";
+  json += "\"manufacturer\":\"MikoTec\",";
+  json += "\"sw_version\":\"" + String(firmware_version) + "\"";
+  json += "}";
+  json += "}";
+
+  mqttClient.publish(discoveryTopic.c_str(), json.c_str(), true);
+  logTS(); dualOut.println("[MQTT] Discovery gesendet: " + discoveryTopic);
+}
+
+bool mqttReconnect() {
+  String clientId = "lightclock-" + clockname;
+  bool connected;
+  if (strlen(mqttUser) > 0) {
+    connected = mqttClient.connect(clientId.c_str(), mqttUser, mqttPass,
+                 (mqttBaseTopic() + "/availability").c_str(), 0, true, "offline");
+  } else {
+    connected = mqttClient.connect(clientId.c_str(),
+                 (mqttBaseTopic() + "/availability").c_str(), 0, true, "offline");
+  }
+  if (connected) {
+    logTS(); dualOut.println("[MQTT] Verbunden mit " + String(mqttBroker));
+    // Availability publishen
+    mqttClient.publish((mqttBaseTopic() + "/availability").c_str(), "online", true);
+    // Alle set-Topics subscriben
+    String base = mqttBaseTopic() + "/set/#";
+    mqttClient.subscribe(base.c_str());
+    logTS(); dualOut.println("[MQTT] Subscribed: " + base);
+    // Discovery senden
+    if (!mqttDiscoverySent) {
+      mqttPublishDiscovery();
+      mqttDiscoverySent = true;
+    }
+    // Initialen State publishen
+    mqttPublishState();
+    return true;
+  } else {
+    logTS(); dualOut.println("[MQTT] Verbindung fehlgeschlagen, rc=" + String(mqttClient.state()));
+    return false;
+  }
+}
+
+void loadMqttConfig() {
+  EEPROM.begin(512);
+  mqttEnabled = EEPROM.read(236);
+  if (mqttEnabled > 1) mqttEnabled = false;
+  mqttPort = (EEPROM.read(237) << 8) | EEPROM.read(238);
+  if (mqttPort == 0 || mqttPort == 65535) mqttPort = 1883;
+  // Broker (64 bytes ab 239)
+  for (int i = 0; i < 63; i++) {
+    mqttBroker[i] = char(EEPROM.read(239 + i));
+  }
+  mqttBroker[63] = '\0';
+  // Abschneiden bei erstem Nullbyte
+  for (int i = 0; i < 63; i++) {
+    if (mqttBroker[i] == '\0' || mqttBroker[i] == 255) { mqttBroker[i] = '\0'; break; }
+  }
+  // User (32 bytes ab 303)
+  for (int i = 0; i < 31; i++) {
+    mqttUser[i] = char(EEPROM.read(303 + i));
+  }
+  mqttUser[31] = '\0';
+  for (int i = 0; i < 31; i++) {
+    if (mqttUser[i] == '\0' || mqttUser[i] == 255) { mqttUser[i] = '\0'; break; }
+  }
+  // Pass (32 bytes ab 335)
+  for (int i = 0; i < 31; i++) {
+    mqttPass[i] = char(EEPROM.read(335 + i));
+  }
+  mqttPass[31] = '\0';
+  for (int i = 0; i < 31; i++) {
+    if (mqttPass[i] == '\0' || mqttPass[i] == 255) { mqttPass[i] = '\0'; break; }
+  }
+
+  logTS(); dualOut.println("[MQTT] Config geladen:");
+  logTS(); dualOut.println("  Enabled: " + String(mqttEnabled));
+  logTS(); dualOut.println("  Broker: " + String(mqttBroker));
+  logTS(); dualOut.println("  Port: " + String(mqttPort));
+  logTS(); dualOut.println("  User: " + String(mqttUser));
+}
+
+void saveMqttConfig() {
+  EEPROM.begin(512);
+  EEPROM.write(236, mqttEnabled ? 1 : 0);
+  EEPROM.write(237, (mqttPort >> 8) & 0xFF);
+  EEPROM.write(238, mqttPort & 0xFF);
+  // Broker
+  for (int i = 0; i < 64; i++) {
+    EEPROM.write(239 + i, (i < (int)strlen(mqttBroker)) ? mqttBroker[i] : 0);
+  }
+  // User
+  for (int i = 0; i < 32; i++) {
+    EEPROM.write(303 + i, (i < (int)strlen(mqttUser)) ? mqttUser[i] : 0);
+  }
+  // Pass
+  for (int i = 0; i < 32; i++) {
+    EEPROM.write(335 + i, (i < (int)strlen(mqttPass)) ? mqttPass[i] : 0);
+  }
+  EEPROM.commit();
+  logTS(); dualOut.println("[MQTT] Config gespeichert");
+}
+
+// Handler fuer /getmqtt und /setmqtt Endpunkte
+void handleGetMqtt() {
+  String json = "{";
+  json += "\"enabled\":" + String(mqttEnabled ? 1 : 0) + ",";
+  json += "\"broker\":\"" + String(mqttBroker) + "\",";
+  json += "\"port\":" + String(mqttPort) + ",";
+  json += "\"user\":\"" + String(mqttUser) + "\",";
+  json += "\"connected\":" + String(mqttClient.connected() ? 1 : 0);
+  json += "}";
+  server.send(200, "application/json", json);
+}
+
+void handleSetMqtt() {
+  if (server.hasArg("mqtt_enabled")) {
+    mqttEnabled = (server.arg("mqtt_enabled") == "1");
+  }
+  if (server.hasArg("mqtt_broker")) {
+    String b = server.arg("mqtt_broker");
+    b.trim();
+    strncpy(mqttBroker, b.c_str(), 63);
+    mqttBroker[63] = '\0';
+  }
+  if (server.hasArg("mqtt_port")) {
+    mqttPort = server.arg("mqtt_port").toInt();
+    if (mqttPort == 0) mqttPort = 1883;
+  }
+  if (server.hasArg("mqtt_user")) {
+    String u = server.arg("mqtt_user");
+    u.trim();
+    strncpy(mqttUser, u.c_str(), 31);
+    mqttUser[31] = '\0';
+  }
+  if (server.hasArg("mqtt_pass")) {
+    String p = server.arg("mqtt_pass");
+    strncpy(mqttPass, p.c_str(), 31);
+    mqttPass[31] = '\0';
+  }
+  saveMqttConfig();
+
+  // MQTT neu konfigurieren
+  mqttClient.disconnect();
+  mqttDiscoverySent = false;
+  if (mqttEnabled && strlen(mqttBroker) > 0) {
+    mqttClient.setServer(mqttBroker, mqttPort);
+    mqttClient.setCallback(mqttCallback);
+    mqttReconnect();
+  }
+
+  server.send(200, "application/json", "{\"ok\":1}");
 }
 
 void loop() {
@@ -662,6 +995,24 @@ void loop() {
   webSocket.loop();
   server.handleClient();
   NTPclient.update();
+
+  // MQTT loop
+  if (mqttEnabled && webMode == 1 && strlen(mqttBroker) > 0) {
+    if (mqttClient.connected()) {
+      mqttClient.loop();
+      // State alle 30 Sekunden publishen
+      if (millis() - lastMqttPublish > 30000) {
+        mqttPublishState();
+        lastMqttPublish = millis();
+      }
+    } else {
+      // Reconnect alle 10 Sekunden versuchen
+      if (millis() - lastMqttReconnect > 10000) {
+        mqttReconnect();
+        lastMqttReconnect = millis();
+      }
+    }
+  }
 
   // Einmal taeglich auf Updates pruefen
   if (webMode == 1 && millis() - lastUpdateCheck > updateCheckInterval) {
@@ -874,6 +1225,9 @@ void loadConfig() {
   maxBrightness = EEPROM.read(231);
   logTS(); dualOut.print("maxBrightness: ");
   dualOut.println(maxBrightness);
+
+  // MQTT Konfiguration laden
+  loadMqttConfig();
 }
 
 void writeInitalConfig() {
@@ -903,6 +1257,10 @@ void writeInitalConfig() {
   EEPROM.write(232, 0); //default hemisphere to 0 (Nord)
   EEPROM.write(233, 0); //default autoSleep to 0 (manuell)
   EEPROM.write(234, 10); //default nightBrightness to 10%
+  EEPROM.write(236, 0); //default MQTT disabled
+  EEPROM.write(237, (1883 >> 8) & 0xFF); //default MQTT port high byte
+  EEPROM.write(238, 1883 & 0xFF); //default MQTT port low byte
+  for (int i = 239; i < 367; i++) { EEPROM.write(i, 0); } //clear MQTT broker/user/pass
 
 
   for (int i = 195; i < 228; i++) {//zero (instead of null) the values where clockname will be written.
@@ -1212,6 +1570,8 @@ void setUpServerHandle() {
   server.on("/getsysinfo", handleGetSysInfo);
   server.on("/reboot", handleReboot);
   server.on("/speed",speedup);
+  server.on("/getmqtt", handleGetMqtt);
+  server.on("/setmqtt", HTTP_POST, handleSetMqtt);
 
   // Deutsche Update-Seite (überschreibt den Standard-Handler von httpUpdater)
   server.on("/update", HTTP_GET, [](){
@@ -3356,7 +3716,9 @@ void handleGetSettings() {
   json += "\"autosleep\":" + String(autoSleep ? 1 : 0) + ",";
   json += "\"latitude\":" + String(latitude) + ",";
   json += "\"longitude\":" + String(longitude) + ",";
-  json += "\"timezone\":" + String(timezone);
+  json += "\"timezone\":" + String(timezone) + ",";
+  json += "\"mqttEnabled\":" + String(mqttEnabled ? 1 : 0) + ",";
+  json += "\"mqttConnected\":" + String(mqttClient.connected() ? 1 : 0);
   json += "}";
   logTS(); dualOut.println("[SETTINGS] " + json);
   server.send(200, "application/json", json);

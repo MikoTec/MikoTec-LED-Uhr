@@ -16,6 +16,7 @@ Eine ESP8266-basierte LED-Uhr mit NeoPixel-Ring, Webinterface und automatischen 
 - **NTP-Zeitsynchronisation** – automatische Uhrzeit über das Internet
 - **Sommerzeit** – automatische DST-Erkennung
 - **LittleFS** – HTML, CSS und JS werden aus dem Flash-Dateisystem geladen (RAM-Entlastung)
+- **MQTT / Home Assistant** – Steuerung über MQTT mit automatischer Home Assistant Discovery
 
 ## Hardware
 
@@ -58,6 +59,8 @@ MikoTec-LED-Uhr/
 | `/getlog` | Aktueller Log (RAM-Buffer) |
 | `/getlog?prev=1` | Log vom letzten Boot (LittleFS) |
 | `/log_prev.txt` | Log-Datei direkt downloadbar |
+| `/getmqtt` | JSON: MQTT-Konfiguration und Status |
+| `/setmqtt` | POST: MQTT-Einstellungen speichern |
 
 ## OTA Update System
 
@@ -105,6 +108,17 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 - ESP8266 Core 3.1.2
 
 ## Changelog
+
+### v2.3.0.0 (01.05.2026)
+- **NEU: MQTT / Home Assistant Integration**
+- PubSubClient 2.8 Library hinzugefügt
+- MQTT-Client mit automatischem Reconnect und State-Publishing (alle 30s)
+- Home Assistant MQTT Discovery — Uhr erscheint automatisch als Light-Entity (RGB + Helligkeit)
+- Steuerbar per MQTT: Helligkeit, Stundenfarbe, Minutenfarbe, Blendpoint, Stundenmarken, Sekunden, Sonnenpunkt, Clockmode, Power ON/OFF
+- Topics: `lightclock/<clockname>/set/#` und `lightclock/<clockname>/state`
+- MQTT-Konfiguration über Weboberfläche (Settings-Seite): Broker, Port, User, Passwort
+- EEPROM-Speicherung der MQTT-Einstellungen (ab Adresse 236)
+- Firmware-Update UND neues LittleFS-Image nötig
 
 ### v2.2.0.40 (29.04.2026)
 - Entfernt: connectToDSTServer() und readDSTtime() - timezonedb.com API war nicht erreichbar und unnötig

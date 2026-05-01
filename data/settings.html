@@ -220,6 +220,39 @@
 </div>
 </ul>
 </form>
+
+<div style="margin-top:30px;border-top:1px solid rgba(255,255,255,0.1);padding-top:20px">
+<label class="section-head" style="font-size:18px;display:block;margin-bottom:15px">MQTT / Home Assistant</label>
+<div id="mqttStatus" style="margin-bottom:10px;font-size:13px;color:#888"></div>
+<ul class="form-verticle" style="list-style:none;padding:0">
+<li class="checkbox">
+<input id="mqtt_enabled" type="checkbox">
+<label for="mqtt_enabled">MQTT aktivieren</label>
+</li>
+<li>
+<input id="mqtt_broker" type="text" placeholder="z.B. 192.168.1.100" autocorrect="off" autocapitalize="none" style="width:100%;box-sizing:border-box">
+<label for="mqtt_broker">Broker IP / Hostname</label>
+</li>
+<li>
+<input id="mqtt_port" type="number" value="1883" min="1" max="65535" style="width:100%;box-sizing:border-box">
+<label for="mqtt_port">Port</label>
+</li>
+<li>
+<input id="mqtt_user" type="text" placeholder="(optional)" autocorrect="off" autocapitalize="none" style="width:100%;box-sizing:border-box">
+<label for="mqtt_user">Benutzer</label>
+</li>
+<li>
+<input id="mqtt_pass" type="password" placeholder="(optional)" style="width:100%;box-sizing:border-box">
+<label for="mqtt_pass">Passwort</label>
+</li>
+<li>
+<div class="btn-box">
+<button type="button" class="btn btn-default" onclick="saveMqtt()">MQTT Speichern</button>
+</div>
+</li>
+</ul>
+</div>
+
 <script src="/menu.js"></script>
 <script src="/settings.js"></script>
 </body>
