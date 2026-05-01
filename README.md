@@ -109,6 +109,13 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.11 (02.05.2026)
+- Hilfe-Seite komplett neu: Tab-Design (Startseite, Einstellungen, Zeitzone, Update, Support)
+- Responsive Bilder vom Update-Server mit picture/srcset
+- Interaktive Tooltip-Hotspots ueber den Bildbereichen
+- Zeitzone und Update Tabs mit Sub-Tabs
+- Firmware-Update UND neues LittleFS-Image noetig
+
 ### v2.3.0.10 (01.05.2026)
 - Fix: Beta-Channel komplett von MQTT entkoppelt
 - Beta wird in loadConfig() eigenstaendig geladen (EEPROM 367)

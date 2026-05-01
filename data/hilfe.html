@@ -2,230 +2,209 @@
 <html>
 <head>
 <title>Hilfe</title>
-<meta http-equiv=Content-Type content="text/html; charset=utf-8" />
-<meta name=viewport content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <link rel="stylesheet" href="/style.css">
 <link rel="stylesheet" href="/menu.css">
 <style>
-.hilfe-tooltip {
-  position: relative;
-  cursor: help;
-  border-bottom: 1px dotted #666;
-  display: inline;
-}
-.hilfe-tooltip::after {
-  content: attr(data-tooltip);
-  display: none;
-  position: absolute;
-  left: 0;
-  top: 120%;
-  z-index: 999;
-  background: #222;
-  color: #fff;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: normal;
-  min-width: 220px;
-  max-width: 320px;
-  line-height: 1.5;
-  white-space: normal;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  pointer-events: none;
-}
-.hilfe-tooltip:hover::after {
-  display: block;
-}
+.tz-tabs{display:flex;border-bottom:2px solid #e0e0e0;margin-bottom:20px;flex-wrap:wrap}
+.tz-tab{padding:10px 16px;cursor:pointer;font-family:Abel,sans-serif;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;background:none;border-top:none;border-left:none;border-right:none;outline:none}
+.tz-tab.active{color:#333;border-bottom:2px solid #333;font-weight:bold}
+.tz-pane{display:none}.tz-pane.active{display:block}
+.hilfe-img-wrap{position:relative;display:inline-block;width:100%;margin:10px 0}
+.hilfe-img-wrap img{width:100%;height:auto;display:block;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.12)}
+.hotspot{position:absolute;cursor:help;border:2px solid transparent;border-radius:4px;transition:border-color .2s,background .2s;z-index:2}
+.hotspot:hover{border-color:rgba(255,180,0,.7);background:rgba(255,180,0,.10)}
+.hotspot .tip{display:none;position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 8px);z-index:999;background:#222;color:#fff;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:normal;min-width:200px;max-width:300px;line-height:1.5;white-space:normal;box-shadow:0 4px 16px rgba(0,0,0,.35);pointer-events:none;text-align:left}
+.hotspot:hover .tip{display:block}
+.hotspot.tip-below .tip{bottom:auto;top:calc(100% + 8px)}
+.hilfe-sub{font-size:12px;color:#999;text-align:center;margin-top:4px}
 </style>
 </head>
-<body class=settings-page>
+<body class="settings-page">
 <div id="menu-placeholder"></div>
 
-<div id="rcorners2">
-<label class="section-head">Hauptseite</label>
-<form class=form-verticle>
-<ul>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Waehle die Farbe fuer den Stundenzeiger und den Minutenzeiger unabhaengig voneinander ueber den integrierten Farbwaehler. Die gewaehlten Farben werden sofort auf der Uhr sichtbar nachdem du auf Update drueckst.">Stundenfarbe / Minutenfarbe</span>
-– Legt die Farben der beiden Uhrzeiger fest.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Bestimmt wie stark Stunden- und Minutenfarbe ineinander uebergehen. Bei 0 gibt es keinen Uebergang, die Farben sind klar getrennt. Bei 255 ist der Uebergang maximal weich und die Farben mischen sich stark.">Mischpunkt</span>
-– Regelt den Farbverlauf zwischen Stunden- und Minutenzeiger.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Setzt die Gesamthelligkeit aller LEDs. Der maximale Wert haengt vom gewahlten Uhrentyp ab: Bei Netzstrombetrieb bis 255, bei USB-Betrieb bis 100, um die Stromversorgung nicht zu ueberladen.">Helligkeit</span>
-– Steuert wie hell alle LEDs leuchten.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Du kannst bis zu vier verschiedene Farbkombinationen (Stunden, Minuten, Helligkeit, Mischpunkt) in den Speicherplaetzen V1 bis V4 ablegen. Mit Laden rufst du eine gespeicherte Kombination wieder ab. So kannst du schnell zwischen Lieblingsfarben wechseln.">Speichern / Laden V1–V4</span>
-– Speichert und laedt Farbkombinationen.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Sendet die aktuellen Einstellungen (Farben, Helligkeit, Mischpunkt) an die Uhr und aktualisiert die LEDs sofort. Ohne diesen Knopf werden Aenderungen nicht uebernommen.">Update</span>
-– Uebertraegt alle Einstellungen auf die Uhr.
-</label>
-</li>
-</ul>
-</form>
-</div>
+<div id="rcorners2" style="max-width:520px;margin:20px auto;">
+  <label class="section-head">Hilfe</label>
 
-<div id="rcorners2">
-<label class="section-head">Einstellungen</label>
-<form class=form-verticle>
-<ul>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Zeigt die aktuelle Systemzeit des ESP8266. Ein Klick auf die Anzeige oeffnet das versteckte Minispiel. Die Zeit wird automatisch per NTP synchronisiert.">Uhrzeit</span>
-– Anzeige der aktuellen ESP-Zeit.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Legt fest ob und welche Markierungen auf dem LED-Ring erscheinen: Keine (kein Marker), Mittag (12-Uhr-Position), Quadranten (3, 6, 9, 12 Uhr), Stunden (alle 12 Positionen), Abdunkeln (LEDs in Richtung 12 Uhr werden schwaecher).">Std-Marken</span>
-– Stundenmarkierungen auf dem Zifferblatt.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Zeigt den aktuellen Sekundenzeiger als LED in der invertierten Farbe an, also der Gegenfarbe der Minutenfarbe. So ist die Sekunde immer sichtbar ohne die Optik zu stoeren.">Sekunden</span>
-– Sekundenzeiger als invertierte LED.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Eine Stunde vor dem berechneten Sonnenaufgang beginnen die LEDs langsam von Schwarz auf die eingestellten Farben aufzuhellen. Das simuliert ein natuerliches Aufwachen mit Licht. Benoetigt korrekte Koordinaten in der Zeitzone.">Sonnenaufgang</span>
-– Sanfter Lichtanstieg vor dem Aufwachen.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Zeigt einen goldenen LED-Punkt der die aktuelle Position der Sonne zwischen Auf- und Untergang anzeigt. Der Punkt wandert tagsüber entsprechend der Tageszeit. Benoetigt korrekte Koordinaten.">Sonnenpunkt</span>
-– Goldener LED-Punkt als Sonnenposition.
-</label>
-</li>
-</ul>
-</form>
-</div>
+  <div class="tz-tabs">
+    <button class="tz-tab active" onclick="showTab('tabStart',this)">Startseite</button>
+    <button class="tz-tab" onclick="showTab('tabSettings',this)">Einstellungen</button>
+    <button class="tz-tab" onclick="showTab('tabTimezone',this)">Zeitzone</button>
+    <button class="tz-tab" onclick="showTab('tabUpdate',this)">Update</button>
+    <button class="tz-tab" onclick="showTab('tabSupport',this)">Support</button>
+  </div>
 
-<div id="rcorners2">
-<label class="section-head">Schlafmodus</label>
-<form class=form-verticle>
-<ul>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Bestimmt was die Uhr waehrend der Schlafzeit anzeigt. Schwarz: Alle LEDs aus. Punkte: Nur Stunden- und Minutenpunkt bleiben sichtbar. Gedimmt: Das gesamte Zifferblatt wird sehr dunkel dargestellt. Mondphase: Die aktuelle Mondphase wird als LED-Bogen angezeigt. Aus: Der Schlafmodus ist deaktiviert, die Uhr laeuft immer normal.">Schlaf-Typ</span>
-– Darstellung der Uhr waehrend der Nacht.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Manuell: Du legst feste Uhrzeiten fuer Schlafen und Aufwachen fest. Automatisch: Die Uhr berechnet Sonnenauf- und -untergang anhand der gespeicherten GPS-Koordinaten und schaltet sich automatisch.">Schlafsteuerung</span>
-– Manuell oder automatisch per Sonnenstand.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Nur aktiv wenn Schlafsteuerung auf Manuell steht. Lege eine feste Uhrzeit fest ab wann die Uhr schlafen geht (Von) und ab wann sie wieder aufwacht (Bis).">Von / Bis</span>
-– Feste Schlaf- und Aufwachzeit.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Helligkeit waehrend des Schlafmodus, z.B. fuer die Mondphasen-Anzeige. 0% bedeutet aus, 100% entspricht der vollen Nacht-Helligkeit. Hat keinen Einfluss auf den Schwarz-Modus.">Nacht-Helligkeit</span>
-– Helligkeit im Schlafmodus (z.B. fuer Mondphase).
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Beeinflusst die Darstellung der Mondphase auf dem LED-Ring. Nordhalbkugel: Der zunehmende Mond erscheint rechts (westlich). Suedhalbkugel: Der zunehmende Mond erscheint links (oestlich). Fuer Deutschland ist Nordhalbkugel korrekt.">Hemisphere</span>
-– Nord- oder Suedhalbkugel fuer die Monddarstellung.
-</label>
-</li>
-</ul>
-</form>
-</div>
+  <!-- Tab: Startseite -->
+  <div id="tabStart" class="tz-pane active">
+    <div class="hilfe-img-wrap">
+      <picture>
+        <source media="(max-width: 360px)" srcset="IMG/hilfe_startseite_telefon.png">
+        <source media="(max-width: 520px)" srcset="IMG/hilfe_startseite_klein.png">
+        <source media="(max-width: 800px)" srcset="IMG/hilfe_startseite_mittel.png">
+        <img src="IMG/hilfe_startseite_gross.png" alt="Startseite">
+      </picture>
+      <div class="hotspot tip-below" style="left:15%;top:1%;width:70%;height:6%"><span class="tip">Zeigt den Namen und die aktuelle Firmware-Version der Uhr an.</span></div>
+      <div class="hotspot tip-below" style="left:5%;top:8%;width:90%;height:30%"><span class="tip">Live-Vorschau des LED-Rings. Zeigt die aktuellen Farben, den Sekundenzeiger und die Stundenmarkierungen in Echtzeit an.</span></div>
+      <div class="hotspot" style="left:3%;top:39%;width:45%;height:10%"><span class="tip">Wähle die Farbe für den Stundenzeiger über den Farbwähler. Die Farbe wird nach dem Drücken von Update auf der Uhr sichtbar.</span></div>
+      <div class="hotspot" style="left:52%;top:39%;width:45%;height:10%"><span class="tip">Wähle die Farbe für den Minutenzeiger. Zusammen mit der Stundenfarbe ergibt sich der Farbverlauf auf dem LED-Ring.</span></div>
+      <div class="hotspot" style="left:3%;top:50%;width:45%;height:9%"><span class="tip">Überblendeffekt: Bestimmt wie stark Stunden- und Minutenfarbe ineinander übergehen. Bei 0 sind die Farben klar getrennt, bei hohen Werten mischen sie sich weich.</span></div>
+      <div class="hotspot" style="left:52%;top:50%;width:45%;height:9%"><span class="tip">Helligkeit: Steuert die Gesamthelligkeit aller LEDs von 10% bis 100%. Bei USB-Betrieb wird die maximale Helligkeit automatisch begrenzt.</span></div>
+      <div class="hotspot" style="left:3%;top:60%;width:94%;height:24%"><span class="tip">Vier Speicherplätze für Farbkombinationen. Jeder Slot speichert: Stundenfarbe, Minutenfarbe, Überblendeffekt und Helligkeit. Die farbigen Balken zeigen die gespeicherten Farben als Vorschau.</span></div>
+      <div class="hotspot" style="left:25%;top:86%;width:50%;height:6%"><span class="tip">Überträgt die aktuellen Einstellungen (Farben, Helligkeit, Mischpunkt) an die Uhr. Ohne diesen Knopf werden Änderungen nicht übernommen.</span></div>
+    </div>
+    <div class="hilfe-sub">Fahre mit der Maus über einen Bereich für Details</div>
+  </div>
 
-<div id="rcorners2">
-<label class="section-head">Zeitzone</label>
-<form class=form-verticle>
-<ul>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Suche deinen Ort per Adresse oder Stadtname. Die Koordinaten (Breitengrad, Laengengrad) werden automatisch eingetragen und fuer Schlafmodus und Sonnenpunkt verwendet.">Standortsuche</span>
-– Ortsbestimmung per Adresssuche.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Waehle eine voreingestellte Stadt aus der Liste. Koordinaten und Zeitzone werden automatisch gesetzt. Praktisch fuer haeufig verwendete Staedte ohne manuelle Eingabe.">Stadt</span>
-– Schnellauswahl aus einer Staedte-Liste.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Trage den UTC-Versatz direkt als Zahl ein, z.B. 1 fuer Mitteleuropaeische Zeit (MEZ) oder 2 fuer Mitteleuropaeische Sommerzeit (MESZ). Negative Werte fuer Zeitzonen westlich von Greenwich.">Manuell</span>
-– Direkte Eingabe des UTC-Versatzes.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Aktiviert oder deaktiviert die Sommerzeit manuell. Wenn aktiviert wird eine Stunde zur Zeitzone addiert. Fuer automatische Erkennung kann der TimezoneDB-API-Key in den Einstellungen hinterlegt werden.">Sommerzeit</span>
-– Manuelle Sommerzeitumschaltung.
-</label>
-</li>
-</ul>
-</form>
-</div>
+  <!-- Tab: Einstellungen -->
+  <div id="tabSettings" class="tz-pane">
+    <div class="hilfe-img-wrap">
+      <picture>
+        <source media="(max-width: 360px)" srcset="IMG/hilfe_einstellungen_telefon.png">
+        <source media="(max-width: 520px)" srcset="IMG/hilfe_einstellungen_klein.png">
+        <source media="(max-width: 800px)" srcset="IMG/hilfe_einstellungen_mittel.png">
+        <img src="IMG/hilfe_einstellungen_gross.png" alt="Einstellungen">
+      </picture>
+      <div class="hotspot tip-below" style="left:5%;top:0.5%;width:90%;height:5%"><span class="tip">Aktuelle Systemzeit des ESP8266. Ein Klick auf die Anzeige öffnet das versteckte Minispiel. Die Zeit wird automatisch per NTP synchronisiert.</span></div>
+      <div class="hotspot tip-below" style="left:5%;top:6%;width:90%;height:4%"><span class="tip">Stundenmarkierungen: Keine, Mittag (12-Uhr-Position), Quadranten (3/6/9/12 Uhr), Stunden (alle 12 Positionen), Abdunkeln (LEDs Richtung 12 Uhr werden schwächer).</span></div>
+      <div class="hotspot tip-below" style="left:5%;top:10.5%;width:90%;height:3.5%"><span class="tip">Zeigt den Sekundenzeiger als LED in der invertierten Farbe der Minutenfarbe an.</span></div>
+      <div class="hotspot" style="left:5%;top:14%;width:90%;height:3.5%"><span class="tip">Goldener LED-Punkt der die aktuelle Sonnenposition zwischen Auf- und Untergang anzeigt. Wandert tagsüber über den LED-Ring.</span></div>
+      <div class="hotspot" style="left:5%;top:17.5%;width:90%;height:3.5%"><span class="tip">Eine Stunde vor dem berechneten Sonnenaufgang beginnen die LEDs langsam aufzuhellen — simuliert ein natürliches Aufwachen mit Licht.</span></div>
+      <div class="hotspot" style="left:5%;top:22%;width:90%;height:17%"><span class="tip">Schlafmodus: Schlaf-Typ bestimmt die Nachtanzeige (Schwarz/Punkte/Gedimmt/Mondphase/Aus). Nacht-Helligkeit regelt die Intensität. Schlafsteuerung wählt zwischen manueller Uhrzeit oder automatisch per Sonnenstand.</span></div>
+      <div class="hotspot" style="left:5%;top:40%;width:90%;height:4%"><span class="tip">Nord- oder Südhalbkugel für die korrekte Darstellung der Mondphase. Für Deutschland: Nordhalbkugel.</span></div>
+      <div class="hotspot" style="left:5%;top:44.5%;width:90%;height:4%"><span class="tip">Aktuelle Zeitzone der Uhr. Kann auf der separaten Zeitzone-Seite geändert werden.</span></div>
+      <div class="hotspot" style="left:5%;top:49%;width:90%;height:3.5%"><span class="tip">Sommerzeit manuell aktivieren oder deaktivieren. Wenn aktiviert wird eine Stunde zur Zeitzone addiert.</span></div>
+      <div class="hotspot" style="left:5%;top:53%;width:90%;height:4%"><span class="tip">Uhrentyp: Original (120 LEDs, Netzbetrieb), Mini (60 LEDs, USB) oder Benutzerdefiniert. Legt LED-Anzahl und maximale Helligkeit fest.</span></div>
+      <div class="hotspot" style="left:5%;top:57.5%;width:90%;height:4%"><span class="tip">Netzwerkname der Uhr (mDNS). Die Uhr ist unter http://[name].local erreichbar.</span></div>
+      <div class="hotspot" style="left:5%;top:62%;width:90%;height:3%"><span class="tip">Aktiviert den Beta-Update-Kanal. Die Uhr prüft dann auf Beta-Versionen statt auf stabile Releases.</span></div>
+      <div class="hotspot" style="left:20%;top:65.5%;width:60%;height:3.5%"><span class="tip">Speichert alle Einstellungen dieser Seite dauerhaft im EEPROM.</span></div>
+      <div class="hotspot" style="left:5%;top:70%;width:90%;height:28%"><span class="tip">MQTT / Home Assistant: Broker-IP, Port, Benutzer und Passwort eintragen um die Uhr mit Home Assistant zu verbinden. Die Uhr erscheint automatisch als Gerät mit Steuerelementen. Status zeigt den Verbindungszustand.</span></div>
+    </div>
+    <div class="hilfe-sub">Fahre mit der Maus über einen Bereich für Details</div>
+  </div>
 
-<div id="rcorners2">
-<label class="section-head">Uhrentyp &amp; Sonstiges</label>
-<form class=form-verticle>
-<ul>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Original: 120 LEDs, Netzstrombetrieb, maximale Helligkeit 255. Mini: 60 LEDs, USB-Betrieb, maximale Helligkeit 100. Benutzerdefiniert: Du kannst die LED-Anzahl und die Stromversorgungsart selbst festlegen.">Uhrentyp</span>
-– Legt LED-Anzahl und Strombegrenzung fest.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Der Name unter dem die Uhr im lokalen Netzwerk erreichbar ist. Mit mDNS kannst du die Uhr unter http://[name].local aufrufen, ohne die IP-Adresse zu kennen.">Uhrenname</span>
-– Netzwerkname der Uhr (mDNS).
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Startet einen Countdown-Timer. Die LEDs fuellen sich schrittweise in der Alarmfarbe auf. Am Ende blinken alle LEDs als Signal. Erreichbar ueber das Menue oder direkt unter /alarm.">Alarm</span>
-– LED-Countdown mit Blinklicht am Ende.
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Lade eine neue Firmware-Datei (.bin) per Browser hoch um die Uhr zu aktualisieren. Die Datei wird direkt auf den ESP geflasht ohne USB-Kabel. Erreichbar ueber Menue > Einstellungen > Update.">Firmware Update</span>
-– Drahtloses Firmware-Update per Browser (OTA).
-</label>
-</li>
-<li>
-<label>
-<span class="hilfe-tooltip" data-tooltip="Loescht saemtliche gespeicherten Einstellungen inklusive WLAN-Zugangsdaten aus dem EEPROM. Die Uhr startet danach als WLAN Access Point mit dem Namen 'MikoTec LED Uhr' zur Neukonfiguration. Nicht rueckgaengig zu machen!">Werksreset</span>
-– Loescht alle Einstellungen und WLAN-Daten.
-</label>
-</li>
-</ul>
-</form>
-</div>
+  <!-- Tab: Zeitzone -->
+  <div id="tabTimezone" class="tz-pane">
+    <div class="tz-tabs" style="border-bottom:1px solid #e0e0e0;margin-bottom:12px;">
+      <button class="tz-tab active" onclick="showSubTab('tzSub1',this)">Suche</button>
+      <button class="tz-tab" onclick="showSubTab('tzSub2',this)">Manuell</button>
+      <button class="tz-tab" onclick="showSubTab('tzSub3',this)">Stadt</button>
+    </div>
+    <div id="tzSub1" class="tz-pane active">
+      <div class="hilfe-img-wrap">
+        <picture>
+          <source media="(max-width: 360px)" srcset="IMG/hilfe_timezone_tab_1_telefon.png">
+          <source media="(max-width: 520px)" srcset="IMG/hilfe_timezone_tab_1_klein.png">
+          <source media="(max-width: 800px)" srcset="IMG/hilfe_timezone_tab_1_mittel.png">
+          <img src="IMG/hilfe_timezone_tab_1_gross.png" alt="Zeitzone Suche">
+        </picture>
+        <div class="hotspot tip-below" style="left:5%;top:18%;width:90%;height:12%"><span class="tip">Gib eine Adresse oder einen Stadtnamen ein und drücke Suchen. Breitengrad und Längengrad werden automatisch ermittelt.</span></div>
+        <div class="hotspot" style="left:5%;top:32%;width:90%;height:15%"><span class="tip">Breitengrad (Latitude) deines Standorts. Wird für Sonnenauf-/untergang und Sonnenpunkt benötigt.</span></div>
+        <div class="hotspot" style="left:5%;top:50%;width:90%;height:15%"><span class="tip">Längengrad (Longitude) deines Standorts. Daraus wird zusammen mit dem Breitengrad die Zeitzone und Sonnenposition berechnet.</span></div>
+        <div class="hotspot" style="left:15%;top:72%;width:70%;height:12%"><span class="tip">Übernimmt die Koordinaten und aktualisiert die Zeitzone der Uhr.</span></div>
+      </div>
+    </div>
+    <div id="tzSub2" class="tz-pane">
+      <div class="hilfe-img-wrap">
+        <picture>
+          <source media="(max-width: 360px)" srcset="IMG/hilfe_timezone_tab_2_telefon.png">
+          <source media="(max-width: 520px)" srcset="IMG/hilfe_timezone_tab_2_klein.png">
+          <source media="(max-width: 800px)" srcset="IMG/hilfe_timezone_tab_2_mittel.png">
+          <img src="IMG/hilfe_timezone_tab_2_gross.png" alt="Zeitzone Manuell">
+        </picture>
+        <div class="hotspot tip-below" style="left:5%;top:18%;width:90%;height:22%"><span class="tip">UTC-Versatz direkt eingeben. Z.B. 1 für MEZ (Winterzeit) oder 2 für MESZ (Sommerzeit). Negative Werte für Zeitzonen westlich von Greenwich.</span></div>
+        <div class="hotspot" style="left:15%;top:62%;width:70%;height:15%"><span class="tip">Übernimmt den manuell eingegebenen UTC-Versatz.</span></div>
+      </div>
+    </div>
+    <div id="tzSub3" class="tz-pane">
+      <div class="hilfe-img-wrap">
+        <picture>
+          <source media="(max-width: 360px)" srcset="IMG/hilfe_timezone_tab_3_telefon.png">
+          <source media="(max-width: 520px)" srcset="IMG/hilfe_timezone_tab_3_klein.png">
+          <source media="(max-width: 800px)" srcset="IMG/hilfe_timezone_tab_3_mittel.png">
+          <img src="IMG/hilfe_timezone_tab_3_gross.png" alt="Zeitzone Stadt">
+        </picture>
+        <div class="hotspot tip-below" style="left:5%;top:18%;width:90%;height:20%"><span class="tip">Wähle eine Stadt aus der Liste. Koordinaten und Zeitzone werden automatisch gesetzt — z.B. Solingen, Berlin, Wien, Zürich oder internationale Städte.</span></div>
+        <div class="hotspot" style="left:15%;top:60%;width:70%;height:15%"><span class="tip">Übernimmt die Koordinaten der gewählten Stadt.</span></div>
+      </div>
+    </div>
+    <div class="hilfe-sub">Fahre mit der Maus über einen Bereich für Details</div>
+  </div>
 
+  <!-- Tab: Update -->
+  <div id="tabUpdate" class="tz-pane">
+    <div class="tz-tabs" style="border-bottom:1px solid #e0e0e0;margin-bottom:12px;">
+      <button class="tz-tab active" onclick="showSubTab('updFW',this)">Firmware</button>
+      <button class="tz-tab" onclick="showSubTab('updFS',this)">Dateisystem</button>
+    </div>
+    <div id="updFW" class="tz-pane active">
+      <div class="hilfe-img-wrap">
+        <picture>
+          <source media="(max-width: 360px)" srcset="IMG/hilfe_update_fw_telefon.png">
+          <source media="(max-width: 520px)" srcset="IMG/hilfe_update_fw_klein.png">
+          <source media="(max-width: 800px)" srcset="IMG/hilfe_update_fw_mittel.png">
+          <img src="IMG/hilfe_update_fw_gross.png" alt="Firmware Update">
+        </picture>
+        <div class="hotspot tip-below" style="left:10%;top:8%;width:80%;height:15%"><span class="tip">Zeigt die aktuell installierte Firmware-Version. So siehst du ob ein Update nötig ist.</span></div>
+        <div class="hotspot" style="left:10%;top:35%;width:80%;height:22%"><span class="tip">Wähle eine .bin Firmware-Datei von deinem Gerät. Die Datei wird per WLAN direkt auf den ESP geflasht — kein USB-Kabel nötig.</span></div>
+        <div class="hotspot" style="left:10%;top:62%;width:80%;height:18%"><span class="tip">Startet den Flash-Vorgang. Die Uhr startet danach automatisch neu. Nicht unterbrechen!</span></div>
+      </div>
+    </div>
+    <div id="updFS" class="tz-pane">
+      <div class="hilfe-img-wrap">
+        <picture>
+          <source media="(max-width: 360px)" srcset="IMG/hilfe_update_fs_telefon.png">
+          <source media="(max-width: 520px)" srcset="IMG/hilfe_update_fs_klein.png">
+          <source media="(max-width: 800px)" srcset="IMG/hilfe_update_fs_mittel.png">
+          <img src="IMG/hilfe_update_fs_gross.png" alt="Dateisystem Update">
+        </picture>
+        <div class="hotspot tip-below" style="left:5%;top:5%;width:90%;height:25%"><span class="tip">Dateisystem-Update: Lädt HTML, CSS und JavaScript Dateien ins Flash-Dateisystem (LittleFS). Nötig wenn sich die Weboberfläche geändert hat.</span></div>
+        <div class="hotspot" style="left:10%;top:40%;width:80%;height:18%"><span class="tip">Wähle eine LittleFS .bin Image-Datei. Diese enthält alle Weboberflächen-Dateien gepackt in einem Image.</span></div>
+        <div class="hotspot" style="left:10%;top:62%;width:80%;height:18%"><span class="tip">Startet den Flash-Vorgang des Dateisystems. Die Uhr startet danach automatisch neu. Nicht unterbrechen!</span></div>
+      </div>
+    </div>
+    <div class="hilfe-sub">Fahre mit der Maus über einen Bereich für Details</div>
+  </div>
+
+  <!-- Tab: Support -->
+  <div id="tabSupport" class="tz-pane">
+    <div class="hilfe-img-wrap">
+      <picture>
+        <source media="(max-width: 360px)" srcset="IMG/hilfe_support_telefon.png">
+        <source media="(max-width: 520px)" srcset="IMG/hilfe_support_klein.png">
+        <source media="(max-width: 800px)" srcset="IMG/hilfe_support_mittel.png">
+        <img src="IMG/hilfe_support_gross.png" alt="Support">
+      </picture>
+      <div class="hotspot tip-below" style="left:5%;top:3%;width:90%;height:36%"><span class="tip">Systeminformationen: Firmware-Version, freier Speicher (Heap) und Betriebszeit seit dem letzten Neustart. Hilfreich für Fehlerdiagnose.</span></div>
+      <div class="hotspot" style="left:5%;top:42%;width:90%;height:55%"><span class="tip">Live-Log der Uhr. Zeigt alle Systemereignisse, Einstellungsänderungen und Fehlermeldungen. Aktualisieren lädt das Log neu, Herunterladen speichert es als Datei, Leeren löscht das Log. Intervall stellt die automatische Aktualisierung ein.</span></div>
+    </div>
+    <div class="hilfe-sub">Fahre mit der Maus über einen Bereich für Details</div>
+  </div>
+
+</div>
 
 <script src="/menu.js"></script>
+<script>
+var imgBase='http://yzdlcru01ktmqlzy.myfritz.net:8080/updates/images/';
+document.querySelectorAll('.hilfe-img-wrap picture source, .hilfe-img-wrap picture img').forEach(function(el){
+  ['src','srcset'].forEach(function(attr){
+    var v=el.getAttribute(attr);
+    if(v&&v.indexOf('IMG/')===0) el.setAttribute(attr,imgBase+v.substring(4));
+  });
+});
+function showTab(id,btn){
+  document.querySelectorAll('#rcorners2 > .tz-pane').forEach(function(p){p.classList.remove('active')});
+  document.querySelectorAll('#rcorners2 > .tz-tabs > .tz-tab').forEach(function(t){t.classList.remove('active')});
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+function showSubTab(id,btn){
+  var parent=btn.parentElement.parentElement;
+  parent.querySelectorAll(':scope > .tz-pane').forEach(function(p){p.classList.remove('active')});
+  btn.parentElement.querySelectorAll('.tz-tab').forEach(function(t){t.classList.remove('active')});
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
 </body>
 </html>
