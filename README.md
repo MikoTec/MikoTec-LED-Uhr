@@ -109,6 +109,13 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.2 (01.05.2026)
+- MQTT Discovery umgebaut: Device mit mehreren Entities statt Light-Entity
+- Entities: Power (Switch), Helligkeit (Number), Modus (Select), Sekunden (Switch), Sonnenpunkt (Switch), Stundenmarken (Select), Blendpoint (Number), Firmware (Sensor), Stundenfarbe (Sensor), Minutenfarbe (Sensor)
+- Alte Light-Discovery wird automatisch entfernt
+- State-JSON um brightness_pct und clockmode_name erweitert
+- Nur Firmware-Update noetig
+
 ### v2.3.0.1 (01.05.2026)
 - Fix: MQTT Discovery Buffer von 512 auf 1200 Bytes vergroessert (Discovery-JSON war 955 Bytes)
 - Fix: availability_topic zur Discovery hinzugefuegt

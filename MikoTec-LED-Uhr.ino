@@ -210,7 +210,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.1";
+const char* firmware_version = "2.3.0.2";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -786,11 +786,17 @@ void mqttPublishState() {
   snprintf(mcHex, sizeof(mcHex), "#%02x%02x%02x", minutecolor.R, minutecolor.G, minutecolor.B);
 
   // State JSON fuer Home Assistant
+  String cmName = "normal";
+  if (clockmode == night) cmName = "night";
+  else if (clockmode == dawnmode) cmName = "dawn";
+
   String json = "{";
   json += "\"state\":\"" + String(clockmode != night ? "ON" : "OFF") + "\",";
   json += "\"brightness\":" + String(map(brightness, 0, 100, 0, 255)) + ",";
+  json += "\"brightness_pct\":" + String(brightness) + ",";
   json += "\"color\":{\"r\":" + String(hourcolor.R) + ",\"g\":" + String(hourcolor.G) + ",\"b\":" + String(hourcolor.B) + "},";
   json += "\"clockmode\":" + String(clockmode) + ",";
+  json += "\"clockmode_name\":\"" + cmName + "\",";
   json += "\"showseconds\":" + String(showseconds ? 1 : 0) + ",";
   json += "\"showsunpoint\":" + String(showSunPoint ? 1 : 0) + ",";
   json += "\"hourmarks\":" + String(hourmarks) + ",";
@@ -808,38 +814,172 @@ void mqttPublishDiscovery() {
 
   String uid = "mikotec_" + clockname;
   uid.replace("-", "_");
-  String discoveryTopic = "homeassistant/light/" + uid + "/config";
   String base = mqttBaseTopic();
 
-  String json = "{";
-  json += "\"name\":\"MikoTec LED Uhr " + clockname + "\",";
-  json += "\"unique_id\":\"" + uid + "\",";
-  json += "\"command_topic\":\"" + base + "/set/power\",";
-  json += "\"state_topic\":\"" + base + "/state\",";
-  json += "\"state_value_template\":\"{{ value_json.state }}\",";
-  json += "\"brightness_command_topic\":\"" + base + "/set/brightness\",";
-  json += "\"brightness_state_topic\":\"" + base + "/state\",";
-  json += "\"brightness_value_template\":\"{{ value_json.brightness }}\",";
-  json += "\"brightness_scale\":255,";
-  json += "\"rgb_command_topic\":\"" + base + "/set/hourcolor\",";
-  json += "\"rgb_command_template\":\"#{{ '%02x' % red }}{{ '%02x' % green }}{{ '%02x' % blue }}\",";
-  json += "\"rgb_state_topic\":\"" + base + "/state\",";
-  json += "\"rgb_value_template\":\"{{ value_json.color.r }},{{ value_json.color.g }},{{ value_json.color.b }}\",";
-  json += "\"json_attributes_topic\":\"" + base + "/state\",";
-  json += "\"availability_topic\":\"" + base + "/availability\",";
-  json += "\"payload_available\":\"online\",";
-  json += "\"payload_not_available\":\"offline\",";
-  json += "\"device\":{";
-  json += "\"identifiers\":[\"" + uid + "\"],";
-  json += "\"name\":\"MikoTec LED Uhr\",";
-  json += "\"model\":\"Light Clock\",";
-  json += "\"manufacturer\":\"MikoTec\",";
-  json += "\"sw_version\":\"" + String(firmware_version) + "\"";
-  json += "}";
-  json += "}";
+  // Device-Block (wird in jeder Entity wiederverwendet)
+  String dev = "\"dev\":{";
+  dev += "\"ids\":[\"" + uid + "\"],";
+  dev += "\"name\":\"MikoTec LED Uhr\",";
+  dev += "\"mdl\":\"Light Clock\",";
+  dev += "\"mf\":\"MikoTec\",";
+  dev += "\"sw\":\"" + String(firmware_version) + "\"";
+  dev += "}";
 
-  mqttClient.publish(discoveryTopic.c_str(), json.c_str(), true);
-  logTS(); dualOut.println("[MQTT] Discovery gesendet: " + discoveryTopic);
+  // Availability-Block
+  String avail = "\"avty_t\":\"" + base + "/availability\",\"pl_avail\":\"online\",\"pl_not_avail\":\"offline\"";
+
+  // --- 1) Switch: Power (ON/OFF) ---
+  {
+    String topic = "homeassistant/switch/" + uid + "_power/config";
+    String json = "{";
+    json += "\"name\":\"Power\",";
+    json += "\"uniq_id\":\"" + uid + "_power\",";
+    json += "\"cmd_t\":\"" + base + "/set/power\",";
+    json += "\"stat_t\":\"" + base + "/state\",";
+    json += "\"val_tpl\":\"{{ value_json.state }}\",";
+    json += "\"ic\":\"mdi:clock-outline\",";
+    json += avail + "," + dev + "}";
+    mqttClient.publish(topic.c_str(), json.c_str(), true);
+    logTS(); dualOut.println("[MQTT] Discovery: " + topic);
+  }
+
+  // --- 2) Number: Helligkeit (0-100) ---
+  {
+    String topic = "homeassistant/number/" + uid + "_brightness/config";
+    String json = "{";
+    json += "\"name\":\"Helligkeit\",";
+    json += "\"uniq_id\":\"" + uid + "_brightness\",";
+    json += "\"cmd_t\":\"" + base + "/set/brightness\",";
+    json += "\"stat_t\":\"" + base + "/state\",";
+    json += "\"val_tpl\":\"{{ value_json.brightness_pct }}\",";
+    json += "\"min\":10,\"max\":100,\"step\":1,";
+    json += "\"unit_of_meas\":\"%\",";
+    json += "\"ic\":\"mdi:brightness-6\",";
+    json += avail + "," + dev + "}";
+    mqttClient.publish(topic.c_str(), json.c_str(), true);
+    logTS(); dualOut.println("[MQTT] Discovery: " + topic);
+  }
+
+  // --- 3) Select: Clockmode ---
+  {
+    String topic = "homeassistant/select/" + uid + "_clockmode/config";
+    String json = "{";
+    json += "\"name\":\"Modus\",";
+    json += "\"uniq_id\":\"" + uid + "_clockmode\",";
+    json += "\"cmd_t\":\"" + base + "/set/clockmode\",";
+    json += "\"stat_t\":\"" + base + "/state\",";
+    json += "\"val_tpl\":\"{{ value_json.clockmode_name }}\",";
+    json += "\"ops\":[\"normal\",\"night\",\"dawn\"],";
+    json += "\"ic\":\"mdi:theme-light-dark\",";
+    json += avail + "," + dev + "}";
+    mqttClient.publish(topic.c_str(), json.c_str(), true);
+    logTS(); dualOut.println("[MQTT] Discovery: " + topic);
+  }
+
+  // --- 4) Switch: Sekunden ---
+  {
+    String topic = "homeassistant/switch/" + uid + "_seconds/config";
+    String json = "{";
+    json += "\"name\":\"Sekunden\",";
+    json += "\"uniq_id\":\"" + uid + "_seconds\",";
+    json += "\"cmd_t\":\"" + base + "/set/showseconds\",";
+    json += "\"stat_t\":\"" + base + "/state\",";
+    json += "\"val_tpl\":\"{{ 'ON' if value_json.showseconds == 1 else 'OFF' }}\",";
+    json += "\"ic\":\"mdi:timer-outline\",";
+    json += avail + "," + dev + "}";
+    mqttClient.publish(topic.c_str(), json.c_str(), true);
+    logTS(); dualOut.println("[MQTT] Discovery: " + topic);
+  }
+
+  // --- 5) Switch: Sonnenpunkt ---
+  {
+    String topic = "homeassistant/switch/" + uid + "_sunpoint/config";
+    String json = "{";
+    json += "\"name\":\"Sonnenpunkt\",";
+    json += "\"uniq_id\":\"" + uid + "_sunpoint\",";
+    json += "\"cmd_t\":\"" + base + "/set/showsunpoint\",";
+    json += "\"stat_t\":\"" + base + "/state\",";
+    json += "\"val_tpl\":\"{{ 'ON' if value_json.showsunpoint == 1 else 'OFF' }}\",";
+    json += "\"ic\":\"mdi:weather-sunny\",";
+    json += avail + "," + dev + "}";
+    mqttClient.publish(topic.c_str(), json.c_str(), true);
+    logTS(); dualOut.println("[MQTT] Discovery: " + topic);
+  }
+
+  // --- 6) Select: Stundenmarken ---
+  {
+    String topic = "homeassistant/select/" + uid + "_hourmarks/config";
+    String json = "{";
+    json += "\"name\":\"Stundenmarken\",";
+    json += "\"uniq_id\":\"" + uid + "_hourmarks\",";
+    json += "\"cmd_t\":\"" + base + "/set/hourmarks\",";
+    json += "\"stat_t\":\"" + base + "/state\",";
+    json += "\"val_tpl\":\"{{ value_json.hourmarks }}\",";
+    json += "\"ops\":[\"0\",\"1\",\"2\",\"3\",\"4\"],";
+    json += "\"ic\":\"mdi:clock-digital\",";
+    json += avail + "," + dev + "}";
+    mqttClient.publish(topic.c_str(), json.c_str(), true);
+    logTS(); dualOut.println("[MQTT] Discovery: " + topic);
+  }
+
+  // --- 7) Number: Blendpoint ---
+  {
+    String topic = "homeassistant/number/" + uid + "_blendpoint/config";
+    String json = "{";
+    json += "\"name\":\"Blendpoint\",";
+    json += "\"uniq_id\":\"" + uid + "_blendpoint\",";
+    json += "\"cmd_t\":\"" + base + "/set/blendpoint\",";
+    json += "\"stat_t\":\"" + base + "/state\",";
+    json += "\"val_tpl\":\"{{ value_json.blendpoint }}\",";
+    json += "\"min\":0,\"max\":100,\"step\":1,";
+    json += "\"unit_of_meas\":\"%\",";
+    json += "\"ic\":\"mdi:gradient-horizontal\",";
+    json += avail + "," + dev + "}";
+    mqttClient.publish(topic.c_str(), json.c_str(), true);
+    logTS(); dualOut.println("[MQTT] Discovery: " + topic);
+  }
+
+  // --- 8) Sensor: Firmware ---
+  {
+    String topic = "homeassistant/sensor/" + uid + "_firmware/config";
+    String json = "{";
+    json += "\"name\":\"Firmware\",";
+    json += "\"uniq_id\":\"" + uid + "_firmware\",";
+    json += "\"stat_t\":\"" + base + "/state\",";
+    json += "\"val_tpl\":\"{{ value_json.fw }}\",";
+    json += "\"ic\":\"mdi:information-outline\",";
+    json += avail + "," + dev + "}";
+    mqttClient.publish(topic.c_str(), json.c_str(), true);
+    logTS(); dualOut.println("[MQTT] Discovery: " + topic);
+  }
+
+  // --- 9) Sensor: Stundenfarbe ---
+  {
+    String topic = "homeassistant/sensor/" + uid + "_hourcolor/config";
+    String json = "{";
+    json += "\"name\":\"Stundenfarbe\",";
+    json += "\"uniq_id\":\"" + uid + "_hourcolor\",";
+    json += "\"stat_t\":\"" + base + "/state\",";
+    json += "\"val_tpl\":\"{{ value_json.hourcolor }}\",";
+    json += "\"ic\":\"mdi:palette\",";
+    json += avail + "," + dev + "}";
+    mqttClient.publish(topic.c_str(), json.c_str(), true);
+    logTS(); dualOut.println("[MQTT] Discovery: " + topic);
+  }
+
+  // --- 10) Sensor: Minutenfarbe ---
+  {
+    String topic = "homeassistant/sensor/" + uid + "_minutecolor/config";
+    String json = "{";
+    json += "\"name\":\"Minutenfarbe\",";
+    json += "\"uniq_id\":\"" + uid + "_minutecolor\",";
+    json += "\"stat_t\":\"" + base + "/state\",";
+    json += "\"val_tpl\":\"{{ value_json.minutecolor }}\",";
+    json += "\"ic\":\"mdi:palette-outline\",";
+    json += avail + "," + dev + "}";
+    mqttClient.publish(topic.c_str(), json.c_str(), true);
+    logTS(); dualOut.println("[MQTT] Discovery: " + topic);
+  }
 }
 
 bool mqttReconnect() {
@@ -862,6 +1002,13 @@ bool mqttReconnect() {
     logTS(); dualOut.println("[MQTT] Subscribed: " + base);
     // Discovery senden
     if (!mqttDiscoverySent) {
+      // Alte Light-Discovery entfernen
+      String uid = "mikotec_" + clockname;
+      uid.replace("-", "_");
+      String oldTopic = "homeassistant/light/" + uid + "/config";
+      mqttClient.publish(oldTopic.c_str(), "", true);
+      logTS(); dualOut.println("[MQTT] Alte Light-Discovery entfernt");
+
       mqttPublishDiscovery();
       mqttDiscoverySent = true;
     }
