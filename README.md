@@ -109,6 +109,15 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.9 (01.05.2026)
+- Beta-Toggle in normales Settings-Formular verschoben (wird mit Speichern gesichert)
+- Beta-Toggle auch ohne MQTT nutzbar
+- NEU: Sonnenaufgang und Sonnenuntergang als MQTT Sensor Entities
+- saveFace/loadFace speichert und laedt jetzt auch Helligkeit
+- Schemes JSON /getstate gibt blendpoint und brightness pro Scheme aus
+- Brightness wird auch in Partition 0 gespeichert
+- Firmware-Update UND neues LittleFS-Image noetig
+
 ### v2.3.0.8 (01.05.2026)
 - NEU: Stable/Beta Update-Kanal
 - version.json neues Format: stable_version/file/fs_version/fs_file + beta_version/file/fs_version/fs_file

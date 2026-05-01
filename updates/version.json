@@ -3,8 +3,8 @@
   "stable_file": "MikoTec-LED-Uhr_v2.3.0.7.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.8",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.8.bin",
-  "beta_fs_version": "2.3.0.8",
-  "beta_fs_file": "littlefs_v2.3.0.8.bin"
+  "beta_version": "2.3.0.9",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.9.bin",
+  "beta_fs_version": "2.3.0.9",
+  "beta_fs_file": "littlefs_v2.3.0.9.bin"
 }

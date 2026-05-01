@@ -213,6 +213,11 @@
 <input id="clockname" name="clockname" value="" type="text" autocorrect="off" autocapitalize="none">
 <label data-tooltip="Netzwerkname der Uhr" class="tooltip section-head" for="clockname">Uhrenname</label>
 </li>
+<li class="checkbox">
+<input id="betahidden" type="hidden" name="betahidden" value="0">
+<input id="betachannel" type="checkbox" name="betachannel">
+<label for="betachannel">Beta-Updates aktivieren</label>
+</li>
 
 <label class="hide-mobile">&nbsp;</label>
 <div class="btn-box">
@@ -244,10 +249,6 @@
 <li>
 <input id="mqtt_pass" type="password" placeholder="(optional)" style="width:100%;box-sizing:border-box">
 <label for="mqtt_pass">Passwort</label>
-</li>
-<li class="checkbox">
-<input id="beta_channel" type="checkbox">
-<label for="beta_channel">Beta-Updates aktivieren</label>
 </li>
 <li>
 <div class="btn-box">

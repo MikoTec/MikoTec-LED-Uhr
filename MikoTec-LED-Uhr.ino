@@ -240,7 +240,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.8";
+const char* firmware_version = "2.3.0.9";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -988,7 +988,19 @@ void mqttPublishState() {
   json += "\"hourcolor\":\"" + String(hcHex) + "\",";
   json += "\"minutecolor\":\"" + String(mcHex) + "\",";
   json += "\"fw\":\"" + String(firmware_version) + "\",";
-  json += "\"beta\":" + String(betaChannel ? 1 : 0);
+  json += "\"beta\":" + String(betaChannel ? 1 : 0) + ",";
+
+  // Sonnenauf/untergang
+  int srMin = 0, ssMin = 0;
+  time_t rawtime = now();
+  struct tm *ti = localtime(&rawtime);
+  int doy = ti->tm_yday + 1;
+  getSunTimes(doy, latitude, longitude, timezone + DSTtime, srMin, ssMin);
+  char srBuf[6], ssBuf[6];
+  snprintf(srBuf, sizeof(srBuf), "%02d:%02d", srMin/60, srMin%60);
+  snprintf(ssBuf, sizeof(ssBuf), "%02d:%02d", ssMin/60, ssMin%60);
+  json += "\"sunrise\":\"" + String(srBuf) + "\",";
+  json += "\"sunset\":\"" + String(ssBuf) + "\"";
   json += "}";
 
   mqttClient.publish((base + "/state").c_str(), json.c_str(), true);
@@ -1183,7 +1195,35 @@ void mqttPublishDiscovery() {
     logTS(); dualOut.println("[MQTT] Discovery: " + topic);
   }
 
-  // --- 12) Switch: Beta-Channel ---
+  // --- 12) Sensor: Sonnenaufgang ---
+  {
+    String topic = "homeassistant/sensor/" + uid + "_sunrise/config";
+    String json = "{";
+    json += "\"name\":\"Sonnenaufgang\",";
+    json += "\"uniq_id\":\"" + uid + "_sunrise\",";
+    json += "\"stat_t\":\"" + base + "/state\",";
+    json += "\"val_tpl\":\"{{ value_json.sunrise }}\",";
+    json += "\"ic\":\"mdi:weather-sunset-up\",";
+    json += avail + "," + dev + "}";
+    mqttClient.publish(topic.c_str(), json.c_str(), true);
+    logTS(); dualOut.println("[MQTT] Discovery: " + topic);
+  }
+
+  // --- 13) Sensor: Sonnenuntergang ---
+  {
+    String topic = "homeassistant/sensor/" + uid + "_sunset/config";
+    String json = "{";
+    json += "\"name\":\"Sonnenuntergang\",";
+    json += "\"uniq_id\":\"" + uid + "_sunset\",";
+    json += "\"stat_t\":\"" + base + "/state\",";
+    json += "\"val_tpl\":\"{{ value_json.sunset }}\",";
+    json += "\"ic\":\"mdi:weather-sunset-down\",";
+    json += avail + "," + dev + "}";
+    mqttClient.publish(topic.c_str(), json.c_str(), true);
+    logTS(); dualOut.println("[MQTT] Discovery: " + topic);
+  }
+
+  // --- 14) Switch: Beta-Channel ---
   {
     String topic = "homeassistant/switch/" + uid + "_beta/config";
     String json = "{";
@@ -1361,9 +1401,6 @@ void handleSetMqtt() {
     String p = server.arg("mqtt_pass");
     strncpy(mqttPass, p.c_str(), 31);
     mqttPass[31] = '\0';
-  }
-  if (server.hasArg("beta_channel")) {
-    betaChannel = (server.arg("beta_channel") == "1");
   }
   saveMqttConfig();
 
@@ -2683,6 +2720,15 @@ void handleRoot() {
   //write the blend point
   EEPROM.write(106, blendpoint);
 
+  //write the brightness
+  EEPROM.write(107, brightness);
+
+  // Beta-Channel
+  if (server.hasArg("betahidden")) {
+    betaChannel = server.hasArg("betachannel");
+    EEPROM.write(367, betaChannel ? 1 : 0);
+  }
+
 
   // Heap freigeben vor dem Aufbau der Root-Seite
   yield();
@@ -3889,6 +3935,9 @@ void saveFace(uint8_t partition)
     //write the blend point
     EEPROM.write(106 + partition * 15, blendpoint);
 
+    //write the brightness
+    EEPROM.write(107 + partition * 15, brightness);
+
     EEPROM.commit();
     delay(500);
   }
@@ -3948,6 +3997,12 @@ void loadFace(uint8_t partition)
 
     //write the blend point
     blendpoint = EEPROM.read(106 + partition * 15);
+
+    //read the brightness
+    uint8_t savedBrightness = EEPROM.read(107 + partition * 15);
+    if (savedBrightness >= 10 && savedBrightness <= 100) {
+      brightness = savedBrightness;
+    }
   }
 }
 //-----------------------------Demo functions (for filming etc)---------------------------------
@@ -4084,7 +4139,9 @@ void handleGetState() {
       EEPROM.read(100 + i*15), EEPROM.read(101 + i*15), EEPROM.read(102 + i*15));
     snprintf(sm, sizeof(sm), "#%02x%02x%02x",
       EEPROM.read(103 + i*15), EEPROM.read(104 + i*15), EEPROM.read(105 + i*15));
-    json += "{\"h\":\"" + String(sh) + "\",\"m\":\"" + String(sm) + "\"}";
+    int bp = EEPROM.read(106 + i*15);
+    int br = EEPROM.read(107 + i*15);
+    json += "{\"h\":\"" + String(sh) + "\",\"m\":\"" + String(sm) + "\",\"bp\":" + String(bp) + ",\"br\":" + String(br) + "}";
     if (i < 4) json += ",";
   }
   json += "]";
@@ -4116,7 +4173,8 @@ void handleGetSettings() {
   json += "\"longitude\":" + String(longitude) + ",";
   json += "\"timezone\":" + String(timezone) + ",";
   json += "\"mqttEnabled\":" + String(mqttEnabled ? 1 : 0) + ",";
-  json += "\"mqttConnected\":" + String(mqttClient.connected() ? 1 : 0);
+  json += "\"mqttConnected\":" + String(mqttClient.connected() ? 1 : 0) + ",";
+  json += "\"betaChannel\":" + String(betaChannel ? 1 : 0);
   json += "}";
   logTS(); dualOut.println("[SETTINGS] " + json);
   server.send(200, "application/json", json);

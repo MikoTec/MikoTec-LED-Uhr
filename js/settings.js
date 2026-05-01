@@ -82,6 +82,7 @@ document.addEventListener('DOMContentLoaded', function(){
       }
     }
     if(d.clockname!=null) document.getElementById('clockname').value=d.clockname;
+    if(d.betaChannel!=null) document.getElementById('betachannel').checked=(d.betaChannel===1);
   }).catch(function(e){console.error('getsettings fehler:',e);});
 
   setInterval(updateTime,1000);
@@ -93,7 +94,6 @@ document.addEventListener('DOMContentLoaded', function(){
     if(d.broker) document.getElementById('mqtt_broker').value=d.broker;
     if(d.port) document.getElementById('mqtt_port').value=d.port;
     if(d.user) document.getElementById('mqtt_user').value=d.user;
-    document.getElementById('beta_channel').checked=(d.beta===1);
     var st=document.getElementById('mqttStatus');
     if(d.enabled===1){
       st.innerText=d.connected===1?'Status: Verbunden':'Status: Nicht verbunden';
@@ -112,7 +112,6 @@ function saveMqtt(){
   fd.append('mqtt_port',document.getElementById('mqtt_port').value);
   fd.append('mqtt_user',document.getElementById('mqtt_user').value);
   fd.append('mqtt_pass',document.getElementById('mqtt_pass').value);
-  fd.append('beta_channel',document.getElementById('beta_channel').checked?'1':'0');
   fetch('/setmqtt',{method:'POST',body:fd}).then(r=>r.json()).then(function(d){
     if(d.ok===1){
       var st=document.getElementById('mqttStatus');
