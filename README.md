@@ -109,6 +109,11 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.1 (01.05.2026)
+- Fix: MQTT Discovery Buffer von 512 auf 1200 Bytes vergroessert (Discovery-JSON war 955 Bytes)
+- Fix: availability_topic zur Discovery hinzugefuegt
+- Nur Firmware-Update noetig, kein neues LittleFS-Image
+
 ### v2.3.0.0 (01.05.2026)
 - **NEU: MQTT / Home Assistant Integration**
 - PubSubClient 2.8 Library hinzugefügt

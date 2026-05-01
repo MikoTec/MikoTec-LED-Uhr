@@ -210,7 +210,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.0";
+const char* firmware_version = "2.3.0.1";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -670,7 +670,7 @@ void setup() {
   if (mqttEnabled && webMode == 1 && strlen(mqttBroker) > 0) {
     mqttClient.setServer(mqttBroker, mqttPort);
     mqttClient.setCallback(mqttCallback);
-    mqttClient.setBufferSize(512);
+    mqttClient.setBufferSize(1200);
     logTS(); dualOut.println("[MQTT] Client konfiguriert: " + String(mqttBroker) + ":" + String(mqttPort));
   }
 
@@ -826,6 +826,9 @@ void mqttPublishDiscovery() {
   json += "\"rgb_state_topic\":\"" + base + "/state\",";
   json += "\"rgb_value_template\":\"{{ value_json.color.r }},{{ value_json.color.g }},{{ value_json.color.b }}\",";
   json += "\"json_attributes_topic\":\"" + base + "/state\",";
+  json += "\"availability_topic\":\"" + base + "/availability\",";
+  json += "\"payload_available\":\"online\",";
+  json += "\"payload_not_available\":\"offline\",";
   json += "\"device\":{";
   json += "\"identifiers\":[\"" + uid + "\"],";
   json += "\"name\":\"MikoTec LED Uhr\",";
