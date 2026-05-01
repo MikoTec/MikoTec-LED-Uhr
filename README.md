@@ -109,6 +109,10 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.13 (02.05.2026)
+- Hilfe-Seite: Neue Startseite-Bilder eingebunden
+- Firmware-Update UND neues LittleFS-Image noetig
+
 ### v2.3.0.12 (02.05.2026)
 - Fix: Log wird vor Firmware-Update als log_prev.txt gesichert
 - Fix: Log wird vor jedem Update (FW + FS + Browser) per MQTT als Backup gepublisht
