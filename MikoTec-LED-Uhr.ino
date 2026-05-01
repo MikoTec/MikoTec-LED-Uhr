@@ -240,7 +240,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.11";
+const char* firmware_version = "2.3.0.12";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -619,6 +619,28 @@ void checkForUpdate() {
     dualOut.println(" Bytes");
     logTS(); dualOut.println("[OTA] Starte Firmware-Download und Flash...");
     
+    // Log sichern bevor der ESP neu startet
+    if (logFSready && logFile) {
+      logFile.flush();
+      logFile.close();
+      logFSready = false;
+      if (LittleFS.exists("/log_prev.txt")) LittleFS.remove("/log_prev.txt");
+      LittleFS.rename("/log.txt", "/log_prev.txt");
+    }
+    
+    // Kompletten Log per MQTT publishen
+    if (mqttEnabled && mqttClient.connected()) {
+      String fullLog = getLogContent();
+      String base = mqttBaseTopic() + "/log_backup";
+      int chunks = (fullLog.length() + 1023) / 1024;
+      for (int i = 0; i < chunks && i < 10; i++) {
+        String chunk = fullLog.substring(i * 1024, _min((int)fullLog.length(), (i + 1) * 1024));
+        mqttClient.publish((base + "/" + String(i)).c_str(), chunk.c_str(), true);
+        mqttClient.loop();
+        delay(50);
+      }
+    }
+    
     WiFiClient updateClient;
     ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
     t_httpUpdate_return ret = ESPhttpUpdate.update(updateClient, binUrl);
@@ -660,10 +682,26 @@ void checkForUpdate() {
     dualOut.println(" Bytes");
     logTS(); dualOut.println("[OTA] Starte LittleFS-Download und Flash...");
     
-    // Log-Datei schliessen bevor LittleFS ueberschrieben wird
-    if (logFile) {
+    // Log sichern bevor LittleFS ueberschrieben wird
+    if (logFSready && logFile) {
+      logFile.flush();
       logFile.close();
       logFSready = false;
+    }
+    
+    // Kompletten Log per MQTT publishen (letzte Chance vor FS-Flash)
+    if (mqttEnabled && mqttClient.connected()) {
+      String fullLog = getLogContent();
+      // In Chunks publishen (max 1024 pro Nachricht)
+      String base = mqttBaseTopic() + "/log_backup";
+      int chunks = (fullLog.length() + 1023) / 1024;
+      for (int i = 0; i < chunks && i < 10; i++) {
+        String chunk = fullLog.substring(i * 1024, _min((int)fullLog.length(), (i + 1) * 1024));
+        mqttClient.publish((base + "/" + String(i)).c_str(), chunk.c_str(), true);
+        mqttClient.loop();
+        delay(50);
+      }
+      logTS(); dualOut.println("[OTA] Log per MQTT gesichert (" + String(chunks) + " Chunks)");
     }
     
     WiFiClient fsClient;
@@ -2072,6 +2110,17 @@ void setUpServerHandle() {
         static String fsOtaLogSnapshot;
         fsOtaLogSnapshot = getLogContent();
         fsOtaLogSnapshot += "\n[FS-OTA] Upload abgeschlossen - Log gesichert vor Neustart\n";
+        // Log per MQTT sichern
+        if (mqttEnabled && mqttClient.connected()) {
+          String base = mqttBaseTopic() + "/log_backup";
+          int chunks = (fsOtaLogSnapshot.length() + 1023) / 1024;
+          for (int i = 0; i < chunks && i < 10; i++) {
+            String chunk = fsOtaLogSnapshot.substring(i * 1024, _min((int)fsOtaLogSnapshot.length(), (i + 1) * 1024));
+            mqttClient.publish((base + "/" + String(i)).c_str(), chunk.c_str(), true);
+            mqttClient.loop();
+            delay(50);
+          }
+        }
         // Handler fuer Log-Download registrieren (kein LittleFS noetig)
         server.on("/fs_ota_log", [](){
           server.sendHeader("Content-Disposition", "attachment; filename=fs_ota_log.txt");

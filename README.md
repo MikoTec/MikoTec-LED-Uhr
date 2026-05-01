@@ -109,6 +109,13 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.12 (02.05.2026)
+- Fix: Log wird vor Firmware-Update als log_prev.txt gesichert
+- Fix: Log wird vor jedem Update (FW + FS + Browser) per MQTT als Backup gepublisht
+- MQTT Topic lightclock/<name>/log_backup/0..9 mit Chunks a 1024 Bytes
+- Browser FS-Upload sichert Log jetzt auch per MQTT
+- Nur Firmware-Update noetig
+
 ### v2.3.0.11 (02.05.2026)
 - Hilfe-Seite komplett neu: Tab-Design (Startseite, Einstellungen, Zeitzone, Update, Support)
 - Responsive Bilder vom Update-Server mit picture/srcset
