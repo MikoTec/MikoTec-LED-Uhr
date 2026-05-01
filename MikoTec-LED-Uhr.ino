@@ -134,17 +134,42 @@ String getLogContent() {
 }
 
 // Eigene Print-Klasse die Serial UND Ringpuffer beschreibt
+// MQTT Log Zeilenpuffer
+char mqttLogLine[256];
+int mqttLogLinePos = 0;
+
+void mqttLogPublish() {
+  if (mqttLogLinePos == 0) return;
+  mqttLogLine[mqttLogLinePos] = '\0';
+  if (mqttEnabled && mqttClient.connected()) {
+    String topic = mqttBaseTopic() + "/log";
+    mqttClient.publish(topic.c_str(), mqttLogLine);
+  }
+  mqttLogLinePos = 0;
+}
+
 class DualPrint : public Print {
   public:
     size_t write(uint8_t c) override {
       char buf[2] = {(char)c, 0};
       logAppend(buf);
+      // MQTT Log: Zeichen sammeln, bei Newline publishen
+      if (c == '\n') {
+        mqttLogPublish();
+      } else if (mqttLogLinePos < 254) {
+        mqttLogLine[mqttLogLinePos++] = (char)c;
+      }
       return Serial.write(c);
     }
     size_t write(const uint8_t *buffer, size_t size) override {
       for (size_t i = 0; i < size; i++) {
         char buf[2] = {(char)buffer[i], 0};
         logAppend(buf);
+        if (buffer[i] == '\n') {
+          mqttLogPublish();
+        } else if (mqttLogLinePos < 254) {
+          mqttLogLine[mqttLogLinePos++] = (char)buffer[i];
+        }
       }
       return Serial.write(buffer, size);
     }
@@ -212,7 +237,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.4";
+const char* firmware_version = "2.3.0.5";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -1007,6 +1032,19 @@ void mqttPublishDiscovery() {
     json += "\"val_tpl\":\"{{ value_json.minutecolor }}\",";
     json += "\"min\":7,\"max\":7,";
     json += "\"ic\":\"mdi:palette-outline\",";
+    json += avail + "," + dev + "}";
+    mqttClient.publish(topic.c_str(), json.c_str(), true);
+    logTS(); dualOut.println("[MQTT] Discovery: " + topic);
+  }
+
+  // --- 11) Sensor: Log ---
+  {
+    String topic = "homeassistant/sensor/" + uid + "_log/config";
+    String json = "{";
+    json += "\"name\":\"Log\",";
+    json += "\"uniq_id\":\"" + uid + "_log\",";
+    json += "\"stat_t\":\"" + base + "/log\",";
+    json += "\"ic\":\"mdi:text-box-outline\",";
     json += avail + "," + dev + "}";
     mqttClient.publish(topic.c_str(), json.c_str(), true);
     logTS(); dualOut.println("[MQTT] Discovery: " + topic);

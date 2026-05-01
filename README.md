@@ -109,6 +109,12 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.5 (01.05.2026)
+- NEU: Log-Ausgabe wird live per MQTT gepublisht (Topic: lightclock/<name>/log)
+- Jede Log-Zeile wird als eigene MQTT-Nachricht gesendet
+- Log als Sensor-Entity in Home Assistant sichtbar
+- Nur Firmware-Update noetig
+
 ### v2.3.0.4 (01.05.2026)
 - Fix: Power OFF schaltet LEDs jetzt komplett aus (sleeptype=black)
 - Power ON stellt vorherigen Modus und Sleeptype wieder her
