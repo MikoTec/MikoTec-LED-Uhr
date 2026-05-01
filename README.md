@@ -109,6 +109,14 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.7 (01.05.2026)
+- NEU: Automatisches LittleFS-Update aus version.json
+- Parst littlefs_version und littlefs_file aus version.json
+- Vergleicht lokale FS-Version (fs_version.txt) mit Remote
+- Firmware wird zuerst aktualisiert, beim naechsten Check dann LittleFS
+- Log-Datei wird vor FS-Update sauber geschlossen
+- Nur Firmware-Update noetig
+
 ### v2.3.0.6 (01.05.2026)
 - NEU: Firmware Update Entity in Home Assistant
 - Zeigt installierte vs. verfuegbare Version an

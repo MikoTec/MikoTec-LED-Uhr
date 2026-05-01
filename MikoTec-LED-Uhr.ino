@@ -239,7 +239,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.6";
+const char* firmware_version = "2.3.0.7";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -536,7 +536,7 @@ void checkForUpdate() {
   logTS(); dualOut.print("[OTA] Inhalt: ");
   dualOut.println(payload);
   
-  // Version aus JSON parsen
+  // Firmware-Version aus JSON parsen
   int vStart = payload.indexOf("\"version\"");
   if (vStart == -1) {
     logTS(); dualOut.println("[OTA] FEHLER: version.json ungueltig - kein version-Feld gefunden.");
@@ -547,7 +547,7 @@ void checkForUpdate() {
   int vEnd = payload.indexOf("\"", vStart);
   String remoteVersion = payload.substring(vStart, vEnd);
   
-  // Dateiname aus JSON parsen
+  // Firmware-Dateiname aus JSON parsen
   int fStart = payload.indexOf("\"file\"");
   if (fStart == -1) {
     logTS(); dualOut.println("[OTA] FEHLER: version.json ungueltig - kein file-Feld gefunden.");
@@ -558,6 +558,22 @@ void checkForUpdate() {
   int fEnd = payload.indexOf("\"", fStart);
   String remoteFile = payload.substring(fStart, fEnd);
   
+  // LittleFS-Version aus JSON parsen
+  String remoteFsVersion = "";
+  String remoteFsFile = "";
+  int fsStart = payload.indexOf("\"littlefs_version\"");
+  if (fsStart != -1) {
+    fsStart = payload.indexOf("\"", fsStart + 18) + 1;
+    int fsEnd = payload.indexOf("\"", fsStart);
+    remoteFsVersion = payload.substring(fsStart, fsEnd);
+  }
+  int ffStart = payload.indexOf("\"littlefs_file\"");
+  if (ffStart != -1) {
+    ffStart = payload.indexOf("\"", ffStart + 15) + 1;
+    int ffEnd = payload.indexOf("\"", ffStart);
+    remoteFsFile = payload.substring(ffStart, ffEnd);
+  }
+  
   logTS(); dualOut.print("[OTA] Installierte Version: ");
   dualOut.println(firmware_version);
   logTS(); dualOut.print("[OTA] Verfuegbare Version:  ");
@@ -565,44 +581,110 @@ void checkForUpdate() {
   logTS(); dualOut.print("[OTA] Dateiname:            ");
   dualOut.println(remoteFile);
   
+  // Lokale FS-Version lesen
+  String localFsVersion = "";
+  if (LittleFS.exists("/fs_version.txt")) {
+    File fv = LittleFS.open("/fs_version.txt", "r");
+    localFsVersion = fv.readString();
+    localFsVersion.trim();
+    fv.close();
+  }
+  logTS(); dualOut.print("[OTA] Installierte FS-Version: ");
+  dualOut.println(localFsVersion.length() > 0 ? localFsVersion : "(unbekannt)");
+  logTS(); dualOut.print("[OTA] Verfuegbare FS-Version:  ");
+  dualOut.println(remoteFsVersion.length() > 0 ? remoteFsVersion : "(keine)");
+  
   // MQTT Update-Status speichern und publishen
   mqttAvailableVersion = remoteVersion;
   mqttAvailableFile = remoteFile;
   mqttPublishUpdateState();
   
-  if (!isNewerVersion(remoteVersion)) {
-    logTS(); dualOut.println("[OTA] Firmware ist aktuell. Kein Update noetig.");
+  // --- Firmware-Update ---
+  if (isNewerVersion(remoteVersion)) {
+    String binUrl = String(update_bin_base_url) + remoteFile;
+    logTS(); dualOut.println("[OTA] *** Neue Firmware gefunden! ***");
+    logTS(); dualOut.print("[OTA] Download URL: ");
+    dualOut.println(binUrl);
+    logTS(); dualOut.print("[OTA] Freier Heap vor Update: ");
+    dualOut.print(ESP.getFreeHeap());
+    dualOut.println(" Bytes");
+    logTS(); dualOut.println("[OTA] Starte Firmware-Download und Flash...");
+    
+    WiFiClient updateClient;
+    ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
+    t_httpUpdate_return ret = ESPhttpUpdate.update(updateClient, binUrl);
+    
+    switch (ret) {
+      case HTTP_UPDATE_FAILED:
+        logTS(); dualOut.print("[OTA] FEHLER: Firmware-Update fehlgeschlagen (");
+        dualOut.print(ESPhttpUpdate.getLastError());
+        dualOut.print("): ");
+        dualOut.println(ESPhttpUpdate.getLastErrorString());
+        break;
+      case HTTP_UPDATE_NO_UPDATES:
+        logTS(); dualOut.println("[OTA] Server meldet: Kein Update verfuegbar.");
+        break;
+      case HTTP_UPDATE_OK:
+        logTS(); dualOut.println("[OTA] Firmware-Update erfolgreich! Neustart...");
+        break;
+    }
+    // Nach erfolgreichem Firmware-Update startet der ESP neu,
+    // dann wird beim naechsten Check das FS-Update geprueft
     dualOut.println("==============================");
     return;
+  } else {
+    logTS(); dualOut.println("[OTA] Firmware ist aktuell.");
   }
   
-  String binUrl = String(update_bin_base_url) + remoteFile;
-  logTS(); dualOut.println("[OTA] *** Neue Version gefunden! ***");
-  logTS(); dualOut.print("[OTA] Download URL: ");
-  dualOut.println(binUrl);
-  logTS(); dualOut.print("[OTA] Freier Heap vor Update: ");
-  dualOut.print(ESP.getFreeHeap());
-  dualOut.println(" Bytes");
-  logTS(); dualOut.println("[OTA] Starte Download und Flash...");
-  
-  WiFiClient updateClient;
-  ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
-  t_httpUpdate_return ret = ESPhttpUpdate.update(updateClient, binUrl);
-  
-  switch (ret) {
-    case HTTP_UPDATE_FAILED:
-      logTS(); dualOut.print("[OTA] FEHLER: Update fehlgeschlagen (");
-      dualOut.print(ESPhttpUpdate.getLastError());
-      dualOut.print("): ");
-      dualOut.println(ESPhttpUpdate.getLastErrorString());
-      break;
-    case HTTP_UPDATE_NO_UPDATES:
-      logTS(); dualOut.println("[OTA] Server meldet: Kein Update verfuegbar.");
-      break;
-    case HTTP_UPDATE_OK:
-      logTS(); dualOut.println("[OTA] Update erfolgreich! Neustart...");
-      break;
+  // --- LittleFS-Update (nur wenn Firmware aktuell) ---
+  if (remoteFsVersion.length() > 0 && remoteFsFile.length() > 0 && remoteFsVersion != localFsVersion) {
+    String fsUrl = String(update_bin_base_url) + remoteFsFile;
+    logTS(); dualOut.println("[OTA] *** Neues LittleFS-Image gefunden! ***");
+    logTS(); dualOut.print("[OTA] Lokal: ");
+    dualOut.print(localFsVersion);
+    dualOut.print(" -> Remote: ");
+    dualOut.println(remoteFsVersion);
+    logTS(); dualOut.print("[OTA] Download URL: ");
+    dualOut.println(fsUrl);
+    logTS(); dualOut.print("[OTA] Freier Heap vor FS-Update: ");
+    dualOut.print(ESP.getFreeHeap());
+    dualOut.println(" Bytes");
+    logTS(); dualOut.println("[OTA] Starte LittleFS-Download und Flash...");
+    
+    // Log-Datei schliessen bevor LittleFS ueberschrieben wird
+    if (logFile) {
+      logFile.close();
+      logFSready = false;
+    }
+    
+    WiFiClient fsClient;
+    ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
+    t_httpUpdate_return ret = ESPhttpUpdate.updateFS(fsClient, fsUrl);
+    
+    switch (ret) {
+      case HTTP_UPDATE_FAILED:
+        logTS(); dualOut.print("[OTA] FEHLER: LittleFS-Update fehlgeschlagen (");
+        dualOut.print(ESPhttpUpdate.getLastError());
+        dualOut.print("): ");
+        dualOut.println(ESPhttpUpdate.getLastErrorString());
+        // Log-Datei wieder oeffnen
+        if (LittleFS.begin()) {
+          logFile = LittleFS.open("/log.txt", "a");
+          logFSready = (logFile);
+        }
+        break;
+      case HTTP_UPDATE_NO_UPDATES:
+        logTS(); dualOut.println("[OTA] Server meldet: Kein FS-Update verfuegbar.");
+        break;
+      case HTTP_UPDATE_OK:
+        logTS(); dualOut.println("[OTA] LittleFS-Update erfolgreich! Neustart...");
+        ESP.restart();
+        break;
+    }
+  } else {
+    logTS(); dualOut.println("[OTA] LittleFS ist aktuell.");
   }
+  
   dualOut.println("==============================");
 }
 
