@@ -110,14 +110,14 @@ if [ "$VER_HTTP" = "200" ] && [ -n "$VER_BODY" ]; then
         CHANGED=1
 
         REMOTE_VERSION=$(echo "$VER_BODY" | grep -oP '(?<="version": ")[^"]*')
-        REMOTE_LFS=$(echo "$VER_BODY" | grep -oP '(?<="littlefs": ")[^"]*')
+        REMOTE_LFS_VERSION=$(echo "$VER_BODY" | grep -oP '(?<="littlefs_version": ")[^"]*')
         LOCAL_VERSION="(keine)"
         if [ -n "$LOCAL_VER" ]; then
             LOCAL_VERSION=$(echo "$LOCAL_VER" | grep -oP '(?<="version": ")[^"]*')
         fi
 
         echo "$VER_BODY" > "$UPDATE_DIR/version.json"
-        buf "version.json AKTUALISIERT: $LOCAL_VERSION -> $REMOTE_VERSION (LittleFS: $REMOTE_LFS)"
+        buf "version.json AKTUALISIERT: $LOCAL_VERSION -> $REMOTE_VERSION (LittleFS: $REMOTE_LFS_VERSION)"
     fi
 else
     if [ "$CHANGED" -eq 0 ]; then
