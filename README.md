@@ -109,6 +109,14 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.15 (02.05.2026)
+- Fix: Kreis-Hotspot nutzt aspect-ratio:1 statt height (kein Ellipsen-Bug mehr)
+- Alle Hotspots aus JSON-Editor mit pixelgenauen Koordinaten
+- Zeitzone mit Sub-Tabs und Hotspots (Suche/Manuell/Stadt)
+- Update mit Sub-Tabs und Hotspots (Firmware/Dateisystem)
+- Neue Bildnamen: timezone_tab1-3, update, update_fs
+- Firmware-Update UND neues LittleFS-Image noetig
+
 ### v2.3.0.14 (02.05.2026)
 - Hilfe-Seite: Pixelgenaue Hotspots aus JSON-Koordinaten
 - Neue Bildnamen (startseite, settings, support, timezone, update, update_fs)

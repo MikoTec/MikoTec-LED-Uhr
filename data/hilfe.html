@@ -45,7 +45,7 @@
         <img src="IMG/startseite_gross.png" alt="Startseite">
       </picture>
       <div class="hotspot" style="left:43%;top:7.3%;width:27.1%;height:3.8%"><span class="tip">Zeigt den Namen und die aktuelle Firmware-Version der Uhr an.</span></div>
-      <div class="hotspot" style="left:24.6%;top:12.3%;width:63.9%;height:30%;border-radius:50%"><span class="tip">Live-Vorschau des LED-Rings.<br>Zeigt die aktuellen Farben, den Sekundenzeiger und die Stundenmarkierungen in Echtzeit an.</span></div>
+      <div class="hotspot" style="left:24.6%;top:12.3%;width:63.9%;aspect-ratio:1;border-radius:50%"><span class="tip">Live-Vorschau des LED-Rings.<br>Zeigt die aktuellen Farben, den Sekundenzeiger und die Stundenmarkierungen in Echtzeit an.</span></div>
       <div class="hotspot" style="left:32.4%;top:43.8%;width:13.9%;height:5.7%"><span class="tip">Wähle die Farbe für den Stundenzeiger über den Farbwähler.<br>Die Farbe wird nach dem Drücken von Update auf der Uhr sichtbar.</span></div>
       <div class="hotspot" style="left:66%;top:43.8%;width:13.8%;height:5.6%"><span class="tip">Wähle die Farbe für den Minutenzeiger.<br>Zusammen mit der Stundenfarbe ergibt sich der Farbverlauf auf dem LED-Ring.</span></div>
       <div class="hotspot" style="left:26.2%;top:50.8%;width:25.1%;height:5.3%"><span class="tip">Überblendeffekt:<br>Bestimmt wie stark Stunden- und Minutenfarbe ineinander übergehen.<br>Bei 0 sind die Farben klar getrennt, bei hohen Werten mischen sie sich weich.</span></div>
@@ -91,14 +91,50 @@
 
   <!-- Tab: Zeitzone -->
   <div id="tabTimezone" class="tz-pane">
-    <div class="hilfe-img-wrap">
-      <picture>
-        <source media="(max-width: 360px)" srcset="IMG/timezone_telefon.png">
-        <source media="(max-width: 520px)" srcset="IMG/timezone_klein.png">
-        <source media="(max-width: 800px)" srcset="IMG/timezone_mittel.png">
-        <img src="IMG/timezone_gross.png" alt="Zeitzone">
-      </picture>
+    <div class="tz-tabs" style="border-bottom:1px solid #e0e0e0;margin-bottom:12px;">
+      <button class="tz-tab active" onclick="showSubTab('tzSub1',this)">Suche</button>
+      <button class="tz-tab" onclick="showSubTab('tzSub2',this)">Manuell</button>
+      <button class="tz-tab" onclick="showSubTab('tzSub3',this)">Stadt</button>
     </div>
+    <div id="tzSub1" class="tz-pane active">
+      <div class="hilfe-img-wrap">
+        <picture>
+          <source media="(max-width: 360px)" srcset="IMG/timezone_tab1_telefon.png">
+          <source media="(max-width: 520px)" srcset="IMG/timezone_tab1_klein.png">
+          <source media="(max-width: 800px)" srcset="IMG/timezone_tab1_mittel.png">
+          <img src="IMG/timezone_tab1_gross.png" alt="Zeitzone Suche">
+        </picture>
+        <div class="hotspot" style="left:22.2%;top:31%;width:53.6%;height:5%"><span class="tip">Suche die Koordinaten deiner Stadt heraus.<br>Gebe deine Stad hier ein und erhalte deine Längen- und Breitengrade deines Standortes.</span></div>
+        <div class="hotspot" style="left:22%;top:37.2%;width:53.8%;height:8.1%"><span class="tip">Manuelle Engabe des Breitengrades</span></div>
+        <div class="hotspot" style="left:22.1%;top:46.2%;width:53.8%;height:8.5%"><span class="tip">Manuelle Eingabe des Längengrades</span></div>
+        <div class="hotspot" style="left:37.1%;top:57%;width:23.4%;height:6.9%"><span class="tip">Updaten der Zeitzone</span></div>
+      </div>
+    </div>
+    <div id="tzSub2" class="tz-pane">
+      <div class="hilfe-img-wrap">
+        <picture>
+          <source media="(max-width: 360px)" srcset="IMG/timezone_tab2_telefon.png">
+          <source media="(max-width: 520px)" srcset="IMG/timezone_tab2_klein.png">
+          <source media="(max-width: 800px)" srcset="IMG/timezone_tab2_mittel.png">
+          <img src="IMG/timezone_tab2_gross.png" alt="Zeitzone Manuell">
+        </picture>
+        <div class="hotspot" style="left:13.9%;top:42%;width:67%;height:5.9%"><span class="tip">Manuelle Eingabe des Zeitlichen Versatzes zur UTC-Zeit</span></div>
+        <div class="hotspot" style="left:33.1%;top:50.9%;width:28.6%;height:8.6%"><span class="tip">Update der Zeitzonen Einstellungen</span></div>
+      </div>
+    </div>
+    <div id="tzSub3" class="tz-pane">
+      <div class="hilfe-img-wrap">
+        <picture>
+          <source media="(max-width: 360px)" srcset="IMG/timezone_tab3_telefon.png">
+          <source media="(max-width: 520px)" srcset="IMG/timezone_tab3_klein.png">
+          <source media="(max-width: 800px)" srcset="IMG/timezone_tab3_mittel.png">
+          <img src="IMG/timezone_tab3_gross.png" alt="Zeitzone Stadt">
+        </picture>
+        <div class="hotspot" style="left:13.9%;top:42%;width:67%;height:5.9%"><span class="tip">Vordefinierte Auswahl verschiedener Städte</span></div>
+        <div class="hotspot" style="left:33.1%;top:51.1%;width:28.6%;height:8.6%"><span class="tip">Update der Zeitzonen Einstellungen</span></div>
+      </div>
+    </div>
+    <div class="hilfe-sub">Fahre mit der Maus über einen Bereich für Details</div>
   </div>
 
   <!-- Tab: Update -->
@@ -115,6 +151,8 @@
           <source media="(max-width: 800px)" srcset="IMG/update_mittel.png">
           <img src="IMG/update_gross.png" alt="Firmware Update">
         </picture>
+        <div class="hotspot" style="left:28.4%;top:33.4%;width:41.4%;height:7%"><span class="tip">Auswahldialog des Dateisystems<br>Hier die neue Firmware der Uhr auswählen</span></div>
+        <div class="hotspot" style="left:33.4%;top:40.2%;width:31%;height:6.9%"><span class="tip">Firmware aktualisieren<br>Nach Upload der Firmware startet die Uhr automatisch neu</span></div>
       </div>
     </div>
     <div id="updFS" class="tz-pane">
@@ -125,8 +163,11 @@
           <source media="(max-width: 800px)" srcset="IMG/update_fs_mittel.png">
           <img src="IMG/update_fs_gross.png" alt="Dateisystem Update">
         </picture>
+        <div class="hotspot" style="left:28.1%;top:38.8%;width:41.4%;height:7%"><span class="tip">Auswahldialog des Dateisystems.<br>Hier die Datei des Dateisystems (FS) auswählen</span></div>
+        <div class="hotspot" style="left:32%;top:45.8%;width:33.9%;height:6.9%"><span class="tip">Dateisystem aktualisieren.<br>Nach Upload des Dateisystem besteht die Möglichkeit eine Logdatei herunter zu laden.<br>Wichtig ist jedoch das die Uhr in der Auswahl danach Neugestartet wird, erst danach stehen alle Funktionen bereit.</span></div>
       </div>
     </div>
+    <div class="hilfe-sub">Fahre mit der Maus über einen Bereich für Details</div>
   </div>
 
   <!-- Tab: Support -->
