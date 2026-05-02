@@ -109,6 +109,12 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.17 (02.05.2026)
+- Fix: Hotspots mit korrekten Server-Bildgroessen berechnet
+- Startseite: 800x1250, Settings: 768x1920, Support: 800x1100
+- Editor-Bug: imgW/imgH in JSON war falsch, Pixelkoordinaten waren korrekt
+- Firmware-Update UND neues LittleFS-Image noetig
+
 ### v2.3.0.16 (02.05.2026)
 - Fix: Kreis-Hotspot aspect-ratio:1 entfernt, korrekte height:30% mit border-radius:50%
 - Firmware-Update UND neues LittleFS-Image noetig
