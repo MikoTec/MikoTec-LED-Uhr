@@ -240,7 +240,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.17";
+const char* firmware_version = "2.3.0.18";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -3063,6 +3063,11 @@ void handleSettings() {
         EEPROM.write(195 + i, clockname[i]);
       }
     }
+  }
+  // Beta-Channel
+  if (server.hasArg("betahidden")) {
+    betaChannel = server.hasArg("betachannel");
+    EEPROM.write(367, betaChannel ? 1 : 0);
   }
   EEPROM.commit();
   delay(100);

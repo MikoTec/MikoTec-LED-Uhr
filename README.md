@@ -109,6 +109,11 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.18 (02.05.2026)
+- Fix: Beta-Channel wird jetzt auch im Settings-Handler (handleSettings) gespeichert
+- Vorher wurde Beta nur im Startseiten-Handler (handleRoot) verarbeitet
+- Nur Firmware-Update noetig
+
 ### v2.3.0.17 (02.05.2026)
 - Fix: Hotspots mit korrekten Server-Bildgroessen berechnet
 - Startseite: 800x1250, Settings: 768x1920, Support: 800x1100
