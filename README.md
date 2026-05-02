@@ -109,6 +109,14 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.14 (02.05.2026)
+- Hilfe-Seite: Pixelgenaue Hotspots aus JSON-Koordinaten
+- Neue Bildnamen (startseite, settings, support, timezone, update, update_fs)
+- Startseite: 8 Hotspots inkl. Kreis fuer Uhr-Vorschau
+- Einstellungen: 20 Hotspots inkl. abgerundeter Schlafbereich
+- Support: 2 Hotspots mit abgerundeten Ecken
+- Firmware-Update UND neues LittleFS-Image noetig
+
 ### v2.3.0.13 (02.05.2026)
 - Hilfe-Seite: Neue Startseite-Bilder eingebunden
 - Firmware-Update UND neues LittleFS-Image noetig
