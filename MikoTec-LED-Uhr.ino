@@ -240,7 +240,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.18";
+const char* firmware_version = "2.3.0.19";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -628,6 +628,18 @@ void checkForUpdate() {
       LittleFS.rename("/log.txt", "/log_prev.txt");
     }
     
+    // Log als last_fw_update.txt in LittleFS speichern (ueberlebt FW-Update)
+    {
+      String fullLog = getLogContent();
+      if (LittleFS.exists("/last_fw_update.txt")) LittleFS.remove("/last_fw_update.txt");
+      File fwLog = LittleFS.open("/last_fw_update.txt", "w");
+      if (fwLog) {
+        fwLog.print(fullLog);
+        fwLog.close();
+        logTS(); dualOut.println("[OTA] Log als /last_fw_update.txt gesichert");
+      }
+    }
+    
     // Kompletten Log per MQTT publishen
     if (mqttEnabled && mqttClient.connected()) {
       String fullLog = getLogContent();
@@ -689,10 +701,21 @@ void checkForUpdate() {
       logFSready = false;
     }
     
+    // Log als last_fs_update.txt speichern (wird beim FS-Flash ueberschrieben,
+    // dient aber als Sicherung bei fehlgeschlagenem Update)
+    {
+      String fullLog = getLogContent();
+      if (LittleFS.exists("/last_fs_update.txt")) LittleFS.remove("/last_fs_update.txt");
+      File fsLog = LittleFS.open("/last_fs_update.txt", "w");
+      if (fsLog) {
+        fsLog.print(fullLog);
+        fsLog.close();
+      }
+    }
+    
     // Kompletten Log per MQTT publishen (letzte Chance vor FS-Flash)
     if (mqttEnabled && mqttClient.connected()) {
       String fullLog = getLogContent();
-      // In Chunks publishen (max 1024 pro Nachricht)
       String base = mqttBaseTopic() + "/log_backup";
       int chunks = (fullLog.length() + 1023) / 1024;
       for (int i = 0; i < chunks && i < 10; i++) {
@@ -2046,6 +2069,26 @@ void setUpServerHandle() {
   server.on("/getmqtt", handleGetMqtt);
   server.on("/setmqtt", HTTP_POST, handleSetMqtt);
 
+  // Update-Log Dateien zum Download anbieten
+  server.on("/last_fw_update.txt", [](){
+    if (LittleFS.exists("/last_fw_update.txt")) {
+      File f = LittleFS.open("/last_fw_update.txt", "r");
+      server.streamFile(f, "text/plain");
+      f.close();
+    } else {
+      server.send(404, "text/plain", "Keine Firmware-Update-Logdatei vorhanden");
+    }
+  });
+  server.on("/last_fs_update.txt", [](){
+    if (LittleFS.exists("/last_fs_update.txt")) {
+      File f = LittleFS.open("/last_fs_update.txt", "r");
+      server.streamFile(f, "text/plain");
+      f.close();
+    } else {
+      server.send(404, "text/plain", "Keine Dateisystem-Update-Logdatei vorhanden");
+    }
+  });
+
   // Deutsche Update-Seite (überschreibt den Standard-Handler von httpUpdater)
   server.on("/update", HTTP_GET, [](){
     String upd = "<!DOCTYPE html><html lang=\'de\'><head>"
@@ -2072,6 +2115,35 @@ void setUpServerHandle() {
 
   // httpUpdater registriert nur noch den POST-Handler
   httpUpdater.setup(&server);
+
+  // Callback: Log sichern bevor Browser-FW-Update startet
+  Update.onStart([]() {
+    logTS(); dualOut.println("[UPDATE] Browser-Update startet, sichere Log...");
+    if (logFSready && logFile) {
+      logFile.flush();
+      logFile.close();
+      logFSready = false;
+    }
+    // Log als last_fw_update.txt speichern (LittleFS ueberlebt FW-Update)
+    String fullLog = getLogContent();
+    if (LittleFS.exists("/last_fw_update.txt")) LittleFS.remove("/last_fw_update.txt");
+    File fwLog = LittleFS.open("/last_fw_update.txt", "w");
+    if (fwLog) {
+      fwLog.print(fullLog);
+      fwLog.close();
+    }
+    // Log per MQTT publishen
+    if (mqttEnabled && mqttClient.connected()) {
+      String base = mqttBaseTopic() + "/log_backup";
+      int chunks = (fullLog.length() + 1023) / 1024;
+      for (int i = 0; i < chunks && i < 10; i++) {
+        String chunk = fullLog.substring(i * 1024, _min((int)fullLog.length(), (i + 1) * 1024));
+        mqttClient.publish((base + "/" + String(i)).c_str(), chunk.c_str(), true);
+        mqttClient.loop();
+        delay(50);
+      }
+    }
+  });
 
   // LittleFS Dateisystem Update per Browser
   server.on("/update_fs", HTTP_GET, [](){
@@ -2119,6 +2191,14 @@ void setUpServerHandle() {
             mqttClient.publish((base + "/" + String(i)).c_str(), chunk.c_str(), true);
             mqttClient.loop();
             delay(50);
+          }
+        }
+        // last_fs_update.txt ins neue FS schreiben (FS wurde gerade geflasht)
+        if (LittleFS.begin()) {
+          File fsLog = LittleFS.open("/last_fs_update.txt", "w");
+          if (fsLog) {
+            fsLog.print(fsOtaLogSnapshot);
+            fsLog.close();
           }
         }
         // Handler fuer Log-Download registrieren (kein LittleFS noetig)

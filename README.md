@@ -109,6 +109,15 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.19 (03.05.2026)
+- NEU: Update-Logs werden als Dateien auf der Uhr gespeichert
+- /last_fw_update.txt - Log vor dem letzten Firmware-Update (in LittleFS, ueberlebt FW-Update)
+- /last_fs_update.txt - Log vor dem letzten Dateisystem-Update (per MQTT + nach Browser-Upload ins neue FS)
+- Update.onStart Callback sichert Log auch bei Browser-FW-Updates
+- Browser-FS-Upload schreibt last_fs_update.txt ins neue Dateisystem nach dem Flash
+- Beide Dateien jederzeit per Browser downloadbar
+- Nur Firmware-Update noetig
+
 ### v2.3.0.18 (02.05.2026)
 - Fix: Beta-Channel wird jetzt auch im Settings-Handler (handleSettings) gespeichert
 - Vorher wurde Beta nur im Startseiten-Handler (handleRoot) verarbeitet
