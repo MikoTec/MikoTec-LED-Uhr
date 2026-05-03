@@ -240,7 +240,7 @@ void webHandleMoon();
 void gameface();
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.19";
+const char* firmware_version = "2.3.0.20";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -306,7 +306,7 @@ int dawnprogress = 0;
 const char* update_version_url = "http://yzdlcru01ktmqlzy.myfritz.net:8080/updates/version.json";
 const char* update_bin_base_url = "http://yzdlcru01ktmqlzy.myfritz.net:8080/updates/";
 unsigned long lastUpdateCheck = 0;
-const unsigned long updateCheckInterval = 14400000; // 4 Stunden in Millisekunden (6x taeglich)
+int lastUpdateCheckHour = -1; // Letzte Stunde in der ein Check lief
 
 bool DSTchecked = 0;
 
@@ -845,11 +845,11 @@ void setup() {
     mdns.addService("ws", "tcp", 81);
   }
 
-  // Update-Check wird nicht im Setup gemacht sondern verzögert im Loop
-  // (mehr freier Heap nach dem Setup)
+  // Update-Check: erster Check 30 Sekunden nach Boot
   if (webMode == 1) {
-    lastUpdateCheck = millis() - updateCheckInterval + 30000; // Erster Check nach 30 Sekunden
+    lastUpdateCheck = millis();
     logTS(); dualOut.println("[OTA] Erster Update-Check in 30 Sekunden...");
+    logTS(); dualOut.println("[OTA] Planmaessige Checks: 0, 3, 6, 9, 12, 15, 18, 21 Uhr");
   }
 
   // MQTT initialisieren wenn aktiviert und WiFi verbunden
@@ -1504,11 +1504,25 @@ void loop() {
     }
   }
 
-  // Einmal taeglich auf Updates pruefen
-  if (webMode == 1 && millis() - lastUpdateCheck > updateCheckInterval) {
-    logTS(); dualOut.println("[OTA] Taeglicher Update-Check wird ausgefuehrt...");
-    checkForUpdate();
-    lastUpdateCheck = millis();
+  // Update-Check: erster Check 30 Sekunden nach Boot, dann zu festen Uhrzeiten
+  if (webMode == 1) {
+    // Einmaliger Boot-Check nach 30 Sekunden
+    if (lastUpdateCheckHour == -1 && millis() - lastUpdateCheck > 30000) {
+      lastUpdateCheckHour = -2; // markiert: Boot-Check erledigt
+      logTS(); dualOut.println("[OTA] Boot Update-Check...");
+      checkForUpdate();
+    }
+    // Planmaessige Checks: 0, 3, 6, 9, 12, 15, 18, 21 Uhr
+    int h = hour();
+    if (h % 3 == 0 && h != lastUpdateCheckHour && minute() == 0) {
+      lastUpdateCheckHour = h;
+      logTS(); dualOut.println("[OTA] Planmaessiger Update-Check (" + String(h) + ":00 Uhr)...");
+      checkForUpdate();
+    }
+    // Reset wenn Stunde sich aendert (damit naechster 3h-Slot wieder triggert)
+    if (h % 3 != 0 && lastUpdateCheckHour >= 0) {
+      lastUpdateCheckHour = h;
+    }
   }
 
   delay(50);

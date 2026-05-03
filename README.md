@@ -109,6 +109,12 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.20 (03.05.2026)
+- Update-Check auf feste Uhrzeiten umgestellt: 0, 3, 6, 9, 12, 15, 18, 21 Uhr
+- Erster Check 30 Sekunden nach Boot
+- Alte millis()-basierte Intervall-Logik entfernt
+- Nur Firmware-Update noetig
+
 ### v2.3.0.19 (03.05.2026)
 - NEU: Update-Logs werden als Dateien auf der Uhr gespeichert
 - /last_fw_update.txt - Log vor dem letzten Firmware-Update (in LittleFS, ueberlebt FW-Update)
