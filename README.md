@@ -188,6 +188,7 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 ## Changelog
 
 ### v2.3 – MQTT / Home Assistant (01.-04.05.2026)
+- v2.3.0.30: OOM-Fix im AP-Modus (WiFi-Setup) — chunked streaming statt großer Strings, neues LittleFS mit Datum-Eingabe
 - v2.3.0.29: Manuelles Datum setzen in Settings (für korrekten Mondstand ohne NTP)
 - v2.3.0.28: MQTT Device-Name aus clockname (Bindestriche → Leerzeichen in HA-Anzeige), README mit allen Handlern
 - v2.3.0.27: NTP-Retry-Delay entfernt (Boot wieder schnell), nur noch 2 schnelle Versuche

@@ -294,15 +294,50 @@ void webHandleSwitchWebMode() {
 void webHandleConfig() {
   lastInteraction = millis();
   logTS(); dualOut.println("Sending webHandleConfig");
-  IPAddress ip = WiFi.softAPIP();
-  String ipStr = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
-  String s;
 
-  String toSend = FPSTR(webconfig_html);
-  //toSend.replace("$css", css_file);
-  toSend.replace("$ssids", st);
+  // Chunked streaming statt großem String — verhindert OOM bei vielen WLANs
+  server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  server.send(200, "text/html", "");
 
-  server.send(200, "text/html", toSend);
+  // HTML-Kopf aus PROGMEM
+  String head = F("<!DOCTYPE HTML><html><head>"
+    "<link rel=stylesheet href='clockmenustyle.css'>"
+    "<meta http-equiv=Content-Type content=\"text/html; charset=utf-8\" />"
+    "<meta name=viewport content=\"width=device-width, initial-scale=1.0\">"
+    "</head><body class=settings-page>"
+    "<strong>Netzwerk </strong>-> Passwort -> Zeitzone<BR>"
+    "<h1>Netzwerk waehlen</h1>"
+    "<form class=form-verticle action=/passwordinput method=GET><ul>");
+  server.sendContent(head);
+
+  // SSID-Liste direkt streamen ohne globalen st-String
+  int n = WiFi.scanComplete();
+  if (n > 0) {
+    for (int i = 0; i < n; i++) {
+      String entry = "<label><input type='radio' name='ssid' value='";
+      entry += WiFi.SSID(i);
+      entry += "' onClick='regularssid()'>";
+      entry += String(i + 1) + ": " + WiFi.SSID(i);
+      entry += " (" + String(WiFi.RSSI(i)) + ")";
+      entry += (WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " (OPEN)" : "*";
+      entry += "</input></label><br>";
+      server.sendContent(entry);
+    }
+  } else {
+    server.sendContent(st); // Fallback auf alten st-String
+  }
+
+  // HTML-Fuß
+  String foot = F("<label onClick=otherssid()>"
+    "<input type=radio name=ssid id=other_ssid value=other>andere SSID:</input>"
+    "<input type=text name=other id=\"other_text\"/></label><br>"
+    "<input type=submit value=Weiter>"
+    "</form></body>"
+    "<script>function otherssid(){a=document.getElementById(\"other_ssid\");a.checked=true}"
+    "function regularssid(){a=document.getElementById(\"other_text\");a.value=\"\"};</script>"
+    "</html>");
+  server.sendContent(foot);
+  server.sendContent("");
 }
 
 void webHandlePassword() {
@@ -381,43 +416,100 @@ void cleanASCII(String &input) {
 
 void webHandleTimeZoneSetup() {
   logTS(); dualOut.println("Sending webHandleTimeZoneSetup");
-  String toSend = FPSTR(timezonesetup_html);
-  //toSend.replace("$css", css_file);
-  toSend.replace("$timezone", String(timezone));
-  toSend.replace("$latitude", String(latitude));
-  toSend.replace("$longitude", String(longitude));
 
-  server.send(200, "text/html", toSend);
-
+  // Passwort aus Request verarbeiten (muss vor send() passieren)
   logTS(); dualOut.println("clearing old pass.");
   clearpass();
-
-
-  String qpass;
-  qpass = server.arg("pass");
+  String qpass = server.arg("pass");
   cleanASCII(qpass);
   dualOut.println(qpass);
-  logTS(); dualOut.println("");
-
-  //int addr=0;
   EEPROM.begin(512);
   delay(10);
-
-
   logTS(); dualOut.println("writing eeprom pass.");
-  //addr += EEPROM.put(addr, qpass);
-  for (int i = 0; i < qpass.length(); ++i)
-  {
+  for (int i = 0; i < qpass.length(); ++i) {
     EEPROM.write(32 + i, qpass[i]);
     dualOut.print(qpass[i]);
   }
-  logTS(); dualOut.println("");
+  dualOut.println("");
   EEPROM.write(186, 1);
-
   EEPROM.commit();
-  delay(1000);
+  delay(100);
   EEPROM.end();
 
+  // Chunked streaming statt FPSTR-String mit 82 Ersetzungen — verhindert OOM
+  server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  server.send(200, "text/html", "");
+
+  server.sendContent(F("<!DOCTYPE HTML><html><head><title>Zeitzone</title>"
+    "<link rel=stylesheet href=\"clockmenustyle.css\">"
+    "<meta http-equiv=Content-Type content=\"text/html; charset=utf-8\" />"
+    "<meta name=viewport content=\"width=device-width, initial-scale=1.0\">"
+    "</head><body class=settings-page>"
+    "<strong>Netzwerk -> Passwort -> </strong>Zeitzone<BR>"
+    "<h1>Zeitzone waehlen</h1>"
+    "<form class=form-verticle action=/a method=GET>"
+    "<label>Zeitzone</label>"
+    "<select name=timezone>"));
+
+  // Zeitzonen-Optionen direkt streamen
+  const char* tzNames[] = {
+    "(GMT-12:00) International Date Line West","(GMT-11:00) Midway Island, Samoa",
+    "(GMT-10:00) Hawaii","(GMT-09:00) Alaska","(GMT-08:00) Pacific Time (US & Canada)",
+    "(GMT-08:00) Tijuana, Baja California","(GMT-07:00) Arizona",
+    "(GMT-07:00) Chihuahua, La Paz, Mazatlan","(GMT-07:00) Mountain Time (US & Canada)",
+    "(GMT-06:00) Central America","(GMT-06:00) Central Time (US & Canada)",
+    "(GMT-06:00) Guadalajara, Mexico City, Monterrey","(GMT-06:00) Saskatchewan",
+    "(GMT-05:00) Bogota, Lima, Quito, Rio Branco","(GMT-05:00) Eastern Time (US & Canada)",
+    "(GMT-05:00) Indiana (East)","(GMT-04:00) Atlantic Time (Canada)",
+    "(GMT-04:00) Caracas, La Paz","(GMT-04:00) Manaus","(GMT-04:00) Santiago",
+    "(GMT-03:30) Newfoundland","(GMT-03:00) Brasilia",
+    "(GMT-03:00) Buenos Aires, Georgetown","(GMT-03:00) Greenland",
+    "(GMT-03:00) Montevideo","(GMT-02:00) Mid-Atlantic","(GMT-01:00) Cape Verde Is.",
+    "(GMT-01:00) Azores","(GMT+00:00) Casablanca, Monrovia, Reykjavik",
+    "(GMT+00:00) Greenwich Mean Time","(GMT+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna",
+    "(GMT+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague",
+    "(GMT+01:00) Brussels, Copenhagen, Madrid, Paris",
+    "(GMT+01:00) Sarajevo, Skopje, Warsaw, Zagreb","(GMT+01:00) West Central Africa",
+    "(GMT+02:00) Amman","(GMT+02:00) Athens, Bucharest, Istanbul","(GMT+02:00) Beirut",
+    "(GMT+02:00) Cairo","(GMT+02:00) Harare, Pretoria",
+    "(GMT+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius",
+    "(GMT+02:00) Jerusalem","(GMT+02:00) Minsk","(GMT+02:00) Windhoek",
+    "(GMT+03:00) Kuwait, Riyadh, Baghdad","(GMT+03:00) Moscow, St. Petersburg, Volgograd",
+    "(GMT+03:00) Nairobi","(GMT+03:00) Tbilisi","(GMT+03:30) Tehran",
+    "(GMT+04:00) Abu Dhabi, Muscat","(GMT+04:00) Baku","(GMT+04:00) Yerevan",
+    "(GMT+04:30) Kabul","(GMT+05:00) Yekaterinburg",
+    "(GMT+05:00) Islamabad, Karachi, Tashkent","(GMT+05:30) Sri Jayawardenapura",
+    "(GMT+05:30) Chennai, Kolkata, Mumbai, New Delhi","(GMT+05:45) Kathmandu",
+    "(GMT+06:00) Almaty, Novosibirsk","(GMT+06:00) Astana, Dhaka",
+    "(GMT+06:30) Yangon (Rangoon)","(GMT+07:00) Bangkok, Hanoi, Jakarta",
+    "(GMT+07:00) Krasnoyarsk","(GMT+08:00) Beijing, Chongqing, Hong Kong, Urumqi",
+    "(GMT+08:00) Kuala Lumpur, Singapore","(GMT+08:00) Irkutsk, Ulaan Bataar",
+    "(GMT+08:00) Perth","(GMT+08:00) Taipei","(GMT+09:00) Osaka, Sapporo, Tokyo",
+    "(GMT+09:00) Seoul","(GMT+09:00) Yakutsk","(GMT+09:30) Adelaide",
+    "(GMT+09:30) Darwin","(GMT+10:00) Brisbane","(GMT+10:00) Canberra, Melbourne, Sydney",
+    "(GMT+10:00) Hobart","(GMT+10:00) Guam, Port Moresby","(GMT+10:00) Vladivostok",
+    "(GMT+11:00) Magadan, Solomon Is., New Caledonia","(GMT+12:00) Auckland, Wellington",
+    "(GMT+12:00) Fiji, Kamchatka, Marshall Is.","(GMT+13:00) Nuku'alofa"
+  };
+
+  for (int i = 0; i < 82; i++) {
+    String opt = "<option value=\"" + String(i+1) + "\"";
+    if (timezonevalue == i+1) opt += " selected";
+    opt += ">" + String(tzNames[i]) + "</option>";
+    server.sendContent(opt);
+  }
+
+  server.sendContent(F("</select>"
+    "<br><label>Breitengrad</label>"
+    "<input type=text name=latitude value=\""));
+  server.sendContent(String(latitude));
+  server.sendContent(F("\"><br><label>Laengengrad</label>"
+    "<input type=text name=longitude value=\""));
+  server.sendContent(String(longitude));
+  server.sendContent(F("\"><br>"
+    "<input type=submit value=Weiter>"
+    "</form></body></html>"));
+  server.sendContent("");
 }
 
 void webHandleConfigSave() {
