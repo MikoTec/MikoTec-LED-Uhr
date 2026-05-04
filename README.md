@@ -51,20 +51,69 @@ MikoTec-LED-Uhr/
 
 ## Webinterface
 
+### Seiten
+
+| Endpunkt | Methode | Beschreibung |
+|----------|---------|-------------|
+| `/` | GET | Startseite mit Uhr-Canvas und Farbwähler |
+| `/index.html` | GET | Alias für Startseite |
+| `/settings` | GET/POST | Einstellungen (Stundenmarken, Schlaf, Zeitzone, MQTT, Beta) |
+| `/timezone` | GET | Zeitzone per Suche, manuell oder Stadtauswahl |
+| `/hilfe` | GET | Interaktive Hilfe mit Tooltip-Hotspots |
+| `/support` | GET | Systeminfo, Betriebszeit, serielles Protokoll |
+| `/alarm` | GET | Alarm-Einstellungen |
+| `/game` | GET | Easter-Egg Game |
+| `/update` | GET | Firmware OTA-Upload per Browser |
+| `/update_fs` | GET/POST | LittleFS-Image OTA-Upload per Browser |
+
+### JSON API
+
+| Endpunkt | Methode | Beschreibung |
+|----------|---------|-------------|
+| `/getstate` | GET | Aktuelle Uhr-Werte: Zeit, Farben, Modus, Helligkeit, Farbschemata |
+| `/getsettings` | GET | Alle Einstellungen: Pixel, Zeitzone, Schlaf, MQTT, Beta-Channel |
+| `/getmqtt` | GET | MQTT-Konfiguration und Verbindungsstatus |
+| `/getsysinfo` | GET | Systeminfo: Heap, Flash, Uptime, IP, MAC, Gateway |
+| `/gettime` | GET | Aktuelle Zeit als `HH:MM:SS` |
+| `/getlog` | GET | Aktueller Log (RAM-Ringpuffer) |
+| `/getlog?prev=1` | GET | Log vom letzten Boot (LittleFS) |
+
+### Steuerung
+
+| Endpunkt | Methode | Beschreibung |
+|----------|---------|-------------|
+| `/setmqtt` | POST | MQTT-Einstellungen speichern (broker, port, user, pass, enabled) |
+| `/timeset` | GET | Zeit manuell setzen (`?time=HH:MM:SS`) |
+| `/reboot` | GET | ESP neu starten |
+| `/nightmodedemo` | GET | Nachtmodus-Demo aktivieren |
+| `/dawn` | GET | Dämmerungseffekt starten |
+| `/moon` | GET | Mondphasen-Anzeige aktivieren |
+| `/brighttest` | GET | Helligkeitstest |
+| `/lightup` | GET | Alle LEDs aufleuchten lassen |
+| `/reflection` | GET | Reflexionstest |
+| `/speed` | GET | Speedup-Modus |
+| `/cleareeprom` | GET | EEPROM-Reset-Bestätigungsseite |
+| `/cleareepromsure` | GET | EEPROM tatsächlich löschen und neu starten |
+| `/switchwebmode` | GET | Zwischen Normal- und AP-Modus wechseln |
+
+### Statische Ressourcen
+
 | Endpunkt | Beschreibung |
 |----------|-------------|
-| `/` | Startseite mit Uhr-Canvas und Farbwähler |
-| `/settings` | Einstellungen (Stundenmarken, Schlaf, Zeitzone, MQTT) |
-| `/timezone` | Zeitzone per Suche, manuell oder Stadtauswahl |
-| `/hilfe` | Interaktive Hilfe mit Tooltip-Hotspots |
-| `/support` | Systeminfo und serielles Protokoll |
-| `/update` | Firmware OTA-Upload |
-| `/update_fs` | LittleFS-Image OTA-Upload |
-| `/getstate` | JSON: aktuelle Uhr-Werte + Farbschemata |
-| `/getsettings` | JSON: alle Einstellungen |
-| `/getmqtt` | JSON: MQTT-Konfiguration und Status |
-| `/last_fw_update.txt` | Log vor dem letzten Firmware-Update |
-| `/last_fs_update.txt` | Log vor dem letzten Dateisystem-Update |
+| `/clock.js` | Canvas-Uhr JavaScript |
+| `/Colour.js` | Farb-Klassen (RGB/HSV/HSL) |
+| `/clockmenustyle.css` | Menü-Stylesheet |
+| `/spectrum.css` | Spectrum Colorpicker CSS |
+| `/spectrum.js` | Spectrum Colorpicker JS |
+| `/description.xml` | SSDP/UPnP Gerätebeschreibung |
+
+### Update-Logs
+
+| Endpunkt | Beschreibung |
+|----------|-------------|
+| `/last_fw_update.txt` | Log direkt vor dem letzten Firmware-Update |
+| `/last_fs_update.txt` | Log direkt vor dem letzten Dateisystem-Update |
+| `/fs_ota_log` | Log des letzten FS-OTA-Vorgangs |
 
 ## MQTT / Home Assistant
 
@@ -139,6 +188,7 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 ## Changelog
 
 ### v2.3 – MQTT / Home Assistant (01.-04.05.2026)
+- v2.3.0.28: MQTT Device-Name aus clockname (Bindestriche → Leerzeichen in HA-Anzeige), README mit allen Handlern
 - v2.3.0.27: NTP-Retry-Delay entfernt (Boot wieder schnell), nur noch 2 schnelle Versuche
 - v2.3.0.26: Gateway und MAC-Adresse im Log ausgeben zur Diagnose
 - v2.3.0.25: WiFi.persistent(false) — ESP holt sich immer frische DHCP-Lease statt gecachte IP

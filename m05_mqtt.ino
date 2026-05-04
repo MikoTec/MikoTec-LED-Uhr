@@ -210,10 +210,14 @@ void mqttPublishDiscovery() {
   uid.replace("-", "_");
   String base = mqttBaseTopic();
 
+  // Anzeigename: clockname mit Leerzeichen statt Bindestrichen
+  String displayName = clockname;
+  displayName.replace("-", " ");
+
   // Device-Block (wird in jeder Entity wiederverwendet)
   String dev = "\"dev\":{";
   dev += "\"ids\":[\"" + uid + "\"],";
-  dev += "\"name\":\"MikoTec LED Uhr\",";
+  dev += "\"name\":\"" + displayName + "\",";
   dev += "\"mdl\":\"Light Clock\",";
   dev += "\"mf\":\"MikoTec\",";
   dev += "\"sw\":\"" + String(firmware_version) + "\"";
