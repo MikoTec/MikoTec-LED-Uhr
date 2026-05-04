@@ -151,6 +151,10 @@ void launchWeb(int webtype) {
         logTS(); dualOut.print("DNS: ");
         dualOut.println(WiFi.dnsIP().toString());
       }
+      logTS(); dualOut.print("Gateway: ");
+      dualOut.println(WiFi.gatewayIP().toString());
+      logTS(); dualOut.print("MAC: ");
+      dualOut.println(WiFi.macAddress());
 
       clockname.toCharArray(clocknamechar, clockname_len);
       if (!mdns.begin(clocknamechar)) {
