@@ -32,6 +32,7 @@ void initWiFi() {
     dualOut.println(esid);
     WiFi.begin(esid.c_str(), epass.c_str());
     if ( testWifi() == 20 ) {
+      st = ""; // RAM freigeben - wird im normalen Modus nicht mehr gebraucht
       launchWeb(1);
       return;
     }
