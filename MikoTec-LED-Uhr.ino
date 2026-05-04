@@ -257,7 +257,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.21";
+const char* firmware_version = "2.3.0.22";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
