@@ -109,6 +109,25 @@ arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 MikoTec-LED-Uhr/
 
 ## Changelog
 
+### v2.3.0.21 (04.05.2026)
+- Refactoring: Code in 13 Modul-Dateien aufgeteilt
+- Hauptdatei: 726 Zeilen (vorher 4706) - nur Globals, setup(), loop()
+- m01_log: Ringpuffer, DualPrint
+- m02_timestamp: Zeitstempel-Cache, logTS
+- m03_sun: Sonnenberechnung
+- m04_ota: OTA Update System
+- m05_mqtt: MQTT Client komplett
+- m06_config: EEPROM loadConfig, writeInitialConfig
+- m07_wifi: WiFi, AP, mDNS
+- m08_server: Server Handler Setup
+- m09_pages: Web-Seiten, handleRoot
+- m10_nightcheck: Nachtmodus-Pruefung
+- m11_settings: Settings, Timezone Handler
+- m12_face: Clock Face Rendering
+- m13_misc: Diverse Handler, Game
+- Keine funktionalen Aenderungen, nur Dateistruktur
+- Nur Firmware-Update noetig
+
 ### v2.3.0.20 (03.05.2026)
 - Update-Check auf feste Uhrzeiten umgestellt: 0, 3, 6, 9, 12, 15, 18, 21 Uhr
 - Erster Check 30 Sekunden nach Boot
