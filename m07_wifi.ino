@@ -23,6 +23,7 @@ void initWiFi() {
   }
   if (webMode == 1) {
     // test esid
+    WiFi.persistent(false);
     WiFi.disconnect();
     delay(100);
     WiFi.mode(WIFI_STA);

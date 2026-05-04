@@ -139,6 +139,7 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 ## Changelog
 
 ### v2.3 – MQTT / Home Assistant (01.-04.05.2026)
+- v2.3.0.25: WiFi.persistent(false) — ESP holt sich immer frische DHCP-Lease statt gecachte IP
 - v2.3.0.24: DNS-Fallback auf 8.8.8.8 wenn DHCP keinen DNS liefert, NTP Retry-Delay auf 1s erhöht
 - v2.3.0.23: NTP Retry-Schleife (bis 5 Versuche), Helligkeit wird bei Settings-Save nicht mehr auf maxBrightness zurückgesetzt
 - v2.3.0.22: OTA-Loop-Fix (Versionsstring stimmte nicht mit Dateiname überein), stable+beta auf 2.3.0.22
