@@ -142,6 +142,15 @@ void launchWeb(int webtype) {
     case 1:
       //setup DNS since we are a client in WiFi net
 
+      // Expliziten DNS-Server setzen falls DHCP keinen liefert
+      if (WiFi.dnsIP().toString() == "0.0.0.0") {
+        WiFi.config(WiFi.localIP(), WiFi.gatewayIP(), WiFi.subnetMask(), IPAddress(8,8,8,8));
+        logTS(); dualOut.println("DNS: Fallback auf 8.8.8.8");
+      } else {
+        logTS(); dualOut.print("DNS: ");
+        dualOut.println(WiFi.dnsIP().toString());
+      }
+
       clockname.toCharArray(clocknamechar, clockname_len);
       if (!mdns.begin(clocknamechar)) {
         logTS(); dualOut.println("MDNS Fehler - wird beim Neustart aktiv.");
