@@ -91,7 +91,7 @@ for LFS_FILE in $LFS_LIST; do
 done
 
 # --- version.json pruefen ---
-REMOTE_VER=$(curl -s -w "\n%{http_code}" "$GITHUB_RAW/version.json")
+REMOTE_VER=$(curl -s -w "\n%{http_code}" -H "Cache-Control: no-cache" -H "Pragma: no-cache" "$GITHUB_RAW/version.json")
 VER_HTTP=$(echo "$REMOTE_VER" | tail -1)
 VER_BODY=$(echo "$REMOTE_VER" | sed '$d')
 
