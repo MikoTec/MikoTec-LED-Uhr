@@ -8,7 +8,9 @@ void loadConfig() {
 
   for (int i = 0; i < 32; ++i)
   {
-    esid += char(EEPROM.read(i));
+    char c = char(EEPROM.read(i));
+    if (c == '\0' || c == (char)255) break;
+    esid += c;
   }
   logTS(); dualOut.print("SSID: ");
   dualOut.println(esid);
@@ -16,7 +18,9 @@ void loadConfig() {
 
   for (int i = 32; i < 96; ++i)
   {
-    epass += char(EEPROM.read(i));
+    char c = char(EEPROM.read(i));
+    if (c == '\0' || c == (char)255) break;
+    epass += c;
   }
   logTS(); dualOut.print("PASS: ");
   dualOut.println(epass);
