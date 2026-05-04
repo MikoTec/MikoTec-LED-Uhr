@@ -257,7 +257,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.22";
+const char* firmware_version = "2.3.0.23";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -452,18 +452,28 @@ void setup() {
   //initialise the NTP clock sync function
   if (webMode == 1) {
     NTPclient.begin();
-    NTPclient.forceUpdate();
+    // NTP Retry: bis zu 5 Versuche mit je 500ms Pause
+    time_t ntpTime = 0;
+    for (int ntpTry = 0; ntpTry < 5; ntpTry++) {
+      NTPclient.forceUpdate();
+      ntpTime = NTPclient.getEpochTime();
+      logTS(); dualOut.print("NTP Versuch ");
+      dualOut.print(ntpTry + 1);
+      dualOut.print(": ");
+      dualOut.println(ntpTime);
+      if (ntpTime > 1000000) break;
+      delay(500);
+    }
     fetchSunriseSunset(latitude, longitude);
-    time_t ntpTime = NTPclient.getEpochTime();
-    logTS(); dualOut.print("NTP Erstabfrage: ");
-    dualOut.println(ntpTime);
     if (ntpTime > 1000000) {
       setTime(ntpTime);
       updateTimestampCache();
-      logTS(); dualOut.print("Zeit gesetzt auf: ");
+      logTS(); dualOut.print("NTP Zeit: ");
       dualOut.print(hour());
       dualOut.print(":");
       dualOut.println(minute());
+    } else {
+      logTS(); dualOut.println("NTP: Keine gueltige Zeit erhalten!");
     }
     setSyncInterval(SECS_PER_HOUR);
     setSyncProvider(getNTPtime);

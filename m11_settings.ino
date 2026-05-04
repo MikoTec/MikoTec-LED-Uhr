@@ -81,17 +81,23 @@ void handleSettings() {
     EEPROM.write(230, pixelCount);
   }
   if (server.hasArg("maxbright")) {
-    maxBrightness = server.arg("maxbright").toInt();
-    brightness = maxBrightness;
-    EEPROM.write(191, brightness);
-    EEPROM.write(231, maxBrightness);
+    int newMaxBright = server.arg("maxbright").toInt();
+    if (newMaxBright != maxBrightness) {
+      maxBrightness = newMaxBright;
+      brightness = maxBrightness;
+      EEPROM.write(191, brightness);
+      EEPROM.write(231, maxBrightness);
+    }
   }
   if (server.hasArg("powerType")) {
     int pt = server.arg("powerType").toInt();
-    maxBrightness = (pt == 1) ? 255 : 100;
-    brightness = maxBrightness;
-    EEPROM.write(191, brightness);
-    EEPROM.write(231, maxBrightness);
+    int newMaxBright = (pt == 1) ? 255 : 100;
+    if (newMaxBright != maxBrightness) {
+      maxBrightness = newMaxBright;
+      brightness = maxBrightness;
+      EEPROM.write(191, brightness);
+      EEPROM.write(231, maxBrightness);
+    }
   }
   if (server.hasArg("timezone")) {
     timezonevalue = server.arg("timezone").toInt();
