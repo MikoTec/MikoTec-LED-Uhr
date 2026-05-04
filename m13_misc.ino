@@ -237,20 +237,34 @@ void handleGetSettings() {
 }
 
 void webHandleTimeSet() {
+  int timehr = 0, timemin = 0, timesec = 0;
+  int timeday = 1, timemonth = 1, timeyear = 2024;
+
   if (server.hasArg("time")) {
     String timestring = server.arg("time");
-    int timehr = timestring.substring(0, 2).toInt();
-    int timemin = timestring.substring(3, 5).toInt();
-    int timesec = 0;
+    timehr  = timestring.substring(0, 2).toInt();
+    timemin = timestring.substring(3, 5).toInt();
     if (timestring.length() >= 8) {
       timesec = timestring.substring(6, 8).toInt();
     }
-    logTS(); dualOut.print("Time Total: "); dualOut.println(timestring);
-    logTS(); dualOut.print("Time Hour: "); dualOut.println(timehr);
-    logTS(); dualOut.print("Time Minute: "); dualOut.println(timemin);
-    logTS(); dualOut.print("Time Second: "); dualOut.println(timesec);
-    setTime(timehr, timemin, timesec, 1, 1, 1);
   }
+  if (server.hasArg("date")) {
+    String datestring = server.arg("date");
+    // Format: YYYY-MM-DD
+    timeyear  = datestring.substring(0, 4).toInt();
+    timemonth = datestring.substring(5, 7).toInt();
+    timeday   = datestring.substring(8, 10).toInt();
+  }
+
+  setTime(timehr, timemin, timesec, timeday, timemonth, timeyear);
+  updateTimestampCache();
+  logTS(); dualOut.print("Zeit+Datum gesetzt: ");
+  dualOut.print(timeday); dualOut.print(".");
+  dualOut.print(timemonth); dualOut.print(".");
+  dualOut.print(timeyear); dualOut.print(" ");
+  dualOut.print(timehr); dualOut.print(":");
+  dualOut.println(timemin);
+
   server.send(200, "text/plain", "OK");
 }
 

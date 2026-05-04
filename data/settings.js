@@ -25,13 +25,24 @@ function updateTime(){
 
 function setManualTime(){
   var t=document.getElementById('mantime').value;
-  if(t==''){return;}
-  fetch('/timeset?time='+t).then(function(){updateTime();}).catch(function(){});
+  var d=document.getElementById('mandate').value;
+  if(t==''&&d==''){return;}
+  var params='time='+encodeURIComponent(t);
+  if(d!='') params+='&date='+encodeURIComponent(d);
+  fetch('/timeset?'+params).then(function(){updateTime();}).catch(function(){});
 }
 
 document.addEventListener('DOMContentLoaded', function(){
   var nb=document.getElementById('nightbrightness');
   if(nb){nb.oninput=function(){document.getElementById('nbval').innerText=this.value+'%';};}
+
+  // Datum-Feld mit heutigem Datum vorbelegen
+  var today=new Date();
+  var dd=String(today.getDate()).padStart(2,'0');
+  var mm=String(today.getMonth()+1).padStart(2,'0');
+  var yyyy=today.getFullYear();
+  var mandate=document.getElementById('mandate');
+  if(mandate) mandate.value=yyyy+'-'+mm+'-'+dd;
 
   fetch('/getsettings').then(r=>r.json()).then(function(d){
     if(d.hourmarks!=null) document.getElementById('hourmarks').value=d.hourmarks;
