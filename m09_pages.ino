@@ -49,6 +49,15 @@ void handlespectrumCSS() {
 }
 
 void handleRoot() {
+  // Wenn LittleFS vorhanden und kein POST/Form-Argument: sofort streamen
+  if (LittleFS.exists("/index.html") && server.args() == 0) {
+    logTS(); dualOut.println("Sending handleRoot (LittleFS)");
+    File f = LittleFS.open("/index.html", "r");
+    server.streamFile(f, "text/html");
+    f.close();
+    return;
+  }
+
   float alarmHour;
   float alarmMin;
   float alarmSec;
@@ -406,34 +415,11 @@ void handleRoot() {
   toSend.replace("$maxBrightness", String(int(maxBrightness)));
   toSend.replace("$brightness", String(int(brightness)));
   toSend.replace("$firmware_version", firmware_version);
-  
-  // Prüfe ob die Seite korrekt aufgebaut wurde
-  if (toSend.indexOf("$externallinks") >= 0 || toSend.indexOf("$csswgradient") >= 0) {
-    logTS(); dualOut.print("[WARN] Root-Seite unvollstaendig! Heap: ");
-    dualOut.println(ESP.getFreeHeap());
-    // Nochmal versuchen mit freigegebenem Heap
-    if (toSend.indexOf("$externallinks") >= 0) {
-      if (webMode != 2) {
-        toSend.replace("$externallinks", FPSTR(externallinks));
-      } else {
-        toSend.replace("$externallinks", "<link rel=stylesheet href='clockmenustyle.css'>");
-      }
-    }
-  }
-  
-  // index.html aus LittleFS liefern falls vorhanden (spart RAM)
-  if (LittleFS.exists("/index.html")) {
-    // Erst toSend leeren um RAM freizugeben
-    toSend = "";
-    File f = LittleFS.open("/index.html", "r");
-    server.streamFile(f, "text/html");
-    f.close();
-  } else {
-    server.setContentLength(toSend.length());
-    server.send(200, "text/html", "");
-    server.sendContent(toSend);
-    toSend = "";
-  }
+
+  server.setContentLength(toSend.length());
+  server.send(200, "text/html", "");
+  server.sendContent(toSend);
+  toSend = "";
   logTS(); dualOut.println("Sending handleRoot");
   EEPROM.commit();
   delay(300);

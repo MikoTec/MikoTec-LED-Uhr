@@ -188,6 +188,7 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 ## Changelog
 
 ### v2.3 – MQTT / Home Assistant (01.-04.05.2026)
+- v2.3.0.32: handleRoot sofortiger LittleFS-Stream ohne Args, WARN und doppelter LittleFS-Check entfernt
 - v2.3.0.31: SSID und Passwort werden sauber eingelesen (kein Garbage/Nullbytes mehr im Log und WiFi-Connect)
 - v2.3.0.30: OOM-Fix im AP-Modus (WiFi-Setup) — chunked streaming statt großer Strings, neues LittleFS mit Datum-Eingabe
 - v2.3.0.29: Manuelles Datum setzen in Settings (für korrekten Mondstand ohne NTP)
