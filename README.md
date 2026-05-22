@@ -187,6 +187,9 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 
 ## Changelog
 
+### v2.4 – Mondphasen-Verbesserung (22.05.2026)
+- v2.4.0.0: Mondposition wandert realistisch ueber den LED-Ring: Ost (zunehmend) -> Sued (Vollmond) -> West (abnehmend); Suedhalbkugel gespiegelt
+
 ### v2.3 – MQTT / Home Assistant (01.-04.05.2026)
 - v2.3.0.33: Heap-Optimierung - Log-Buffer 4096, st-String leeren nach WiFi; neues LittleFS mit korrekter fs_version.txt
 - v2.3.0.32: handleRoot sofortiger LittleFS-Stream ohne Args, WARN und doppelter LittleFS-Check entfernt

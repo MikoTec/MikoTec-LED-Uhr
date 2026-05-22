@@ -539,27 +539,30 @@ void moon() {
   if (fadeZone < 2) fadeZone = 2;
   if (litLEDs > pixelCount - fadeZone * 2) litLEDs = pixelCount - fadeZone * 2;
 
-  // Position: Nordhalbkugel wächst rechts, Südhalbkugel wächst links
-  // phase < 15 = zunehmend, phase >= 15 = abnehmend
-  bool waxing = (phase < 15);
+  // Mondposition wandert ueber den Zyklus: Ost(15) -> Sued(30) -> West(45)
+  // phase_days 0 = Neumond, ~14.76 = Vollmond (Sued), ~29.53 = wieder Neumond
+  // Nordhalbkugel: Ost=LED15, Sued=LED30, West=LED45
+  // Suedhalbkugel: gespiegelt: West=LED15, Nord=LED30, Ost=LED45
+  int moonEast = pixelCount / 4;     // LED 15 (3-Uhr-Position)
+  int moonSouth = pixelCount / 2;    // LED 30 (6-Uhr-Position)
+  int moonWest = pixelCount * 3 / 4; // LED 45 (9-Uhr-Position)
 
-  // Startposition der beleuchteten Seite
-  int moonCenter = pixelCount / 2; // Mitte oben (12-Uhr-Position)
-  int startLED;
-
-  if (hemisphere == 0) {
-    // Nordhalbkugel: zunehmend = rechte Seite beleuchtet
-    if (waxing) {
-      startLED = moonCenter - litLEDs / 2;
+  int moonCenter;
+  if (phase_days <= 14.76) {
+    // Zunehmend: Ost -> Sued
+    float progress = phase_days / 14.76;
+    if (hemisphere == 0) {
+      moonCenter = moonEast + (int)(progress * (moonSouth - moonEast));
     } else {
-      startLED = moonCenter - litLEDs / 2;
+      moonCenter = moonWest - (int)(progress * (moonWest - moonSouth));
     }
   } else {
-    // Südhalbkugel: gespiegelt
-    if (waxing) {
-      startLED = moonCenter - litLEDs / 2;
+    // Abnehmend: Sued -> West
+    float progress = (phase_days - 14.76) / (29.53 - 14.76);
+    if (hemisphere == 0) {
+      moonCenter = moonSouth + (int)(progress * (moonWest - moonSouth));
     } else {
-      startLED = moonCenter - litLEDs / 2;
+      moonCenter = moonSouth - (int)(progress * (moonSouth - moonEast));
     }
   }
 
@@ -568,19 +571,9 @@ void moon() {
     clockleds->SetPixelColor(i, RgbColor(0, 0, 0));
   }
 
-  // Beleuchtete LEDs setzen mit weichem Rand
-
+  // Beleuchtete LEDs setzen mit weichem Rand, zentriert um moonCenter
   for (int i = 0; i < litLEDs + fadeZone * 2; i++) {
-    int ledIdx;
-    if (hemisphere == 0) {
-      ledIdx = waxing ?
-        (moonCenter + litLEDs / 2 - i + pixelCount) % pixelCount :
-        (moonCenter - litLEDs / 2 + i + pixelCount) % pixelCount;
-    } else {
-      ledIdx = waxing ?
-        (moonCenter - litLEDs / 2 + i + pixelCount) % pixelCount :
-        (moonCenter + litLEDs / 2 - i + pixelCount) % pixelCount;
-    }
+    int ledIdx = (moonCenter - (litLEDs + fadeZone * 2) / 2 + i + pixelCount) % pixelCount;
 
     int brightness_val;
     int moonMax = _max(1, 64 * nightBrightness / 100); // Mond-Helligkeit nach nightBrightness skalieren
@@ -603,7 +596,8 @@ void moon() {
     lastMoonLogHour = hour();
     logTS(); dualOut.print("Mondphase Tag: "); dualOut.print(phase);
     dualOut.print(" Beleuchtung: "); dualOut.print((int)(illumination * 100));
-    dualOut.print("% LEDs: "); dualOut.println(litLEDs);
+    dualOut.print("% LEDs: "); dualOut.print(litLEDs);
+    dualOut.print(" Center: "); dualOut.println(moonCenter);
     logMemory();
   }
 }
