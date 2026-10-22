@@ -534,36 +534,38 @@ void moon() {
   // Anzahl beleuchteter LEDs basierend auf Beleuchtung
   int litLEDs = (int)(illumination * pixelCount);
 
-  // Sicherstellen dass litLEDs + fadeZone*2 nicht pixelCount übersteigt
+  // Fadezone fuer weiche Raender
   int fadeZone = pixelCount / 20;
   if (fadeZone < 2) fadeZone = 2;
-  if (litLEDs > pixelCount - fadeZone * 2) litLEDs = pixelCount - fadeZone * 2;
 
-  // Mondposition wandert ueber den Zyklus: Ost(15) -> Sued(30) -> West(45)
-  // phase_days 0 = Neumond, ~14.76 = Vollmond (Sued), ~29.53 = wieder Neumond
-  // Nordhalbkugel: Ost=LED15, Sued=LED30, West=LED45
-  // Suedhalbkugel: gespiegelt: West=LED15, Nord=LED30, Ost=LED45
-  int moonEast = pixelCount / 4;     // LED 15 (3-Uhr-Position)
-  int moonSouth = pixelCount / 2;    // LED 30 (6-Uhr-Position)
-  int moonWest = pixelCount * 3 / 4; // LED 45 (9-Uhr-Position)
+  // Monddarstellung als Kompass-Uhr:
+  // LED 0  = Norden (12 Uhr)
+  // LED 15 = Osten  (3 Uhr)  <- Aufgang der Sichel
+  // LED 30 = Sueden (6 Uhr)
+  // LED 45 = Westen (9 Uhr)
+  //
+  // Nordhalbkugel: zunehmend = Licht kommt von Osten (rechts)
+  //   -> moonCenter fest bei LED 15 (3-Uhr/Ost)
+  //   -> LEDs breiten sich symmetrisch nach 12 Uhr und 6 Uhr aus
+  //   -> Tag 1: nur LED 15 leuchtet, Vollmond: alle 60 LEDs
+  //   -> abnehmend: moonCenter wechselt zu LED 45 (9-Uhr/West)
+  //
+  // Suedhalbkugel: gespiegelt (Aufgang von Westen)
 
   int moonCenter;
-  if (phase_days <= 14.76) {
-    // Zunehmend: Ost -> Sued
-    float progress = phase_days / 14.76;
-    if (hemisphere == 0) {
-      moonCenter = moonEast + (int)(progress * (moonSouth - moonEast));
-    } else {
-      moonCenter = moonWest - (int)(progress * (moonWest - moonSouth));
-    }
+  if (hemisphere == 0) {
+    // Nordhalbkugel
+    moonCenter = (phase_days <= 14.76) ? pixelCount / 4 : pixelCount * 3 / 4;
   } else {
-    // Abnehmend: Sued -> West
-    float progress = (phase_days - 14.76) / (29.53 - 14.76);
-    if (hemisphere == 0) {
-      moonCenter = moonSouth + (int)(progress * (moonWest - moonSouth));
-    } else {
-      moonCenter = moonSouth - (int)(progress * (moonSouth - moonEast));
-    }
+    // Suedhalbkugel
+    moonCenter = (phase_days <= 14.76) ? pixelCount * 3 / 4 : pixelCount / 4;
+  }
+
+  // Bei Vollmond alle LEDs an (kein Clamp noetig)
+  // Kein Abschneiden bei Vollmond: Ring leuchtet komplett
+  if (litLEDs >= pixelCount - 1) {
+    litLEDs = pixelCount;
+    fadeZone = 0;
   }
 
   // Alle LEDs erstmal aus
@@ -572,12 +574,15 @@ void moon() {
   }
 
   // Beleuchtete LEDs setzen mit weichem Rand, zentriert um moonCenter
-  for (int i = 0; i < litLEDs + fadeZone * 2; i++) {
-    int ledIdx = (moonCenter - (litLEDs + fadeZone * 2) / 2 + i + pixelCount) % pixelCount;
+  int total = litLEDs + fadeZone * 2;
+  for (int i = 0; i < total; i++) {
+    int ledIdx = (moonCenter - total / 2 + i + pixelCount) % pixelCount;
 
     int brightness_val;
     int moonMax = _max(1, 64 * nightBrightness / 100); // Mond-Helligkeit nach nightBrightness skalieren
-    if (i < fadeZone) {
+    if (fadeZone == 0) {
+      brightness_val = moonMax; // Vollmond: alle gleich hell
+    } else if (i < fadeZone) {
       brightness_val = moonMax * i / fadeZone; // einblenden
     } else if (i >= litLEDs + fadeZone) {
       brightness_val = moonMax * (litLEDs + fadeZone * 2 - i) / fadeZone; // ausblenden
@@ -597,7 +602,9 @@ void moon() {
     logTS(); dualOut.print("Mondphase Tag: "); dualOut.print(phase);
     dualOut.print(" Beleuchtung: "); dualOut.print((int)(illumination * 100));
     dualOut.print("% LEDs: "); dualOut.print(litLEDs);
-    dualOut.print(" Center: "); dualOut.println(moonCenter);
+    dualOut.print(" Center: "); dualOut.print(moonCenter);
+    dualOut.print(phase_days <= 14.76 ? " (zunehmend)" : " (abnehmend)");
+    dualOut.println();
     logMemory();
   }
 }
