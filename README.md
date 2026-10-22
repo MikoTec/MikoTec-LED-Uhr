@@ -187,6 +187,9 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 
 ## Changelog
 
+### v2.3.0.37 – Fixes (22.10.2026)
+- LittleFS-Neustartschleife behoben: FS-Image `littlefs_v2.3.0.34.bin` neu gebaut, `data/fs_version.txt` auf 2.3.0.34 korrigiert und `version.json` (`beta_fs_version`/`beta_fs_file`) angeglichen. Ursache: das bisherige `littlefs_v2.3.0.33.bin` enthielt intern die FS-Version 2.4.0.0, wodurch der OTA-Vergleich (`!=`) bei jedem Boot erneut ausloeste.
+
 ### v2.4 – Mondphasen-Verbesserung (22.05.2026)
 - v2.4.0.0: Mondposition wandert realistisch ueber den LED-Ring: Ost (zunehmend) -> Sued (Vollmond) -> West (abnehmend); Suedhalbkugel gespiegelt
 
