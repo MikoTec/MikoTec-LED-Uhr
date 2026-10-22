@@ -257,7 +257,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.35";
+const char* firmware_version = "2.3.0.36";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -320,8 +320,8 @@ Ticker dawntick;//a ticker to establish how far through dawn we are
 int dawnprogress = 0;
 
 // Auto-Update Konfiguration
-const char* update_version_url = "http://yzdlcru01ktmqlzy.myfritz.net/updates/version.json";
-const char* update_bin_base_url = "http://yzdlcru01ktmqlzy.myfritz.net/updates/";
+const char* update_version_url = "https://yzdlcru01ktmqlzy.myfritz.net/updates/version.json";
+const char* update_bin_base_url = "https://yzdlcru01ktmqlzy.myfritz.net/updates/";
 unsigned long lastUpdateCheck = 0;
 int lastUpdateCheckHour = -1; // Letzte Stunde in der ein Check lief
 

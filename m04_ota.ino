@@ -28,7 +28,8 @@ void checkForUpdate() {
   logTS(); dualOut.print("[OTA] Abfrage URL: ");
   dualOut.println(update_version_url);
   
-  WiFiClient client;
+  BearSSL::WiFiClientSecure client;
+  client.setInsecure();
   HTTPClient http;
   http.begin(client, update_version_url);
   http.setTimeout(15000);
@@ -169,7 +170,8 @@ void checkForUpdate() {
       }
     }
     
-    WiFiClient updateClient;
+    BearSSL::WiFiClientSecure updateClient;
+    updateClient.setInsecure();
     ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
     t_httpUpdate_return ret = ESPhttpUpdate.update(updateClient, binUrl);
     
