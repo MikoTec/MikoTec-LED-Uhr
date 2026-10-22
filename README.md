@@ -187,6 +187,9 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 
 ## Changelog
 
+### v2.3.0.38 – OTA-Logik (22.10.2026)
+- OTA-FS-Update loest nur noch bei ECHT neuerer Remote-FS-Version aus (statt bei jeder Ungleichheit). Neue Hilfsfunktion `isVersionNewer(remote, local)` vergleicht zwei 4-stellige Versionsstrings; `isNewerVersion` baut darauf auf. Verhindert dauerhaft Update-/Neustartschleifen bei abweichender oder aelterer FS-Version.
+
 ### v2.3.0.37 – Fixes (22.10.2026)
 - LittleFS-Neustartschleife behoben: FS-Image `littlefs_v2.3.0.34.bin` neu gebaut, `data/fs_version.txt` auf 2.3.0.34 korrigiert und `version.json` (`beta_fs_version`/`beta_fs_file`) angeglichen. Ursache: das bisherige `littlefs_v2.3.0.33.bin` enthielt intern die FS-Version 2.4.0.0, wodurch der OTA-Vergleich (`!=`) bei jedem Boot erneut ausloeste.
 

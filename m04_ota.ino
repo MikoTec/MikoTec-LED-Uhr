@@ -1,10 +1,12 @@
 // m04_ota.ino
 
-bool isNewerVersion(const String& remoteVersion) {
+// Vergleicht zwei 4-stellige Versionsstrings (a.b.c.d).
+// Liefert true, wenn remoteVersion ECHT neuer ist als localVersion.
+bool isVersionNewer(const String& remoteVersion, const String& localVersion) {
   int lv[4] = {0, 0, 0, 0};
   int rv[4] = {0, 0, 0, 0};
   
-  sscanf(firmware_version, "%d.%d.%d.%d", &lv[0], &lv[1], &lv[2], &lv[3]);
+  sscanf(localVersion.c_str(), "%d.%d.%d.%d", &lv[0], &lv[1], &lv[2], &lv[3]);
   sscanf(remoteVersion.c_str(), "%d.%d.%d.%d", &rv[0], &rv[1], &rv[2], &rv[3]);
   
   for (int i = 0; i < 4; i++) {
@@ -12,6 +14,10 @@ bool isNewerVersion(const String& remoteVersion) {
     if (rv[i] < lv[i]) return false;
   }
   return false;
+}
+
+bool isNewerVersion(const String& remoteVersion) {
+  return isVersionNewer(remoteVersion, String(firmware_version));
 }
 
 void checkForUpdate() {
@@ -198,7 +204,7 @@ void checkForUpdate() {
   }
   
   // --- LittleFS-Update (nur wenn Firmware aktuell) ---
-  if (remoteFsVersion.length() > 0 && remoteFsFile.length() > 0 && remoteFsVersion != localFsVersion) {
+  if (remoteFsVersion.length() > 0 && remoteFsFile.length() > 0 && isVersionNewer(remoteFsVersion, localFsVersion)) {
     String fsUrl = String(update_bin_base_url) + remoteFsFile;
     logTS(); dualOut.println("[OTA] *** Neues LittleFS-Image gefunden! ***");
     logTS(); dualOut.print("[OTA] Lokal: ");
