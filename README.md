@@ -187,6 +187,13 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 
 ## Changelog
 
+### v2.3.0.39 – OTA TLS-Fix / OOM-Schleife behoben (22.10.2026)
+- OTA-Update-URLs auf Port 8443 umgestellt (ESP8266-tauglicher TLS-1.2-Endpunkt des Update-Servers mit ssl_buffer_size 512).
+- BearSSL an allen drei OTA-Stellen (version.json, Firmware-.bin, LittleFS-.bin) auf setBufferSizes(512, 512) + probeMaxFragmentLength(..., 8443, 512) umgestellt, damit der TLS-Handshake in den knappen Heap passt.
+- MQTT-Client wird vor jedem TLS-Handshake getrennt (Heap-Peak entlasten); loop() reconnectet automatisch, Discovery wird nicht erneut gesendet.
+- LittleFS-Download von nacktem WiFiClient (HTTP) auf BearSSL (HTTPS) umgestellt, passend zur HTTPS-Basis-URL.
+- Ursache der Neustartschleife: Unhandled C++ exception OOM beim TLS-1.3-Handshake des OTA-Checks bei nur ~7,6 KB freiem Heap.
+
 ### v2.3.0.38 – OTA-Logik (22.10.2026)
 - OTA-FS-Update loest nur noch bei ECHT neuerer Remote-FS-Version aus (statt bei jeder Ungleichheit). Neue Hilfsfunktion `isVersionNewer(remote, local)` vergleicht zwei 4-stellige Versionsstrings; `isNewerVersion` baut darauf auf. Verhindert dauerhaft Update-/Neustartschleifen bei abweichender oder aelterer FS-Version.
 

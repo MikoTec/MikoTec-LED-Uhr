@@ -34,8 +34,22 @@ void checkForUpdate() {
   logTS(); dualOut.print("[OTA] Abfrage URL: ");
   dualOut.println(update_version_url);
   
+  // MQTT vor dem TLS-Handshake trennen, um Heap-Peak zu entlasten
+  // (loop() reconnectet automatisch; mqttDiscoverySent bleibt true -> keine erneute Discovery)
+  if (mqttEnabled && mqttClient.connected()) {
+    mqttClient.disconnect();
+    logTS(); dualOut.println("[OTA] MQTT fuer TLS-Handshake getrennt");
+  }
+  delay(50);
+
   BearSSL::WiFiClientSecure client;
   client.setInsecure();
+  // Kleine TLS-Puffer passend zum Server (ssl_buffer_size 512, TLS 1.2)
+  client.setBufferSizes(512, 512);
+  // MFLN pruefen/aktivieren (max_fragment_length 512)
+  bool mfln = client.probeMaxFragmentLength("yzdlcru01ktmqlzy.myfritz.net", 8443, 512);
+  logTS(); dualOut.print("[OTA] MFLN 512 unterstuetzt: ");
+  dualOut.println(mfln ? "ja" : "nein");
   HTTPClient http;
   http.begin(client, update_version_url);
   http.setTimeout(15000);
@@ -176,8 +190,17 @@ void checkForUpdate() {
       }
     }
     
+    // MQTT vor dem TLS-Handshake trennen (Heap-Peak entlasten)
+    if (mqttEnabled && mqttClient.connected()) {
+      mqttClient.disconnect();
+      logTS(); dualOut.println("[OTA] MQTT fuer Firmware-Download getrennt");
+    }
+    delay(50);
+
     BearSSL::WiFiClientSecure updateClient;
     updateClient.setInsecure();
+    updateClient.setBufferSizes(512, 512);
+    updateClient.probeMaxFragmentLength("yzdlcru01ktmqlzy.myfritz.net", 8443, 512);
     ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
     t_httpUpdate_return ret = ESPhttpUpdate.update(updateClient, binUrl);
     
@@ -251,7 +274,17 @@ void checkForUpdate() {
       logTS(); dualOut.println("[OTA] Log per MQTT gesichert (" + String(chunks) + " Chunks)");
     }
     
-    WiFiClient fsClient;
+    // MQTT vor dem TLS-Handshake trennen (Heap-Peak entlasten)
+    if (mqttEnabled && mqttClient.connected()) {
+      mqttClient.disconnect();
+      logTS(); dualOut.println("[OTA] MQTT fuer LittleFS-Download getrennt");
+    }
+    delay(50);
+
+    BearSSL::WiFiClientSecure fsClient;
+    fsClient.setInsecure();
+    fsClient.setBufferSizes(512, 512);
+    fsClient.probeMaxFragmentLength("yzdlcru01ktmqlzy.myfritz.net", 8443, 512);
     ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
     t_httpUpdate_return ret = ESPhttpUpdate.updateFS(fsClient, fsUrl);
     
