@@ -552,45 +552,53 @@ void moon() {
   //
   // Suedhalbkugel: gespiegelt (Aufgang von Westen)
 
-  int moonCenter;
+  // Monddarstellung: dunkle Zone zentriert an West (LED 45) bei zunehmendem Mond
+  // Nordhalbkugel zunehmend: dunkle Seite = Westen (LED 45)
+  // Nordhalbkugel abnehmend: dunkle Seite = Osten (LED 15)
+  // Suedhalbkugel: gespiegelt
+
+  int darkCenter;
   if (hemisphere == 0) {
     // Nordhalbkugel
-    moonCenter = (phase_days <= 14.76) ? pixelCount / 4 : pixelCount * 3 / 4;
+    darkCenter = (phase_days <= 14.76) ? pixelCount * 3 / 4 : pixelCount / 4;
   } else {
     // Suedhalbkugel
-    moonCenter = (phase_days <= 14.76) ? pixelCount * 3 / 4 : pixelCount / 4;
+    darkCenter = (phase_days <= 14.76) ? pixelCount / 4 : pixelCount * 3 / 4;
   }
 
-  // Bei Vollmond alle LEDs an (kein Clamp noetig)
-  // Kein Abschneiden bei Vollmond: Ring leuchtet komplett
+  // Anzahl dunkler LEDs
+  int darkLEDs = pixelCount - litLEDs;
+
+  // Bei Vollmond alle LEDs an
   if (litLEDs >= pixelCount - 1) {
     litLEDs = pixelCount;
+    darkLEDs = 0;
     fadeZone = 0;
   }
 
-  // Alle LEDs erstmal aus
+  // Alle LEDs erstmal an (hell)
+  int moonMax = _max(1, 64 * nightBrightness / 100);
   for (int i = 0; i < pixelCount; i++) {
-    clockleds->SetPixelColor(i, RgbColor(0, 0, 0));
+    clockleds->SetPixelColor(i, RgbColor(moonMax, moonMax, moonMax));
   }
 
-  // Beleuchtete LEDs setzen mit weichem Rand, zentriert um moonCenter
-  int total = litLEDs + fadeZone * 2;
-  for (int i = 0; i < total; i++) {
-    int ledIdx = (moonCenter - total / 2 + i + pixelCount) % pixelCount;
+  // Dunkle Zone zentriert um darkCenter ausschneiden (mit weichem Rand)
+  if (darkLEDs > 0) {
+    int darkTotal = darkLEDs + fadeZone * 2;
+    for (int i = 0; i < darkTotal; i++) {
+      int ledIdx = (darkCenter - darkTotal / 2 + i + pixelCount) % pixelCount;
 
-    int brightness_val;
-    int moonMax = _max(1, 64 * nightBrightness / 100); // Mond-Helligkeit nach nightBrightness skalieren
-    if (fadeZone == 0) {
-      brightness_val = moonMax; // Vollmond: alle gleich hell
-    } else if (i < fadeZone) {
-      brightness_val = moonMax * i / fadeZone; // einblenden
-    } else if (i >= litLEDs + fadeZone) {
-      brightness_val = moonMax * (litLEDs + fadeZone * 2 - i) / fadeZone; // ausblenden
-    } else {
-      brightness_val = moonMax; // voll beleuchtet
-    }
+      int brightness_val;
+      if (i < fadeZone) {
+        // Einblenden (Übergang hell->dunkel)
+        brightness_val = moonMax - moonMax * i / fadeZone;
+      } else if (i >= darkLEDs + fadeZone) {
+        // Ausblenden (Übergang dunkel->hell)
+        brightness_val = moonMax * (i - darkLEDs - fadeZone) / fadeZone;
+      } else {
+        brightness_val = 0; // komplett dunkel
+      }
 
-    if (brightness_val > 0) {
       clockleds->SetPixelColor(ledIdx, RgbColor(brightness_val, brightness_val, brightness_val));
     }
   }
@@ -601,8 +609,9 @@ void moon() {
     lastMoonLogHour = hour();
     logTS(); dualOut.print("Mondphase Tag: "); dualOut.print(phase);
     dualOut.print(" Beleuchtung: "); dualOut.print((int)(illumination * 100));
-    dualOut.print("% LEDs: "); dualOut.print(litLEDs);
-    dualOut.print(" Center: "); dualOut.print(moonCenter);
+    dualOut.print("% litLEDs: "); dualOut.print(litLEDs);
+    dualOut.print(" darkLEDs: "); dualOut.print(darkLEDs);
+    dualOut.print(" darkCenter: "); dualOut.print(darkCenter);
     dualOut.print(phase_days <= 14.76 ? " (zunehmend)" : " (abnehmend)");
     dualOut.println();
     logMemory();
