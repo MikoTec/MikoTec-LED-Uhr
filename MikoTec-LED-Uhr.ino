@@ -257,7 +257,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.40";
+const char* firmware_version = "2.3.0.41";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -324,10 +324,9 @@ const char* update_version_url = "https://yzdlcru01ktmqlzy.myfritz.net:8443/upda
 const char* update_bin_base_url = "https://yzdlcru01ktmqlzy.myfritz.net:8443/updates/";
 unsigned long lastUpdateCheck = 0;
 int lastUpdateCheckHour = -1; // Letzte Stunde in der ein Check lief
-// NOTFALL v2.3.0.40: OTA-Check deaktiviert, um die OOM-Neustartschleife zu stoppen.
-// Der TLS-Handshake bei nur ~7KB freiem Heap verursacht OOM. Wird in 2.3.0.41
-// (OTA-Check vor MQTT, mehr Heap) wieder aktiviert.
-bool otaEnabled = false;
+// OTA aktiv. Der Boot-Check laeuft in setup() VOR der MQTT-Init (viel Heap),
+// taeglicher Neustart um 3:30 (loop()) sorgt fuer regelmaessige Update-Pruefung.
+bool otaEnabled = true;
 
 bool DSTchecked = 0;
 
@@ -495,11 +494,14 @@ void setup() {
     mdns.addService("ws", "tcp", 81);
   }
 
-  // Update-Check: erster Check 30 Sekunden nach Boot
-  if (webMode == 1) {
-    lastUpdateCheck = millis();
-    logTS(); dualOut.println("[OTA] Erster Update-Check in 30 Sekunden...");
-    logTS(); dualOut.println("[OTA] Planmaessige Checks: 0, 3, 6, 9, 12, 15, 18, 21 Uhr");
+  // OTA-Boot-Check VOR der MQTT-Initialisierung ausfuehren, solange noch viel
+  // Heap frei ist (~19KB statt ~7KB nach MQTT-Discovery). Nur so passt der
+  // TLS-Handshake in den Speicher (sonst OOM). Regelmaessige Pruefung erfolgt
+  // ueber den taeglichen Neustart um 3:30 Uhr (siehe loop()).
+  if (webMode == 1 && otaEnabled) {
+    logTS(); dualOut.println("[OTA] Boot Update-Check (vor MQTT)...");
+    checkForUpdate();
+    lastUpdateCheckHour = -2; // Boot-Check erledigt
   }
 
   // MQTT initialisieren wenn aktiviert und WiFi verbunden
@@ -555,25 +557,13 @@ void loop() {
     }
   }
 
-  // Update-Check: erster Check 30 Sekunden nach Boot, dann zu festen Uhrzeiten
-  if (webMode == 1 && otaEnabled) {
-    // Einmaliger Boot-Check nach 30 Sekunden
-    if (lastUpdateCheckHour == -1 && millis() - lastUpdateCheck > 30000) {
-      lastUpdateCheckHour = -2; // markiert: Boot-Check erledigt
-      logTS(); dualOut.println("[OTA] Boot Update-Check...");
-      checkForUpdate();
-    }
-    // Planmaessige Checks: 0, 3, 6, 9, 12, 15, 18, 21 Uhr
-    int h = hour();
-    if (h % 3 == 0 && h != lastUpdateCheckHour && minute() == 0) {
-      lastUpdateCheckHour = h;
-      logTS(); dualOut.println("[OTA] Planmaessiger Update-Check (" + String(h) + ":00 Uhr)...");
-      checkForUpdate();
-    }
-    // Reset wenn Stunde sich aendert (damit naechster 3h-Slot wieder triggert)
-    if (h % 3 != 0 && lastUpdateCheckHour >= 0) {
-      lastUpdateCheckHour = h;
-    }
+  // Taeglicher Neustart um 3:30 Uhr -> beim Hochfahren laeuft der OTA-Boot-Check
+  // in setup() (vor MQTT, genug Heap fuer den TLS-Handshake). Nur bei Uptime > 1h,
+  // damit keine Reboot-Schleife um 3:30 entsteht.
+  if (webMode == 1 && otaEnabled && hour() == 3 && minute() == 30 && millis() > 3600000UL) {
+    logTS(); dualOut.println("[SYS] Taeglicher Neustart fuer Update-Pruefung...");
+    delay(100);
+    ESP.restart();
   }
 
   delay(50);

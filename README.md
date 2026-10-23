@@ -187,6 +187,11 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 
 ## Changelog
 
+### v2.3.0.41 – OTA-Check vor MQTT + taeglicher Neustart (23.10.2026)
+- OTA-Boot-Check laeuft jetzt in `setup()` VOR der MQTT-Initialisierung (~19 KB freier Heap statt ~7 KB), damit der TLS-Handshake nicht mehr in OOM laeuft. OTA wieder aktiv (`otaEnabled = true`).
+- Planmaessige 3-Stunden-Checks entfernt (liefen bei zu wenig Heap). Stattdessen taeglicher Selbst-Neustart um 3:30 Uhr: beim Hochfahren prueft die Uhr auf Updates (genug Heap). Reboot nur bei Uptime > 1 h, um eine Reboot-Schleife um 3:30 zu verhindern.
+- Loest die OOM-Neustartschleife dauerhaft und behaelt die automatische Update-Pruefung fuer dauerhaft an der Wand haengende Uhren.
+
 ### v2.3.0.40 – Notfall: OTA-Check deaktiviert (23.10.2026)
 - Notfall-Firmware gegen die OOM-Neustartschleife: OTA-Boot-Check und planmaessige Checks ueber das Flag `otaEnabled = false` deaktiviert, damit kein TLS-Handshake mehr bei nur ~7 KB freiem Heap ausgeloest wird. Die Uhr laeuft damit stabil (ohne Auto-Update). Der TLS-Handshake-OOM blieb trotz setBufferSizes(512,512)+MFLN bestehen, weil vor dem Check nur ~7 KB Heap frei sind (nach WiFi+MQTT-Discovery). Wird in 2.3.0.41 geloest (OTA-Check vor MQTT, ~19 KB Heap).
 
