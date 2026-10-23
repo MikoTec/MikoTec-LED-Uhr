@@ -257,7 +257,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.39";
+const char* firmware_version = "2.3.0.40";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -324,6 +324,10 @@ const char* update_version_url = "https://yzdlcru01ktmqlzy.myfritz.net:8443/upda
 const char* update_bin_base_url = "https://yzdlcru01ktmqlzy.myfritz.net:8443/updates/";
 unsigned long lastUpdateCheck = 0;
 int lastUpdateCheckHour = -1; // Letzte Stunde in der ein Check lief
+// NOTFALL v2.3.0.40: OTA-Check deaktiviert, um die OOM-Neustartschleife zu stoppen.
+// Der TLS-Handshake bei nur ~7KB freiem Heap verursacht OOM. Wird in 2.3.0.41
+// (OTA-Check vor MQTT, mehr Heap) wieder aktiviert.
+bool otaEnabled = false;
 
 bool DSTchecked = 0;
 
@@ -552,7 +556,7 @@ void loop() {
   }
 
   // Update-Check: erster Check 30 Sekunden nach Boot, dann zu festen Uhrzeiten
-  if (webMode == 1) {
+  if (webMode == 1 && otaEnabled) {
     // Einmaliger Boot-Check nach 30 Sekunden
     if (lastUpdateCheckHour == -1 && millis() - lastUpdateCheck > 30000) {
       lastUpdateCheckHour = -2; // markiert: Boot-Check erledigt

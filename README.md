@@ -187,6 +187,9 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 
 ## Changelog
 
+### v2.3.0.40 – Notfall: OTA-Check deaktiviert (23.10.2026)
+- Notfall-Firmware gegen die OOM-Neustartschleife: OTA-Boot-Check und planmaessige Checks ueber das Flag `otaEnabled = false` deaktiviert, damit kein TLS-Handshake mehr bei nur ~7 KB freiem Heap ausgeloest wird. Die Uhr laeuft damit stabil (ohne Auto-Update). Der TLS-Handshake-OOM blieb trotz setBufferSizes(512,512)+MFLN bestehen, weil vor dem Check nur ~7 KB Heap frei sind (nach WiFi+MQTT-Discovery). Wird in 2.3.0.41 geloest (OTA-Check vor MQTT, ~19 KB Heap).
+
 ### v2.3.0.39 – OTA TLS-Fix / OOM-Schleife behoben (22.10.2026)
 - OTA-Update-URLs auf Port 8443 umgestellt (ESP8266-tauglicher TLS-1.2-Endpunkt des Update-Servers mit ssl_buffer_size 512).
 - BearSSL an allen drei OTA-Stellen (version.json, Firmware-.bin, LittleFS-.bin) auf setBufferSizes(512, 512) + probeMaxFragmentLength(..., 8443, 512) umgestellt, damit der TLS-Handshake in den knappen Heap passt.
