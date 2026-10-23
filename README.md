@@ -187,6 +187,10 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 
 ## Changelog
 
+### v2.3.0.44 – TLS-RX-Puffer 2048 + SSL-Fehlerdiagnose (23.10.2026)
+- RX-Puffer an allen drei OTA-Stellen von 512 auf 2048 erhoeht. 512 war zu klein fuer das TLS-Zertifikats-Record im Handshake (Let's-Encrypt-ECDSA-Kette ~1,5 KB) -> Verbindung scheiterte mit HTTP -1. Grund: der Heap nach dem WLAN-Connect betraegt nur ~11 KB (WiFi-Stack belegt ~9 KB), nicht die erhofften ~19 KB.
+- Diagnose: bei Verbindungsfehler (httpCode < 0) wird jetzt der genaue BearSSL-Fehlercode (getLastSSLError) und der freie Heap geloggt.
+
 ### v2.3.0.43 – OTA-Check direkt nach WLAN, MFLN-Probe entfernt (23.10.2026)
 - OTA-Boot-Check laeuft jetzt DIREKT nach dem WLAN-Connect (vor NTP, WebSocket, mDNS, MQTT), wo der Heap maximal frei ist (~19 KB). Zuvor lief er nach WebSocket/mDNS bei nur ~10 KB -> HTTP -1 (Verbindung scheiterte).
 - MFLN-Probe (probeMaxFragmentLength) an allen drei OTA-Stellen entfernt. Sie baute direkt vor dem echten Connect eine zweite TLS-Verbindung auf und fragmentierte bei knappem Heap den Speicher. setBufferSizes(512,512) bleibt; BearSSL handelt MFLN automatisch aus.

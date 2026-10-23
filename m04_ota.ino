@@ -44,18 +44,29 @@ void checkForUpdate() {
 
   BearSSL::WiFiClientSecure client;
   client.setInsecure();
-  // Kleine TLS-Puffer passend zum Server (ssl_buffer_size 512, TLS 1.2)
-  client.setBufferSizes(512, 512);
+  // RX 2048 nimmt die TLS-Zertifikatskette im Handshake auf (512 war zu klein
+  // -> HTTP -1). TX bleibt klein. Server: TLS 1.2, ssl_buffer_size 512.
+  client.setBufferSizes(2048, 512);
   HTTPClient http;
   http.begin(client, update_version_url);
   http.setTimeout(15000);
-  
+
   logTS(); dualOut.println("[OTA] Sende HTTP-Anfrage...");
   int httpCode = http.GET();
-  
+
   logTS(); dualOut.print("[OTA] HTTP-Antwort: ");
   dualOut.println(httpCode);
-  
+
+  // Diagnose bei Verbindungsfehler: genauen BearSSL-Fehler + Heap ausgeben
+  if (httpCode < 0) {
+    char sslErr[128];
+    int errCode = client.getLastSSLError(sslErr, sizeof(sslErr));
+    logTS(); dualOut.print("[OTA] SSL-Fehler "); dualOut.print(errCode);
+    dualOut.print(": "); dualOut.println(sslErr);
+    logTS(); dualOut.print("[OTA] Freier Heap nach Fehler: ");
+    dualOut.println(ESP.getFreeHeap());
+  }
+
   if (httpCode != 200) {
     logTS(); dualOut.print("[OTA] Update-Check fehlgeschlagen, HTTP-Code: ");
     dualOut.println(httpCode);
@@ -195,7 +206,7 @@ void checkForUpdate() {
 
     BearSSL::WiFiClientSecure updateClient;
     updateClient.setInsecure();
-    updateClient.setBufferSizes(512, 512);
+    updateClient.setBufferSizes(2048, 512);
     ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
     t_httpUpdate_return ret = ESPhttpUpdate.update(updateClient, binUrl);
     
@@ -278,7 +289,7 @@ void checkForUpdate() {
 
     BearSSL::WiFiClientSecure fsClient;
     fsClient.setInsecure();
-    fsClient.setBufferSizes(512, 512);
+    fsClient.setBufferSizes(2048, 512);
     ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
     t_httpUpdate_return ret = ESPhttpUpdate.updateFS(fsClient, fsUrl);
     
