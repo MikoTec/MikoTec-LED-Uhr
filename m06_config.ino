@@ -124,6 +124,13 @@ void loadConfig() {
   betaChannel = EEPROM.read(367);
   if (betaChannel > 1) betaChannel = false;
   logTS(); dualOut.println("Beta-Channel: " + String(betaChannel ? "Ja" : "Nein"));
+
+  // Taegliche Neustart-Zeit (EEPROM 368/369). Unbeschrieben (255) -> Default 3:30.
+  rebootHour = EEPROM.read(368);
+  if (rebootHour > 23) rebootHour = 3;
+  rebootMinute = EEPROM.read(369);
+  if (rebootMinute > 59) rebootMinute = 30;
+  logTS(); dualOut.println("Neustart-Zeit: " + String(rebootHour) + ":" + (rebootMinute < 10 ? "0" : "") + String(rebootMinute));
 }
 
 void writeInitalConfig() {

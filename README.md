@@ -187,6 +187,12 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 
 ## Changelog
 
+### v2.3.0.42 – Einstellbare Neustart-Zeit (23.10.2026)
+- Die Uhrzeit des taeglichen Neustarts ist jetzt in den Einstellungen konfigurierbar (Feld "Taeglicher Neustart"). Default 3:30 Uhr. Der Neustart selbst ist fest aktiv und kann nicht abgeschaltet werden.
+- Neue EEPROM-Werte: 368 = rebootHour, 369 = rebootMinute (Default 3:30 bei unbeschriebenem EEPROM). Geladen in loadConfig, gespeichert via handleSettings, ausgeliefert via /getsettings.
+- UI: neues Zeitfeld in settings.html + Laden in settings.js (neues LittleFS-Image 2.3.0.42).
+- FS-Version auf 2.3.0.42 angehoben = gleicher Stand wie die Firmware.
+
 ### v2.3.0.41 – OTA-Check vor MQTT + taeglicher Neustart (23.10.2026)
 - OTA-Boot-Check laeuft jetzt in `setup()` VOR der MQTT-Initialisierung (~19 KB freier Heap statt ~7 KB), damit der TLS-Handshake nicht mehr in OOM laeuft. OTA wieder aktiv (`otaEnabled = true`).
 - Planmaessige 3-Stunden-Checks entfernt (liefen bei zu wenig Heap). Stattdessen taeglicher Selbst-Neustart um 3:30 Uhr: beim Hochfahren prueft die Uhr auf Updates (genug Heap). Reboot nur bei Uptime > 1 h, um eine Reboot-Schleife um 3:30 zu verhindern.

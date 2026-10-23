@@ -230,7 +230,9 @@ void handleGetSettings() {
   json += "\"timezone\":" + String(timezone) + ",";
   json += "\"mqttEnabled\":" + String(mqttEnabled ? 1 : 0) + ",";
   json += "\"mqttConnected\":" + String(mqttClient.connected() ? 1 : 0) + ",";
-  json += "\"betaChannel\":" + String(betaChannel ? 1 : 0);
+  json += "\"betaChannel\":" + String(betaChannel ? 1 : 0) + ",";
+  json += "\"rebootHour\":" + String(rebootHour) + ",";
+  json += "\"rebootMinute\":" + String(rebootMinute);
   json += "}";
   logTS(); dualOut.println("[SETTINGS] " + json);
   server.send(200, "application/json", json);

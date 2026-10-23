@@ -257,7 +257,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.41";
+const char* firmware_version = "2.3.0.42";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -325,8 +325,11 @@ const char* update_bin_base_url = "https://yzdlcru01ktmqlzy.myfritz.net:8443/upd
 unsigned long lastUpdateCheck = 0;
 int lastUpdateCheckHour = -1; // Letzte Stunde in der ein Check lief
 // OTA aktiv. Der Boot-Check laeuft in setup() VOR der MQTT-Init (viel Heap),
-// taeglicher Neustart um 3:30 (loop()) sorgt fuer regelmaessige Update-Pruefung.
+// taeglicher Neustart (loop()) sorgt fuer regelmaessige Update-Pruefung.
 bool otaEnabled = true;
+// Taegliche Neustart-Zeit (vom Nutzer einstellbar, EEPROM 368/369). Default 3:30.
+int rebootHour = 3;    // EEPROM 368
+int rebootMinute = 30; // EEPROM 369
 
 bool DSTchecked = 0;
 
@@ -560,7 +563,7 @@ void loop() {
   // Taeglicher Neustart um 3:30 Uhr -> beim Hochfahren laeuft der OTA-Boot-Check
   // in setup() (vor MQTT, genug Heap fuer den TLS-Handshake). Nur bei Uptime > 1h,
   // damit keine Reboot-Schleife um 3:30 entsteht.
-  if (webMode == 1 && otaEnabled && hour() == 3 && minute() == 30 && millis() > 3600000UL) {
+  if (webMode == 1 && otaEnabled && hour() == rebootHour && minute() == rebootMinute && millis() > 3600000UL) {
     logTS(); dualOut.println("[SYS] Taeglicher Neustart fuer Update-Pruefung...");
     delay(100);
     ESP.restart();

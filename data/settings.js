@@ -94,6 +94,12 @@ document.addEventListener('DOMContentLoaded', function(){
     }
     if(d.clockname!=null) document.getElementById('clockname').value=d.clockname;
     if(d.betaChannel!=null) document.getElementById('betachannel').checked=(d.betaChannel===1);
+    if(d.rebootHour!=null&&d.rebootMinute!=null){
+      var rh=(d.rebootHour<10?'0':'')+d.rebootHour;
+      var rm=(d.rebootMinute<10?'0':'')+d.rebootMinute;
+      var rt=document.getElementById('rebootTime');
+      if(rt) rt.value=rh+':'+rm;
+    }
   }).catch(function(e){console.error('getsettings fehler:',e);});
 
   setInterval(updateTime,1000);

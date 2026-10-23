@@ -46,6 +46,15 @@ void handleSettings() {
     EEPROM.write(190, wakemin);
     nightCheck();
   }
+  if (server.hasArg("rebootTime")) {
+    String rebootstring = server.arg("rebootTime");
+    rebootHour = rebootstring.substring(0, 2).toInt();
+    rebootMinute = rebootstring.substring(3).toInt();
+    if (rebootHour > 23) rebootHour = 3;
+    if (rebootMinute > 59) rebootMinute = 30;
+    EEPROM.write(368, rebootHour);
+    EEPROM.write(369, rebootMinute);
+  }
   if (server.hasArg("DSThidden")) {
     int oldDSTtime = DSTtime;
     DSTtime = server.hasArg("DST");
