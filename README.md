@@ -187,6 +187,11 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 
 ## Changelog
 
+### v2.3.0.47 – OTA-Selbsttest: strandtest-Durchlauf am 24.10.2026 (23.10.2026)
+- Testmodul (m14_blinktest.ino) auf einen strandtest-Durchlauf umgestellt: colorWipe (rot/gruen/blau), theaterChase, rainbow, rainbowCycle, theaterChaseRainbow in Dauerschleife, am 24.10.2026 von 6:45 bis 7:15 Uhr. Non-blocking State-Machine (kein delay/WDT-Reset), damit die Uhr responsiv bleibt.
+- FW + FS auf 2.3.0.47 (gleicher Stand), damit FW- und FS-OTA mitgetestet werden.
+- Wird in der finalen Version (2.3.0.50) wieder entfernt.
+
 ### v2.3.0.46 – OTA-Selbsttest: buntes Blinken am 24.10.2026 (23.10.2026)
 - Temporaeres Testmodul (m14_blinktest.ino): Am 24.10.2026 zwischen 6:45 und 7:15 Uhr blinkt die Uhr bunt (Regenbogen, an/aus). Sichtbarer Nachweis, dass das automatische OTA-Update (Firmware + LittleFS) ueber den naechtlichen Neustart funktioniert hat. Ausserhalb dieses Zeitfensters passiert nichts.
 - FS auf 2.3.0.46 angehoben, damit auch das FS-OTA-Update mitgetestet wird.
