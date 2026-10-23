@@ -187,6 +187,10 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 
 ## Changelog
 
+### v2.3.0.43 – OTA-Check direkt nach WLAN, MFLN-Probe entfernt (23.10.2026)
+- OTA-Boot-Check laeuft jetzt DIREKT nach dem WLAN-Connect (vor NTP, WebSocket, mDNS, MQTT), wo der Heap maximal frei ist (~19 KB). Zuvor lief er nach WebSocket/mDNS bei nur ~10 KB -> HTTP -1 (Verbindung scheiterte).
+- MFLN-Probe (probeMaxFragmentLength) an allen drei OTA-Stellen entfernt. Sie baute direkt vor dem echten Connect eine zweite TLS-Verbindung auf und fragmentierte bei knappem Heap den Speicher. setBufferSizes(512,512) bleibt; BearSSL handelt MFLN automatisch aus.
+
 ### v2.3.0.42 – Einstellbare Neustart-Zeit (23.10.2026)
 - Die Uhrzeit des taeglichen Neustarts ist jetzt in den Einstellungen konfigurierbar (Feld "Taeglicher Neustart"). Default 3:30 Uhr. Der Neustart selbst ist fest aktiv und kann nicht abgeschaltet werden.
 - Neue EEPROM-Werte: 368 = rebootHour, 369 = rebootMinute (Default 3:30 bei unbeschriebenem EEPROM). Geladen in loadConfig, gespeichert via handleSettings, ausgeliefert via /getsettings.

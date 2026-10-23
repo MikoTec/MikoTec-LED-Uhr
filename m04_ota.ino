@@ -46,10 +46,6 @@ void checkForUpdate() {
   client.setInsecure();
   // Kleine TLS-Puffer passend zum Server (ssl_buffer_size 512, TLS 1.2)
   client.setBufferSizes(512, 512);
-  // MFLN pruefen/aktivieren (max_fragment_length 512)
-  bool mfln = client.probeMaxFragmentLength("yzdlcru01ktmqlzy.myfritz.net", 8443, 512);
-  logTS(); dualOut.print("[OTA] MFLN 512 unterstuetzt: ");
-  dualOut.println(mfln ? "ja" : "nein");
   HTTPClient http;
   http.begin(client, update_version_url);
   http.setTimeout(15000);
@@ -200,7 +196,6 @@ void checkForUpdate() {
     BearSSL::WiFiClientSecure updateClient;
     updateClient.setInsecure();
     updateClient.setBufferSizes(512, 512);
-    updateClient.probeMaxFragmentLength("yzdlcru01ktmqlzy.myfritz.net", 8443, 512);
     ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
     t_httpUpdate_return ret = ESPhttpUpdate.update(updateClient, binUrl);
     
@@ -284,7 +279,6 @@ void checkForUpdate() {
     BearSSL::WiFiClientSecure fsClient;
     fsClient.setInsecure();
     fsClient.setBufferSizes(512, 512);
-    fsClient.probeMaxFragmentLength("yzdlcru01ktmqlzy.myfritz.net", 8443, 512);
     ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
     t_httpUpdate_return ret = ESPhttpUpdate.updateFS(fsClient, fsUrl);
     

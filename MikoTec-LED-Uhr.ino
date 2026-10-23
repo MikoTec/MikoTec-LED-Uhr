@@ -257,7 +257,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.42";
+const char* firmware_version = "2.3.0.43";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -452,6 +452,15 @@ void setup() {
   lastInteraction = millis();
   //adjustTime(36600);
   delay(1000);
+
+  // OTA-Boot-Check SOFORT nach dem WLAN-Connect, vor allem anderen (NTP, WebSocket,
+  // mDNS, MQTT). Hier ist der Heap maximal frei (~19KB), damit der TLS-Handshake
+  // sicher passt. Regelmaessige Pruefung erfolgt ueber den taeglichen Neustart (loop()).
+  if (webMode == 1 && otaEnabled) {
+    logTS(); dualOut.println("[OTA] Boot Update-Check (direkt nach WLAN)...");
+    checkForUpdate();
+    lastUpdateCheckHour = -2; // Boot-Check erledigt
+  }
   // Setze den Zeit-Offset (Sekunden) erst hier im Setup
   NTPclient.setTimeOffset((timezone + DSTtime) * 3600);
   NTPclient.begin();
@@ -497,15 +506,6 @@ void setup() {
     mdns.addService("ws", "tcp", 81);
   }
 
-  // OTA-Boot-Check VOR der MQTT-Initialisierung ausfuehren, solange noch viel
-  // Heap frei ist (~19KB statt ~7KB nach MQTT-Discovery). Nur so passt der
-  // TLS-Handshake in den Speicher (sonst OOM). Regelmaessige Pruefung erfolgt
-  // ueber den taeglichen Neustart um 3:30 Uhr (siehe loop()).
-  if (webMode == 1 && otaEnabled) {
-    logTS(); dualOut.println("[OTA] Boot Update-Check (vor MQTT)...");
-    checkForUpdate();
-    lastUpdateCheckHour = -2; // Boot-Check erledigt
-  }
 
   // MQTT initialisieren wenn aktiviert und WiFi verbunden
   if (mqttEnabled && webMode == 1 && strlen(mqttBroker) > 0) {
