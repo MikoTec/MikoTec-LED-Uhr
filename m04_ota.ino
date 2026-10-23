@@ -44,9 +44,9 @@ void checkForUpdate() {
 
   BearSSL::WiFiClientSecure client;
   client.setInsecure();
-  // RX 2048 nimmt die TLS-Zertifikatskette im Handshake auf (512 war zu klein
-  // -> HTTP -1). TX bleibt klein. Server: TLS 1.2, ssl_buffer_size 512.
-  client.setBufferSizes(2048, 512);
+  // Kleine TLS-Puffer (minimaler Heap-Bedarf). Der Check laeuft in initWiFi()
+  // vor mDNS/SSDP/WebServer, wo der Heap maximal frei ist. Server: TLS 1.2.
+  client.setBufferSizes(512, 512);
   HTTPClient http;
   http.begin(client, update_version_url);
   http.setTimeout(15000);
@@ -206,7 +206,7 @@ void checkForUpdate() {
 
     BearSSL::WiFiClientSecure updateClient;
     updateClient.setInsecure();
-    updateClient.setBufferSizes(2048, 512);
+    updateClient.setBufferSizes(512, 512);
     ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
     t_httpUpdate_return ret = ESPhttpUpdate.update(updateClient, binUrl);
     
@@ -289,7 +289,7 @@ void checkForUpdate() {
 
     BearSSL::WiFiClientSecure fsClient;
     fsClient.setInsecure();
-    fsClient.setBufferSizes(2048, 512);
+    fsClient.setBufferSizes(512, 512);
     ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
     t_httpUpdate_return ret = ESPhttpUpdate.updateFS(fsClient, fsUrl);
     

@@ -157,6 +157,18 @@ void launchWeb(int webtype) {
       logTS(); dualOut.print("MAC: ");
       dualOut.println(WiFi.macAddress());
 
+      // OTA-Boot-Check HIER, direkt nach dem WLAN-Connect und VOR mDNS/SSDP/WebServer,
+      // wo der Heap maximal frei ist (~15KB). BearSSL-TLS braucht viel zusammenhaengenden
+      // Heap; nach dem Start der Dienste (~11KB) scheitert die Allokation (SSL -1000).
+      // LittleFS vorab bereitstellen (begin ist idempotent), damit der FS-Versionsvergleich
+      // in checkForUpdate() korrekt ist und kein ungewolltes FS-Update ausloest.
+      LittleFS.begin();
+      if (otaEnabled) {
+        logTS(); dualOut.println("[OTA] Boot Update-Check (max. Heap, vor Diensten)...");
+        checkForUpdate();
+        lastUpdateCheckHour = -2; // Boot-Check erledigt
+      }
+
       clockname.toCharArray(clocknamechar, clockname_len);
       if (!mdns.begin(clocknamechar)) {
         logTS(); dualOut.println("MDNS Fehler - wird beim Neustart aktiv.");

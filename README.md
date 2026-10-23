@@ -187,6 +187,11 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 
 ## Changelog
 
+### v2.3.0.45 – OTA-Check vor mDNS/SSDP/WebServer (max. Heap) (23.10.2026)
+- OTA-Boot-Check jetzt in initWiFi() direkt nach dem WLAN-Connect und VOR mDNS, SSDP und WebServer, wo der Heap maximal frei ist (~15 KB statt ~11 KB). Grund: SSL-Fehler -1000 (v2.3.0.44) zeigte, dass die TLS-Allokation an zu wenig Heap scheitert, nicht an der Record-Groesse.
+- RX-Puffer wieder auf 512 (2048 in v2.3.0.44 war kontraproduktiv -> mehr Heap-Bedarf -> -1000).
+- LittleFS.begin() vor dem Check vorgezogen (idempotent), damit der FS-Versionsvergleich korrekt ist und kein ungewolltes FS-Update ausloest.
+
 ### v2.3.0.44 – TLS-RX-Puffer 2048 + SSL-Fehlerdiagnose (23.10.2026)
 - RX-Puffer an allen drei OTA-Stellen von 512 auf 2048 erhoeht. 512 war zu klein fuer das TLS-Zertifikats-Record im Handshake (Let's-Encrypt-ECDSA-Kette ~1,5 KB) -> Verbindung scheiterte mit HTTP -1. Grund: der Heap nach dem WLAN-Connect betraegt nur ~11 KB (WiFi-Stack belegt ~9 KB), nicht die erhofften ~19 KB.
 - Diagnose: bei Verbindungsfehler (httpCode < 0) wird jetzt der genaue BearSSL-Fehlercode (getLastSSLError) und der freie Heap geloggt.
