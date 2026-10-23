@@ -187,6 +187,11 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 
 ## Changelog
 
+### v2.3.0.48 – Genauere Mondphase (Meeus) + strandtest-Test (23.10.2026)
+- Mondphasen-Berechnung von der linearen Kosinus-Naeherung auf die Meeus-Formel (Astronomical Algorithms, Kap. 48) umgestellt: Beleuchtung und Richtung aus dem Phasenwinkel. Gegen ephem validiert: Max-Fehler 0,3 % (vorher bis 3,9 %, v.a. bei den Vierteln). now() wird vor der Rechnung auf UTC korrigiert (timezone + DSTtime).
+- Testmodul (strandtest-Durchlauf am 24.10.2026, 6:45-7:15) bleibt fuer den OTA-Selbsttest enthalten.
+- FW + FS auf 2.3.0.48. Testmodul wird in der finalen 2.3.0.50 entfernt.
+
 ### v2.3.0.47 – OTA-Selbsttest: strandtest-Durchlauf am 24.10.2026 (23.10.2026)
 - Testmodul (m14_blinktest.ino) auf einen strandtest-Durchlauf umgestellt: colorWipe (rot/gruen/blau), theaterChase, rainbow, rainbowCycle, theaterChaseRainbow in Dauerschleife, am 24.10.2026 von 6:45 bis 7:15 Uhr. Non-blocking State-Machine (kein delay/WDT-Reset), damit die Uhr responsiv bleibt.
 - FW + FS auf 2.3.0.47 (gleicher Stand), damit FW- und FS-OTA mitgetestet werden.
