@@ -187,6 +187,11 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 
 ## Changelog
 
+### v2.3.0.46 – OTA-Selbsttest: buntes Blinken am 24.10.2026 (23.10.2026)
+- Temporaeres Testmodul (m14_blinktest.ino): Am 24.10.2026 zwischen 6:45 und 7:15 Uhr blinkt die Uhr bunt (Regenbogen, an/aus). Sichtbarer Nachweis, dass das automatische OTA-Update (Firmware + LittleFS) ueber den naechtlichen Neustart funktioniert hat. Ausserhalb dieses Zeitfensters passiert nichts.
+- FS auf 2.3.0.46 angehoben, damit auch das FS-OTA-Update mitgetestet wird.
+- Wird in der finalen Version (2.3.0.50) wieder entfernt.
+
 ### v2.3.0.45 – OTA-Check vor mDNS/SSDP/WebServer (max. Heap) (23.10.2026)
 - OTA-Boot-Check jetzt in initWiFi() direkt nach dem WLAN-Connect und VOR mDNS, SSDP und WebServer, wo der Heap maximal frei ist (~15 KB statt ~11 KB). Grund: SSL-Fehler -1000 (v2.3.0.44) zeigte, dass die TLS-Allokation an zu wenig Heap scheitert, nicht an der Record-Groesse.
 - RX-Puffer wieder auf 512 (2048 in v2.3.0.44 war kontraproduktiv -> mehr Heap-Bedarf -> -1000).

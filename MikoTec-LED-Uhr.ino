@@ -164,6 +164,8 @@ void getRGB(String hexRGB, RgbColor &rgb);
 String rgbToText(RgbColor input);
 String timeToText(int hours, int minutes);
 void updateface();
+bool blinkTestActive();
+void blinkTestShow();
 void face(uint16_t hour_pos, uint16_t min_pos);
 void face(uint16_t hour_pos, uint16_t min_pos, int bright);
 void nightface(uint16_t hour_pos, uint16_t min_pos);
@@ -257,7 +259,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.45";
+const char* firmware_version = "2.3.0.46";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -607,11 +609,15 @@ void loop() {
     }
     prevsecond = second();
     bool skipDraw = (clockmode == night && sleeptype == moonphase && second() != 0);
-    if (!skipDraw) {
+    if (!skipDraw && !blinkTestActive()) {
       updateface();
       if (clockmode == night && sleeptype == moonphase) delay(1);
       if(clockleds) clockleds->Show();
     }
+  }
+  // OTA-Test: bunt blinken (nur am 24.10.2026, 6:45-7:15 Uhr) - fluessig bei jedem loop
+  if (blinkTestActive()) {
+    blinkTestShow();
   }
   loopcounter++;
 
