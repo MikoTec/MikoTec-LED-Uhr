@@ -187,6 +187,14 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 
 ## Changelog
 
+### v2.3.0.50 – Wecker/Alarm-System mit Lichteffekten (24.10.2026)
+- Neues Multi-Alarm-System (wie Handy-Wecker): bis zu 8 Alarme, jeder mit Uhrzeit, Wochentagen (einzeln + Schnellwahl Mo-Fr/Wochenende/taeglich), Effekt und Dauer. Gespeichert im EEPROM ab Adresse 370.
+- Lichteffekte je Alarm waehlbar: kompletter strandtest (alle Effekte im Wechsel) oder einzeln colorWipe / theaterChase / Regenbogen. Non-blocking, laeuft die eingestellte Dauer, danach zurueck zur normalen Uhr.
+- Neue Alarm-Seite (/alarm) im Design der uebrigen Oberflaeche, Web-Handler /getalarms und /setalarms.
+- Einmaliges 24.10.-Testmodul entfernt (durch das Alarm-System ersetzt).
+- Enthaelt den OTA-Download-Heap-Fix (2.3.0.49) und die Meeus-Mondphase (2.3.0.48).
+- FW + FS auf 2.3.0.50. Finale Version.
+
 ### v2.3.0.49 – OTA-Download-Heap-Fix (24.10.2026)
 - OTA-Firmware- und FS-Download scheiterten (-1, connection failed), weil die Log-Sicherung vor dem Download (getLogContent + MQTT-Log-Versand) den Heap von ~18 KB auf ~5,7 KB druckte - zu wenig fuer den zweiten TLS-Handshake. Diese Log-Sicherung an beiden Download-Stellen entfernt; das Log bleibt in /log_prev.txt erhalten (ueberlebt das Update).
 - Enthaelt weiterhin Meeus-Mondphase und das strandtest-Testmodul (24.10. 6:45-7:15).

@@ -238,6 +238,48 @@ void handleGetSettings() {
   server.send(200, "application/json", json);
 }
 
+// ---- Wecker/Alarm Web-Handler ----
+
+void handleGetAlarms() {
+  String json = "[";
+  for (int i = 0; i < MAX_ALARMS; i++) {
+    if (i > 0) json += ",";
+    json += "{";
+    json += "\"enabled\":"  + String(alarms[i].enabled)  + ",";
+    json += "\"hour\":"     + String(alarms[i].hour)     + ",";
+    json += "\"minute\":"   + String(alarms[i].minute)   + ",";
+    json += "\"days\":"     + String(alarms[i].days)     + ",";
+    json += "\"effect\":"   + String(alarms[i].effect)   + ",";
+    json += "\"duration\":" + String(alarms[i].duration);
+    json += "}";
+  }
+  json += "]";
+  server.send(200, "application/json", json);
+}
+
+void handleSetAlarms() {
+  for (int i = 0; i < MAX_ALARMS; i++) {
+    String pre = "a" + String(i) + "_";
+    if (server.hasArg(pre + "hour")) {
+      alarms[i].enabled  = server.arg(pre + "enabled").toInt();
+      alarms[i].hour     = server.arg(pre + "hour").toInt();
+      alarms[i].minute   = server.arg(pre + "minute").toInt();
+      alarms[i].days     = server.arg(pre + "days").toInt();
+      alarms[i].effect   = server.arg(pre + "effect").toInt();
+      alarms[i].duration = server.arg(pre + "duration").toInt();
+      if (alarms[i].enabled > 1) alarms[i].enabled = 0;
+      if (alarms[i].hour > 23) alarms[i].hour = 7;
+      if (alarms[i].minute > 59) alarms[i].minute = 0;
+      if (alarms[i].days > 127) alarms[i].days = 0;
+      if (alarms[i].effect > 3) alarms[i].effect = 0;
+      if (alarms[i].duration < 1 || alarms[i].duration > 30) alarms[i].duration = 2;
+    }
+  }
+  saveAlarms();
+  logTS(); dualOut.println("[ALARM] Alarme gespeichert");
+  server.send(200, "application/json", "{\"ok\":1}");
+}
+
 void webHandleTimeSet() {
   int timehr = 0, timemin = 0, timesec = 0;
   int timeday = 1, timemonth = 1, timeyear = 2024;
@@ -292,17 +334,22 @@ void webHandleMoon() {
 }
 
 void webHandleAlarm() {
+  // Neue Multi-Alarm-Seite aus LittleFS streamen (Werte per JS fetch /getalarms)
+  if (LittleFS.exists("/alarm.html")) {
+    logTS(); dualOut.println("Sending webHandleAlarm (LittleFS)");
+    File f = LittleFS.open("/alarm.html", "r");
+    server.streamFile(f, "text/html");
+    f.close();
+    return;
+  }
+  // Fallback (PROGMEM)
   String toSend = FPSTR(alarm_html);
   if (webMode != 2) {
-    // don't send external links if we're local only
     toSend.replace("$externallinks", FPSTR(externallinks));
-
   } else {
     toSend.replace("$externallinks", "<link rel=stylesheet href='clockmenustyle.css'>");
-
   }
   server.send(200, "html", toSend);
-
 }
 
 

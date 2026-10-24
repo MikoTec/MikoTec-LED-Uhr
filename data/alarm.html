@@ -1,54 +1,121 @@
 <!DOCTYPE HTML>
-<html><head>
-
-  <meta http-equiv=Content-Type content='text/html; charset=utf-8' />
-  <meta name=viewport content='width=device-width, initial-scale=1.0'>
-<style>
-@import url(http://fonts.googleapis.com/css?family=Abel);@import url(https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css);
-</style>
-
+<html>
+<head>
+<title>Wecker</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="/style.css">
 <link rel="stylesheet" href="/menu.css">
-<script>
-jQuery(document).ready(function($){
-  $("#alarmcolorspectrum").spectrum({
-      flat: true,
-      preferredFormat: "hex",
-      showButtons: false,
-      showInput: true,
-      move: function(color) {c=color.toRgb(); alarmcolor = new RGBColour(c.r, c.g, c.b);
-                             document.getElementById("alarmcolor").value=document.getElementById("alarmcolorspectrum").value;},
-      change: function(color) {document.getElementById("alarmcolor").value=document.getElementById("alarmcolorspectrum").value;}
-    });
-  })
-</script>
+<style>
+.alarm-card{border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:14px;margin-bottom:16px;background:rgba(255,255,255,0.03)}
+.alarm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.alarm-time{font-size:26px;font-weight:bold;font-family:Abel,sans-serif}
+.alarm-row{margin:10px 0}
+.alarm-row label{display:block;margin-bottom:4px;font-size:13px;opacity:0.8}
+.day-btns{display:flex;gap:4px;flex-wrap:wrap}
+.day-btn{flex:1;min-width:38px;padding:8px 0;text-align:center;border:1px solid rgba(255,255,255,0.2);border-radius:5px;cursor:pointer;font-size:13px;user-select:none}
+.day-btn.on{background:#2d7;color:#000;border-color:#2d7;font-weight:bold}
+.quick-btns{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.quick-btns span{font-size:12px;padding:5px 10px;border:1px solid rgba(255,255,255,0.2);border-radius:12px;cursor:pointer;opacity:0.85}
+.alarm-fields{display:flex;gap:10px;flex-wrap:wrap}
+.alarm-fields>div{flex:1;min-width:130px}
+.toggle{width:46px;height:26px;border-radius:13px;background:#555;position:relative;cursor:pointer;transition:.2s}
+.toggle.on{background:#2d7}
+.toggle i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+.toggle.on i{left:23px}
+input[type=time],select,input[type=number]{width:100%;box-sizing:border-box;font-size:16px;padding:8px;border-radius:4px;border:1px solid rgba(0,0,0,0.15)}
+</style>
 </head>
-<body class=settings-page>
-<form class=form-verticle action=/ method=GET>
-<div class="color-box" style="width: 100% !important">
-  <label>Alarmfarbe</label>
-  <input type='color' name = 'alarmcolorspectrum' id='alarmcolorspectrum' value='#ff0000'/>
-  <input type='hidden' name = 'alarmcolor' id = 'alarmcolor' value = '#ff0000'>
+<body class="settings-page">
+<div id="menu-placeholder"></div>
+
+<div style="font-size:28px;font-weight:bold;letter-spacing:2px;margin-bottom:4px;font-family:Abel,sans-serif">Wecker</div>
+<div style="font-size:13px;opacity:0.7;margin-bottom:16px">Erinnerungen mit Lichteffekt &ndash; z.B. Mo&ndash;Fr 7:20 Uhr.</div>
+
+<div id="alarmlist"></div>
+
+<div class="btn-box" style="margin-top:10px">
+<button type="button" class="btn btn-default" onclick="saveAlarms()">Wecker speichern</button>
 </div>
-<ul>
-<li>
-<label>Std: </label>
-<div class=form-field>
-<input type=number name=alarmhour value=0 id="alarmhour"/><br>
-</div>
-</li>
-<li>
-<label>Min: </label>
-<div class=form-field><input type=number name=alarmmin value=1 id="alarmmin"/></label><br>
-</div>
-</li>
-<li>
-<label>Sek: </label>
-<div class=form-field>
-<input type=number name=alarmsec value=0 id="alarmsec"/></label><br>
-</div>
-</li>
-<input type=submit value=Starten>
-</form>
+<div id="savemsg" style="margin-top:10px;font-size:14px;color:#2d7;display:none">Gespeichert!</div>
+
+<script src="/menu.js"></script>
+<script>
+var MAX=8;
+var DAYS=['Mo','Di','Mi','Do','Fr','Sa','So'];
+var EFFECTS=['Kompletter strandtest','colorWipe (Farbdurchlauf)','theaterChase (Lauflicht)','Regenbogen'];
+var alarms=[];
+
+function render(){
+  var html='';
+  for(var i=0;i<MAX;i++){
+    var a=alarms[i]||{enabled:0,hour:7,minute:0,days:0,effect:0,duration:2};
+    var hh=('0'+a.hour).slice(-2), mm=('0'+a.minute).slice(-2);
+    html+='<div class="alarm-card" data-i="'+i+'">';
+    html+='<div class="alarm-head"><input type="time" class="f-time" style="width:140px" value="'+hh+':'+mm+'">';
+    html+='<div class="toggle'+(a.enabled?' on':'')+'" onclick="this.classList.toggle(\'on\')"><i></i></div></div>';
+    // Tage
+    html+='<div class="alarm-row"><label>Wochentage</label><div class="day-btns">';
+    for(var d=0;d<7;d++){
+      var on=(a.days&(1<<d))?' on':'';
+      html+='<div class="day-btn'+on+'" data-d="'+d+'" onclick="this.classList.toggle(\'on\')">'+DAYS[d]+'</div>';
+    }
+    html+='</div><div class="quick-btns">';
+    html+='<span onclick="quick('+i+',31)">Mo&ndash;Fr</span>';
+    html+='<span onclick="quick('+i+',96)">Wochenende</span>';
+    html+='<span onclick="quick('+i+',127)">Täglich</span>';
+    html+='<span onclick="quick('+i+',0)">Keine</span>';
+    html+='</div></div>';
+    // Effekt + Dauer
+    html+='<div class="alarm-row alarm-fields">';
+    html+='<div><label>Effekt</label><select class="f-effect">';
+    for(var e=0;e<EFFECTS.length;e++) html+='<option value="'+e+'"'+(a.effect==e?' selected':'')+'>'+EFFECTS[e]+'</option>';
+    html+='</select></div>';
+    html+='<div><label>Dauer (Minuten)</label><input type="number" class="f-dur" min="1" max="30" value="'+a.duration+'"></div>';
+    html+='</div>';
+    html+='</div>';
+  }
+  document.getElementById('alarmlist').innerHTML=html;
+}
+
+function quick(i,mask){
+  var card=document.querySelector('.alarm-card[data-i="'+i+'"]');
+  var btns=card.querySelectorAll('.day-btn');
+  for(var d=0;d<7;d++){ if(mask&(1<<d)) btns[d].classList.add('on'); else btns[d].classList.remove('on'); }
+}
+
+function collect(){
+  var cards=document.querySelectorAll('.alarm-card');
+  var out=[];
+  cards.forEach(function(card){
+    var t=card.querySelector('.f-time').value.split(':');
+    var days=0; card.querySelectorAll('.day-btn').forEach(function(b){ if(b.classList.contains('on')) days|=(1<<parseInt(b.dataset.d)); });
+    out.push({
+      enabled: card.querySelector('.toggle').classList.contains('on')?1:0,
+      hour: parseInt(t[0])||0, minute: parseInt(t[1])||0,
+      days: days,
+      effect: parseInt(card.querySelector('.f-effect').value)||0,
+      duration: Math.min(30,Math.max(1,parseInt(card.querySelector('.f-dur').value)||2))
+    });
+  });
+  return out;
+}
+
+function saveAlarms(){
+  var data=collect();
+  var params=[];
+  for(var i=0;i<data.length;i++){
+    var a=data[i];
+    params.push('a'+i+'_enabled='+a.enabled,'a'+i+'_hour='+a.hour,'a'+i+'_minute='+a.minute,
+                'a'+i+'_days='+a.days,'a'+i+'_effect='+a.effect,'a'+i+'_duration='+a.duration);
+  }
+  fetch('/setalarms',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params.join('&')})
+    .then(function(r){return r.json();})
+    .then(function(){var m=document.getElementById('savemsg');m.style.display='block';setTimeout(function(){m.style.display='none';},2500);})
+    .catch(function(e){alert('Fehler beim Speichern: '+e);});
+}
+
+fetch('/getalarms').then(function(r){return r.json();}).then(function(d){alarms=d;render();}).catch(function(){render();});
+</script>
 </body>
 </html>

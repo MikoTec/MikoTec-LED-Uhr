@@ -20,7 +20,10 @@ void setUpServerHandle() {
   server.on("/gettime", handleGetTime);
   server.on("/getstate", handleGetState);
   server.on("/getsettings", handleGetSettings);
-  server.on("/alarm", webHandleAlarm);
+  server.on("/alarm", HTTP_GET, webHandleAlarm);
+  server.on("/alarm", HTTP_POST, handleSetAlarms);
+  server.on("/getalarms", handleGetAlarms);
+  server.on("/setalarms", HTTP_POST, handleSetAlarms);
   server.on("/reflection", webHandleReflection);
   server.on("/dawn", webHandleDawn);
   server.on("/moon", webHandleMoon);

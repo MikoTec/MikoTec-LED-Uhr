@@ -164,8 +164,12 @@ void getRGB(String hexRGB, RgbColor &rgb);
 String rgbToText(RgbColor input);
 String timeToText(int hours, int minutes);
 void updateface();
-bool blinkTestActive();
-void blinkTestShow();
+void loadAlarms();
+void saveAlarms();
+void checkAlarms();
+bool alarmRunning();
+void alarmShow();
+void alarmEffectShow(uint8_t effect);
 void face(uint16_t hour_pos, uint16_t min_pos);
 void face(uint16_t hour_pos, uint16_t min_pos, int bright);
 void nightface(uint16_t hour_pos, uint16_t min_pos);
@@ -208,6 +212,8 @@ void webHandleReflection();
 void webHandleDawn();
 void webHandleMoon();
 void webHandleAlarm();
+void handleGetAlarms();
+void handleSetAlarms();
 void ssdpResponder();
 void interpretTimeZone(int timezonename);
 void ChangeNeoPixels(uint16_t count, uint8_t pin);
@@ -259,7 +265,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.49";
+const char* firmware_version = "2.3.0.50";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -332,6 +338,22 @@ bool otaEnabled = true;
 // Taegliche Neustart-Zeit (vom Nutzer einstellbar, EEPROM 368/369). Default 3:30.
 int rebootHour = 3;    // EEPROM 368
 int rebootMinute = 30; // EEPROM 369
+
+// ---- Wecker/Alarm-System (EEPROM ab 370, 6 Bytes je Alarm) ----
+#define MAX_ALARMS 8
+struct Alarm {
+  uint8_t enabled;   // 0/1
+  uint8_t hour;      // 0-23
+  uint8_t minute;    // 0-59
+  uint8_t days;      // Bitmask bit0=Mo..bit6=So
+  uint8_t effect;    // 0=strandtest, 1=colorWipe, 2=theaterChase, 3=rainbow
+  uint8_t duration;  // Minuten
+};
+Alarm alarms[MAX_ALARMS];
+int activeAlarm = -1;           // Index des laufenden Alarms, -1 = keiner
+unsigned long alarmStartMs = 0;
+uint8_t alarmEffectPhase = 0;
+uint16_t alarmEffectStep = 0;
 
 bool DSTchecked = 0;
 
@@ -433,6 +455,7 @@ void setup() {
   }
   loadConfig();
   delay(10);
+  loadAlarms();
 
   // 4. LEDs initialisieren (nach EEPROM damit pixelCount bekannt)
   if (pixelCount < 1 || pixelCount > 500) pixelCount = 120;
@@ -609,15 +632,16 @@ void loop() {
     }
     prevsecond = second();
     bool skipDraw = (clockmode == night && sleeptype == moonphase && second() != 0);
-    if (!skipDraw && !blinkTestActive()) {
+    if (!skipDraw && activeAlarm < 0) {
       updateface();
       if (clockmode == night && sleeptype == moonphase) delay(1);
       if(clockleds) clockleds->Show();
     }
   }
-  // OTA-Test: bunt blinken (nur am 24.10.2026, 6:45-7:15 Uhr) - fluessig bei jedem loop
-  if (blinkTestActive()) {
-    blinkTestShow();
+  // Wecker/Alarm pruefen und ggf. Effekt fluessig zeigen (non-blocking)
+  checkAlarms();
+  if (alarmRunning()) {
+    alarmShow();
   }
   loopcounter++;
 
