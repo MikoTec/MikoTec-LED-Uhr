@@ -5,14 +5,16 @@ Eine ESP8266-basierte LED-Uhr mit NeoPixel-Ring, Webinterface, MQTT/Home Assista
 ## Features
 
 - **LED-Uhranzeige** mit einstellbaren Stunden- und Minutenfarben, Überblendeffekt und Helligkeit
-- **Mondphase** als Nachtanzeige – astronomisch korrekte Berechnung
+- **Mondphase** als Nachtanzeige – astronomisch korrekte Berechnung nach der Meeus-Formel (Astronomical Algorithms, Kap. 48), Beleuchtung und Richtung aus dem Phasenwinkel
 - **Sonnenaufgang-Simulation** – eine Stunde vor Sonnenaufgang simuliert die Uhr einen Dämmerungseffekt
 - **Sonnenpunkt** – goldener LED-Punkt zeigt die aktuelle Sonnenposition zwischen Auf- und Untergang
 - **Auto-Schlaf** – schaltet automatisch bei Sonnenuntergang ab und bei Sonnenaufgang wieder ein
+- **Wecker/Alarm-System** – bis zu 8 Alarme wie bei einem Handy-Wecker: Uhrzeit, Wochentage (einzeln + Schnellwahl Mo–Fr/Wochenende/täglich), Lichteffekt und Dauer pro Alarm; danach zurück zur normalen Uhr
 - **4 Farbschemata** – speichert Stundenfarbe, Minutenfarbe, Überblendeffekt und Helligkeit
 - **Webinterface** – alle Einstellungen über den Browser konfigurierbar
 - **MQTT / Home Assistant** – vollständige Steuerung mit automatischer Discovery (15 Entities)
-- **OTA-Updates** – Firmware und LittleFS per Browser oder automatisch (Stable/Beta Kanal)
+- **OTA-Updates** – Firmware und LittleFS per Browser oder automatisch über HTTPS (TLS 1.2, Port 8443), Stable/Beta Kanal
+- **Einstellbarer täglicher Neustart** – Uhrzeit in den Einstellungen konfigurierbar (Default 3:30 Uhr), prüft beim Hochfahren auf Updates
 - **NTP-Zeitsynchronisation** mit automatischer Sommerzeit
 - **LittleFS** – HTML, CSS und JS aus dem Flash-Dateisystem
 - **Interaktive Hilfe** mit Tooltip-Hotspots über Screenshots
@@ -39,9 +41,10 @@ MikoTec-LED-Uhr/
 ├── m08_server.ino          # Server Handler Setup
 ├── m09_pages.ino           # Web-Seiten: Startseite (handleRoot)
 ├── m10_nightcheck.ino      # Nachtmodus-Prüfung
-├── m11_settings.ino        # Settings, Timezone Handler
-├── m12_face.ino            # Clock Face Rendering, Alarm, Dawn, Moon
-├── m13_misc.ino            # Diverse Handler, WebSocket, Game
+├── m11_settings.ino        # Settings, Timezone Handler, Neustart-Zeit
+├── m12_face.ino            # Clock Face Rendering, Dawn, Moon (Meeus)
+├── m13_misc.ino            # Diverse Handler, WebSocket, Game, Alarm-JSON
+├── m14_alarm.ino           # Wecker-/Alarm-System (Effekte, EEPROM, Prüfung)
 ├── h/                      # Header-Dateien (PROGMEM Fallback)
 ├── data/                   # LittleFS Dateien (HTML, CSS, JS)
 ├── images/                 # Screenshots für Hilfe-Seite
@@ -61,7 +64,7 @@ MikoTec-LED-Uhr/
 | `/timezone` | GET | Zeitzone per Suche, manuell oder Stadtauswahl |
 | `/hilfe` | GET | Interaktive Hilfe mit Tooltip-Hotspots |
 | `/support` | GET | Systeminfo, Betriebszeit, serielles Protokoll |
-| `/alarm` | GET | Alarm-Einstellungen |
+| `/alarm` | GET/POST | Wecker-Seite (bis zu 8 Alarme); POST speichert die Alarme |
 | `/game` | GET | Easter-Egg Game |
 | `/update` | GET | Firmware OTA-Upload per Browser |
 | `/update_fs` | GET/POST | LittleFS-Image OTA-Upload per Browser |
@@ -71,10 +74,11 @@ MikoTec-LED-Uhr/
 | Endpunkt | Methode | Beschreibung |
 |----------|---------|-------------|
 | `/getstate` | GET | Aktuelle Uhr-Werte: Zeit, Farben, Modus, Helligkeit, Farbschemata |
-| `/getsettings` | GET | Alle Einstellungen: Pixel, Zeitzone, Schlaf, MQTT, Beta-Channel |
+| `/getsettings` | GET | Alle Einstellungen: Pixel, Zeitzone, Schlaf, MQTT, Beta-Channel, Neustart-Zeit |
 | `/getmqtt` | GET | MQTT-Konfiguration und Verbindungsstatus |
 | `/getsysinfo` | GET | Systeminfo: Heap, Flash, Uptime, IP, MAC, Gateway |
 | `/gettime` | GET | Aktuelle Zeit als `HH:MM:SS` |
+| `/getalarms` | GET | Alle Wecker als JSON-Array (enabled, hour, minute, days, effect, duration) |
 | `/getlog` | GET | Aktueller Log (RAM-Ringpuffer) |
 | `/getlog?prev=1` | GET | Log vom letzten Boot (LittleFS) |
 
@@ -83,6 +87,7 @@ MikoTec-LED-Uhr/
 | Endpunkt | Methode | Beschreibung |
 |----------|---------|-------------|
 | `/setmqtt` | POST | MQTT-Einstellungen speichern (broker, port, user, pass, enabled) |
+| `/setalarms` | POST | Wecker speichern (Formularfelder `a<i>_enabled`, `a<i>_hour`, `a<i>_minute`, `a<i>_days`, `a<i>_effect`, `a<i>_duration`) |
 | `/timeset` | GET | Zeit manuell setzen (`?time=HH:MM:SS`) |
 | `/reboot` | GET | ESP neu starten |
 | `/nightmodedemo` | GET | Nachtmodus-Demo aktivieren |
@@ -148,25 +153,66 @@ Die Uhr wird über MQTT Discovery automatisch als Gerät in Home Assistant erkan
 
 ## OTA Update System
 
-### Auto-Update Zeiten
-00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00 Uhr + 30s nach Boot
+### Auto-Update
+Der OTA-Check läuft beim Hochfahren in `initWiFi()` direkt nach dem WLAN-Connect und **vor** mDNS, SSDP und WebServer – an dieser Stelle ist der freie Heap maximal (~18 KB), sodass der TLS-Handshake nicht in OOM läuft. Für dauerhaft an der Wand hängende Uhren startet die Uhr sich täglich selbst neu (Uhrzeit einstellbar, Default 3:30 Uhr) und prüft dabei auf Updates. Der Neustart erfolgt nur bei Uptime > 1 h, um eine Reboot-Schleife zu verhindern. Die früheren festen 3-Stunden-Checks sind entfernt (liefen bei zu wenig Heap).
+
+Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isVersionNewer`), nicht bei jeder Ungleichheit – das verhindert dauerhafte Update-/Neustartschleifen bei abweichender oder älterer FS-Version.
 
 ### version.json Format
 ```json
 {
-  "stable_version": "2.3.0.7",
-  "stable_file": "MikoTec-LED-Uhr_v2.3.0.7.bin",
+  "stable_version": "2.3.0.22",
+  "stable_file": "MikoTec-LED-Uhr_v2.3.0.22.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.21",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.21.bin",
-  "beta_fs_version": "2.3.0.17",
-  "beta_fs_file": "littlefs_v2.3.0.17.bin"
+  "beta_version": "2.3.0.50",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.50.bin",
+  "beta_fs_version": "2.3.0.50",
+  "beta_fs_file": "littlefs_v2.3.0.50.bin"
 }
 ```
 
 ### Update-Server
-`http://yzdlcru01ktmqlzy.myfritz.net:8080/updates/`
+`https://yzdlcru01ktmqlzy.myfritz.net:8443/updates/` (TLS 1.2, ssl_buffer_size 512, ESP8266-tauglich)
+
+Die Uhr nutzt BearSSL mit `setBufferSizes(512, 512)` an allen drei OTA-Stellen (version.json, Firmware-.bin, LittleFS-.bin).
+
+## EEPROM-Belegung
+
+512 Bytes. Wichtigste Adressen:
+
+| Adresse | Inhalt |
+|---------|--------|
+| 0–31 | WLAN-SSID |
+| 32–96 | WLAN-Passwort |
+| 175–178 | Breiten-/Längengrad |
+| 179 | Zeitzone |
+| 181 | Stundenmarken |
+| 182 / 183 | Schlaf Stunde / Minute |
+| 185 | DST automatisch |
+| 186 | webMode (Setup/Normal) |
+| 189 / 190 | Wake Stunde / Minute |
+| 191 | Helligkeit |
+| 192 | Sommerzeit |
+| 230 / 231 | Pixelanzahl / max. Helligkeit |
+| 232 | Hemisphäre |
+| 236 | MQTT aktiv |
+| 237–238 | MQTT-Port |
+| 239–366 | MQTT Broker / User / Passwort |
+| 367 | Beta-Channel |
+| **368** | **rebootHour** (täglicher Neustart, Default 3) |
+| **369** | **rebootMinute** (Default 30) |
+| **370–417** | **Alarme** (8 × 6 Bytes: enabled, hour, minute, days, effect, duration) |
+| 500 | Magic Byte (0xC4 = eingerichtet) |
+
+## Wecker/Alarm-System
+
+- Bis zu **8 Alarme**, jeder einzeln aktivierbar (`m14_alarm.ino`).
+- Pro Alarm: Uhrzeit, Wochentage als Bitmask (Bit0 = Montag … Bit6 = Sonntag), Effekt, Dauer in Minuten.
+- **Effekte** (`effect`): `0` = kompletter strandtest (alle Effekte im Wechsel), `1` = colorWipe, `2` = theaterChase, `3` = Regenbogen.
+- **Schnellwahl** der Tage: Mo–Fr (`31`), Wochenende (`96`), Täglich (`127`), Keine (`0`).
+- Effekte sind **non-blocking** (kein `delay`/WDT-Reset), die Uhr bleibt responsiv. Nach Ablauf der Dauer schaltet die Uhr automatisch zurück in den Normalbetrieb.
+- `checkAlarms()` prüft einmal pro Minute, `alarmRunning()` überwacht die Dauer, `alarmEffectShow()` ist die Effekt-Engine.
 
 ## Kompilierung
 
