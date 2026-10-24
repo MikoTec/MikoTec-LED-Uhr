@@ -172,30 +172,10 @@ void checkForUpdate() {
       LittleFS.rename("/log.txt", "/log_prev.txt");
     }
     
-    // Log als last_fw_update.txt in LittleFS speichern (ueberlebt FW-Update)
-    {
-      String fullLog = getLogContent();
-      if (LittleFS.exists("/last_fw_update.txt")) LittleFS.remove("/last_fw_update.txt");
-      File fwLog = LittleFS.open("/last_fw_update.txt", "w");
-      if (fwLog) {
-        fwLog.print(fullLog);
-        fwLog.close();
-        logTS(); dualOut.println("[OTA] Log als /last_fw_update.txt gesichert");
-      }
-    }
-    
-    // Kompletten Log per MQTT publishen
-    if (mqttEnabled && mqttClient.connected()) {
-      String fullLog = getLogContent();
-      String base = mqttBaseTopic() + "/log_backup";
-      int chunks = (fullLog.length() + 1023) / 1024;
-      for (int i = 0; i < chunks && i < 10; i++) {
-        String chunk = fullLog.substring(i * 1024, _min((int)fullLog.length(), (i + 1) * 1024));
-        mqttClient.publish((base + "/" + String(i)).c_str(), chunk.c_str(), true);
-        mqttClient.loop();
-        delay(50);
-      }
-    }
+    // Hinweis: Log-Sicherung nach /last_fw_update.txt und MQTT-Log-Versand
+    // wurden hier ENTFERNT - getLogContent() drueckte den Heap vor dem Download
+    // auf ~5.7KB, wodurch der TLS-Handshake fuer den Download scheiterte (-1).
+    // Das Log bleibt in /log_prev.txt erhalten (ueberlebt das Firmware-Update).
     
     // MQTT vor dem TLS-Handshake trennen (Heap-Peak entlasten)
     if (mqttEnabled && mqttClient.connected()) {
@@ -254,31 +234,8 @@ void checkForUpdate() {
       logFSready = false;
     }
     
-    // Log als last_fs_update.txt speichern (wird beim FS-Flash ueberschrieben,
-    // dient aber als Sicherung bei fehlgeschlagenem Update)
-    {
-      String fullLog = getLogContent();
-      if (LittleFS.exists("/last_fs_update.txt")) LittleFS.remove("/last_fs_update.txt");
-      File fsLog = LittleFS.open("/last_fs_update.txt", "w");
-      if (fsLog) {
-        fsLog.print(fullLog);
-        fsLog.close();
-      }
-    }
-    
-    // Kompletten Log per MQTT publishen (letzte Chance vor FS-Flash)
-    if (mqttEnabled && mqttClient.connected()) {
-      String fullLog = getLogContent();
-      String base = mqttBaseTopic() + "/log_backup";
-      int chunks = (fullLog.length() + 1023) / 1024;
-      for (int i = 0; i < chunks && i < 10; i++) {
-        String chunk = fullLog.substring(i * 1024, _min((int)fullLog.length(), (i + 1) * 1024));
-        mqttClient.publish((base + "/" + String(i)).c_str(), chunk.c_str(), true);
-        mqttClient.loop();
-        delay(50);
-      }
-      logTS(); dualOut.println("[OTA] Log per MQTT gesichert (" + String(chunks) + " Chunks)");
-    }
+    // Hinweis: Log-Sicherung (getLogContent) und MQTT-Log-Versand hier ENTFERNT -
+    // sie druecken den Heap vor dem TLS-Download zu stark (Download scheitert sonst).
     
     // MQTT vor dem TLS-Handshake trennen (Heap-Peak entlasten)
     if (mqttEnabled && mqttClient.connected()) {

@@ -187,6 +187,11 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 
 ## Changelog
 
+### v2.3.0.49 – OTA-Download-Heap-Fix (24.10.2026)
+- OTA-Firmware- und FS-Download scheiterten (-1, connection failed), weil die Log-Sicherung vor dem Download (getLogContent + MQTT-Log-Versand) den Heap von ~18 KB auf ~5,7 KB druckte - zu wenig fuer den zweiten TLS-Handshake. Diese Log-Sicherung an beiden Download-Stellen entfernt; das Log bleibt in /log_prev.txt erhalten (ueberlebt das Update).
+- Enthaelt weiterhin Meeus-Mondphase und das strandtest-Testmodul (24.10. 6:45-7:15).
+- FW + FS auf 2.3.0.49.
+
 ### v2.3.0.48 – Genauere Mondphase (Meeus) + strandtest-Test (23.10.2026)
 - Mondphasen-Berechnung von der linearen Kosinus-Naeherung auf die Meeus-Formel (Astronomical Algorithms, Kap. 48) umgestellt: Beleuchtung und Richtung aus dem Phasenwinkel. Gegen ephem validiert: Max-Fehler 0,3 % (vorher bis 3,9 %, v.a. bei den Vierteln). now() wird vor der Rechnung auf UTC korrigiert (timezone + DSTtime).
 - Testmodul (strandtest-Durchlauf am 24.10.2026, 6:45-7:15) bleibt fuer den OTA-Selbsttest enthalten.
