@@ -42,42 +42,50 @@ void checkForUpdate() {
   }
   delay(50);
 
-  BearSSL::WiFiClientSecure client;
-  client.setInsecure();
-  // Kleine TLS-Puffer (minimaler Heap-Bedarf). Der Check laeuft in initWiFi()
-  // vor mDNS/SSDP/WebServer, wo der Heap maximal frei ist. Server: TLS 1.2.
-  client.setBufferSizes(512, 512);
-  HTTPClient http;
-  http.begin(client, update_version_url);
-  http.setTimeout(15000);
+  // --- version.json-Check in eigenem Scope ---
+  // Der BearSSL-Client fuer den Check wird am Blockende zerstoert und sein
+  // TLS-Kontext (~12KB) freigegeben, BEVOR unten der Download-Client erstellt
+  // wird. Vorher lebten Check- und Download-Client gleichzeitig -> Heap vor
+  // dem Download nur ~5.7KB -> TLS-Handshake scheiterte (HTTP error -1).
+  String payload;
+  {
+    BearSSL::WiFiClientSecure client;
+    client.setInsecure();
+    // Kleine TLS-Puffer (minimaler Heap-Bedarf). Der Check laeuft in initWiFi()
+    // vor mDNS/SSDP/WebServer, wo der Heap maximal frei ist. Server: TLS 1.2.
+    client.setBufferSizes(512, 512);
+    HTTPClient http;
+    http.begin(client, update_version_url);
+    http.setTimeout(15000);
 
-  logTS(); dualOut.println("[OTA] Sende HTTP-Anfrage...");
-  int httpCode = http.GET();
+    logTS(); dualOut.println("[OTA] Sende HTTP-Anfrage...");
+    int httpCode = http.GET();
 
-  logTS(); dualOut.print("[OTA] HTTP-Antwort: ");
-  dualOut.println(httpCode);
-
-  // Diagnose bei Verbindungsfehler: genauen BearSSL-Fehler + Heap ausgeben
-  if (httpCode < 0) {
-    char sslErr[128];
-    int errCode = client.getLastSSLError(sslErr, sizeof(sslErr));
-    logTS(); dualOut.print("[OTA] SSL-Fehler "); dualOut.print(errCode);
-    dualOut.print(": "); dualOut.println(sslErr);
-    logTS(); dualOut.print("[OTA] Freier Heap nach Fehler: ");
-    dualOut.println(ESP.getFreeHeap());
-  }
-
-  if (httpCode != 200) {
-    logTS(); dualOut.print("[OTA] Update-Check fehlgeschlagen, HTTP-Code: ");
+    logTS(); dualOut.print("[OTA] HTTP-Antwort: ");
     dualOut.println(httpCode);
+
+    // Diagnose bei Verbindungsfehler: genauen BearSSL-Fehler + Heap ausgeben
+    if (httpCode < 0) {
+      char sslErr[128];
+      int errCode = client.getLastSSLError(sslErr, sizeof(sslErr));
+      logTS(); dualOut.print("[OTA] SSL-Fehler "); dualOut.print(errCode);
+      dualOut.print(": "); dualOut.println(sslErr);
+      logTS(); dualOut.print("[OTA] Freier Heap nach Fehler: ");
+      dualOut.println(ESP.getFreeHeap());
+    }
+
+    if (httpCode != 200) {
+      logTS(); dualOut.print("[OTA] Update-Check fehlgeschlagen, HTTP-Code: ");
+      dualOut.println(httpCode);
+      http.end();
+      dualOut.println("==============================");
+      return;
+    }
+
+    logTS(); dualOut.println("[OTA] version.json erfolgreich geladen.");
+    payload = http.getString();
     http.end();
-    dualOut.println("==============================");
-    return;
-  }
-  
-  logTS(); dualOut.println("[OTA] version.json erfolgreich geladen.");
-  String payload = http.getString();
-  http.end();
+  }  // Scope-Ende: Check-Client + TLS-Kontext hier freigegeben
   logTS(); dualOut.print("[OTA] Inhalt: ");
   dualOut.println(payload);
   

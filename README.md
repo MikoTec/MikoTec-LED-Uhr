@@ -165,8 +165,8 @@ Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isV
   "stable_file": "MikoTec-LED-Uhr_v2.3.0.22.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.50",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.50.bin",
+  "beta_version": "2.3.0.51",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.51.bin",
   "beta_fs_version": "2.3.0.50",
   "beta_fs_file": "littlefs_v2.3.0.50.bin"
 }
@@ -232,6 +232,11 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 - **Minor/Major** nur nach Absprache
 
 ## Changelog
+
+### v2.3.0.51 – OTA-Download-Heap-Fix (Scope-Kapselung) (25.10.2026)
+- OTA-Firmware-Download scheiterte weiterhin mit `-1` (connection failed): Beim automatischen Neustart um 03:30 erkannte der Check die neue Version 2.3.0.50 korrekt (`HTTP 200`, version.json geladen), der anschliessende Download brach aber ab. Ursache: Der BearSSL-Client des `version.json`-Checks war eine lokale Variable in `checkForUpdate()` und lebte bis zum Funktionsende - sein TLS-Kontext (~12 KB) blieb belegt, waehrend darunter der Download-Client erstellt wurde. Dadurch standen vor dem Download nur noch ~5,7 KB Heap statt der ~15-18 KB fuer den TLS-Handshake.
+- Fix: Der version.json-Check liegt jetzt in einem eigenen Scope-Block `{ }` in `m04_ota.ino`. Der Check-Client wird am Blockende zerstoert und sein Heap freigegeben, bevor der Firmware-/FS-Download-Client erstellt wird. `payload` wird vor dem Block deklariert und bleibt danach erhalten.
+- Nur `m04_ota.ino` geaendert; keine Endpunkt-, EEPROM- oder data/-Aenderung, daher kein neues LittleFS-Image (FS bleibt 2.3.0.50).
 
 ### v2.3.0.50 – Wecker/Alarm-System mit Lichteffekten (24.10.2026)
 - Neues Multi-Alarm-System (wie Handy-Wecker): bis zu 8 Alarme, jeder mit Uhrzeit, Wochentagen (einzeln + Schnellwahl Mo-Fr/Wochenende/taeglich), Effekt und Dauer. Gespeichert im EEPROM ab Adresse 370.
