@@ -165,8 +165,8 @@ Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isV
   "stable_file": "MikoTec-LED-Uhr_v2.3.0.22.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.53",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.53.bin",
+  "beta_version": "2.3.0.54",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.54.bin",
   "beta_fs_version": "2.3.0.50",
   "beta_fs_file": "littlefs_v2.3.0.50.bin"
 }
@@ -182,7 +182,7 @@ Der automatische OTA-Firmware-Download ist durch eine Code-Signatur geschützt: 
 
 Die Verify-Objekte (`BearSSL::PublicKey` + `SigningVerifier`) werden **transient** nur um den Download herum angelegt und sofort wieder freigegeben (`Update.installSignature(nullptr,nullptr)` + `delete`) – dauerhaft würden sie ~6,5 KB Heap belegen und den WiFi-Stack zum Absturz bringen (Exception 29, behoben in v2.3.0.53).
 
-**Geltungsbereich:** Die Prüfung greift nur beim **Auto-OTA-Firmware-Download** – dem über das Internet exponierten Weg. **Browser-Upload** (`/update`) und **USB-Flash** prüfen *keine* Signatur; sie erfordern lokalen bzw. physischen Zugriff auf die Uhr.
+**Geltungsbereich:** Die Prüfung greift beim **Auto-OTA-Firmware-Download** und – seit v2.3.0.54 – auch beim **Browser-Upload** (`/update`). Beim Browser-Upload werden die Verify-Objekte im `Update.onStart` transient angelegt und zuvor MQTT getrennt, da im Normalbetrieb nur ~6,5 KB Heap frei sind (`loop()` reconnectet MQTT automatisch). Nur der **USB-Flash** prüft *keine* Signatur (physischer Zugriff nötig).
 
 **Verhalten bei fremder oder unsignierter Firmware:** Das Image wird zwar heruntergeladen, die Prüfung schlägt aber fehl, das Update wird verworfen und der Boot-Slot *nicht* aktiviert – die Uhr bleibt auf der laufenden Version:
 
@@ -247,6 +247,12 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 - **Minor/Major** nur nach Absprache
 
 ## Changelog
+
+### v2.3.0.54 – Signaturprüfung auch beim Browser-Upload (Variante A) (26.10.2026)
+- Die Code-Signatur gilt jetzt auch für den **Browser-Upload** (`/update`), nicht mehr nur für den Auto-OTA. Damit ist auch der lokale Upload-Weg gegen untergeschobene Firmware abgesichert.
+- Heap-schonend umgesetzt: Im `Update.onStart` wird zuerst MQTT getrennt (gibt Heap frei, `loop()` reconnectet automatisch), dann werden die Verify-Objekte transient angelegt; Freigabe in `onEnd`/`onError`. Der Browser-Upload läuft im Normalbetrieb mit nur ~6,5 KB Heap, daher das Freimachen. Der tatsächlich verfügbare Heap wird als `[UPDATE] Signaturpruefung aktiv, freier Heap: …` geloggt.
+- USB-Flash prüft weiterhin keine Signatur (physischer Zugriff).
+- FW 2.3.0.54, FS bleibt 2.3.0.50.
 
 ### v2.3.0.53 – Signatur-Heap-Fix: Verify-Objekte nur transient (26.10.2026)
 - Fix fuer den WiFi-Stack-Crash (Exception 29, StoreProhibited) aus 2.3.0.52: Die BearSSL-Signatur-Objekte (`PublicKey` + `SigningVerifier`) wurden dauerhaft im `setup()` angelegt und belegten ~6,5 KB Heap. Dadurch fehlte dem WiFi-Stack im MQTT-Discovery-Pfad der Speicher → Absturz im `sys`-Context → Bootschleife. Boot, Port 80 und Signatur selbst liefen korrekt – es war reiner Heap-Mangel (Heap beim OTA-Check 11,5 KB statt 18 KB).

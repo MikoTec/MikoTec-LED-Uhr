@@ -89,16 +89,39 @@ void setUpServerHandle() {
   // Callback: Log sichern bevor Browser-FW-Update startet
   Update.onStart([]() {
     logTS(); dualOut.println("[UPDATE] Browser-Update startet...");
-    // getLogContent() + /last_fw_update.txt + MQTT-Log-Versand ENTFERNT:
-    // drueckten den ohnehin knappen Heap beim Update-Start zu stark -> Crash
-    // mitten im Flash -> korruptes Image -> Bootschleife (siehe m04_ota.ino,
-    // dort aus demselben Grund entfernt). Beim FW-Update bleibt LittleFS
-    // erhalten, eine Log-Sicherung ist hier unnoetig.
+    // Log-Datei schliessen (LittleFS bleibt beim FW-Update erhalten; keine
+    // Log-Sicherung hier - das drueckte frueher den Heap -> Bootschleife).
     if (logFSready && logFile) {
       logFile.flush();
       logFile.close();
       logFSready = false;
     }
+    // Variante A: Signaturpruefung auch fuer den Browser-Upload.
+    // Der Upload laeuft im Normalbetrieb mit knappem Heap (~6,5 KB), daher
+    // zuerst MQTT trennen (gibt Heap frei; loop() reconnectet automatisch),
+    // dann die Verify-Objekte transient anlegen. Freigabe in onEnd/onError.
+    if (mqttEnabled && mqttClient.connected()) {
+      mqttClient.disconnect();
+    }
+    browserSignPubKey = new BearSSL::PublicKey(ota_pubkey);
+    browserSignHash = new BearSSL::HashSHA256();
+    browserSignVerifier = new BearSSL::SigningVerifier(browserSignPubKey);
+    Update.installSignature(browserSignHash, browserSignVerifier);
+    logTS(); dualOut.print("[UPDATE] Signaturpruefung aktiv, freier Heap: ");
+    dualOut.println(ESP.getFreeHeap());
+  });
+  // Aufraeumen nach dem Browser-Upload (Erfolg: Neustart folgt; Fehler: weiter).
+  Update.onEnd([]() {
+    Update.installSignature(nullptr, nullptr);
+    delete browserSignVerifier; delete browserSignHash; delete browserSignPubKey;
+    browserSignVerifier = nullptr; browserSignHash = nullptr; browserSignPubKey = nullptr;
+  });
+  Update.onError([](uint8_t err) {
+    Update.installSignature(nullptr, nullptr);
+    delete browserSignVerifier; delete browserSignHash; delete browserSignPubKey;
+    browserSignVerifier = nullptr; browserSignHash = nullptr; browserSignPubKey = nullptr;
+    logTS(); dualOut.print("[UPDATE] Browser-Update fehlgeschlagen/abgelehnt, Code: ");
+    dualOut.println(err);
   });
 
   // LittleFS Dateisystem Update per Browser
