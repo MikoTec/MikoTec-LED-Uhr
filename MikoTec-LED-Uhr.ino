@@ -265,7 +265,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.54";
+const char* firmware_version = "2.3.0.55";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -356,12 +356,6 @@ yKD6iTWaiNWJS6RQ7jnA9f9/JcVo+4ttdtAkhBweTw3232a1cxkcXTuIB00fLnAI
 KQIDAQAB
 -----END PUBLIC KEY-----
 )PUBKEY";
-
-// Transiente Verify-Objekte fuer den Browser-Upload (Variante A, m08_server.ino).
-// Global, da onStart/onEnd/onError sie teilen; nur waehrend des Uploads angelegt.
-BearSSL::PublicKey* browserSignPubKey = nullptr;
-BearSSL::HashSHA256* browserSignHash = nullptr;
-BearSSL::SigningVerifier* browserSignVerifier = nullptr;
 
 // ---- Wecker/Alarm-System (EEPROM ab 370, 6 Bytes je Alarm) ----
 #define MAX_ALARMS 8

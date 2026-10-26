@@ -91,37 +91,16 @@ void setUpServerHandle() {
     logTS(); dualOut.println("[UPDATE] Browser-Update startet...");
     // Log-Datei schliessen (LittleFS bleibt beim FW-Update erhalten; keine
     // Log-Sicherung hier - das drueckte frueher den Heap -> Bootschleife).
+    // Variante A (Browser-Upload-Signaturpruefung) wurde in v2.3.0.55 wieder
+    // ENTFERNT: das Anlegen der BearSSL-Verify-Objekte sprengte im
+    // Normalbetrieb den knappen Heap (~6,5KB) und crashte bereits hier im
+    // onStart (vor dem Verify). Signatur greift daher nur beim Auto-OTA
+    // (Boot, ~18KB Heap); der lokale Browser-Upload bleibt ungeprueft.
     if (logFSready && logFile) {
       logFile.flush();
       logFile.close();
       logFSready = false;
     }
-    // Variante A: Signaturpruefung auch fuer den Browser-Upload.
-    // Der Upload laeuft im Normalbetrieb mit knappem Heap (~6,5 KB), daher
-    // zuerst MQTT trennen (gibt Heap frei; loop() reconnectet automatisch),
-    // dann die Verify-Objekte transient anlegen. Freigabe in onEnd/onError.
-    if (mqttEnabled && mqttClient.connected()) {
-      mqttClient.disconnect();
-    }
-    browserSignPubKey = new BearSSL::PublicKey(ota_pubkey);
-    browserSignHash = new BearSSL::HashSHA256();
-    browserSignVerifier = new BearSSL::SigningVerifier(browserSignPubKey);
-    Update.installSignature(browserSignHash, browserSignVerifier);
-    logTS(); dualOut.print("[UPDATE] Signaturpruefung aktiv, freier Heap: ");
-    dualOut.println(ESP.getFreeHeap());
-  });
-  // Aufraeumen nach dem Browser-Upload (Erfolg: Neustart folgt; Fehler: weiter).
-  Update.onEnd([]() {
-    Update.installSignature(nullptr, nullptr);
-    delete browserSignVerifier; delete browserSignHash; delete browserSignPubKey;
-    browserSignVerifier = nullptr; browserSignHash = nullptr; browserSignPubKey = nullptr;
-  });
-  Update.onError([](uint8_t err) {
-    Update.installSignature(nullptr, nullptr);
-    delete browserSignVerifier; delete browserSignHash; delete browserSignPubKey;
-    browserSignVerifier = nullptr; browserSignHash = nullptr; browserSignPubKey = nullptr;
-    logTS(); dualOut.print("[UPDATE] Browser-Update fehlgeschlagen/abgelehnt, Code: ");
-    dualOut.println(err);
   });
 
   // LittleFS Dateisystem Update per Browser
