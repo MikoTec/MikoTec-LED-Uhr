@@ -154,7 +154,7 @@ Die Uhr wird über MQTT Discovery automatisch als Gerät in Home Assistant erkan
 ## OTA Update System
 
 ### Auto-Update
-Der OTA-Check läuft beim Hochfahren in `initWiFi()` direkt nach dem WLAN-Connect und **vor** mDNS, SSDP und WebServer – an dieser Stelle ist der freie Heap maximal (~18 KB), sodass der TLS-Handshake nicht in OOM läuft. Für dauerhaft an der Wand hängende Uhren startet die Uhr sich täglich selbst neu (Uhrzeit einstellbar, Default 3:30 Uhr) und prüft dabei auf Updates. Der Neustart erfolgt nur bei Uptime > 1 h, um eine Reboot-Schleife zu verhindern. Die früheren festen 3-Stunden-Checks sind entfernt (liefen bei zu wenig Heap).
+Der OTA-Check läuft beim Hochfahren in `initWiFi()` direkt nach dem WLAN-Connect und **vor** mDNS, SSDP und WebServer – an dieser Stelle ist der freie Heap maximal (~18 KB). Seit v2.3.0.52 läuft der OTA über **HTTP Port 80** (`WiFiClient`, kein TLS); das beseitigt den früheren Heap-Engpass beim BearSSL-Handshake, der den Firmware-Download scheitern ließ (`-1 connection failed`). Für dauerhaft an der Wand hängende Uhren startet die Uhr sich täglich selbst neu (Uhrzeit einstellbar, Default 3:30 Uhr) und prüft dabei auf Updates. Der Neustart erfolgt nur bei Uptime > 1 h, um eine Reboot-Schleife zu verhindern. Die früheren festen 3-Stunden-Checks sind entfernt (liefen bei zu wenig Heap).
 
 Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isVersionNewer`), nicht bei jeder Ungleichheit – das verhindert dauerhafte Update-/Neustartschleifen bei abweichender oder älterer FS-Version.
 
@@ -173,9 +173,24 @@ Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isV
 ```
 
 ### Update-Server
-`https://yzdlcru01ktmqlzy.myfritz.net:8443/updates/` (TLS 1.2, ssl_buffer_size 512, ESP8266-tauglich)
+`http://yzdlcru01ktmqlzy.myfritz.net/updates/` (HTTP Port 80, ohne TLS – seit v2.3.0.52)
 
-Die Uhr nutzt BearSSL mit `setBufferSizes(512, 512)` an allen drei OTA-Stellen (version.json, Firmware-.bin, LittleFS-.bin).
+Der OTA läuft über reines HTTP (`WiFiClient`), weil der BearSSL-TLS-Handshake auf dem ESP8266 zu viel Heap brauchte und der Firmware-Download dadurch scheiterte (`-1 connection failed`). Integrität und Authentizität werden stattdessen über die **Code-Signatur** sichergestellt (siehe unten), sodass HTTP ohne TLS unbedenklich ist. Der frühere TLS-Endpunkt auf Port 8443 bleibt serverseitig als Fallback bestehen.
+
+### OTA-Code-Signatur (RSA-2048 + SHA256)
+Der automatische OTA-Firmware-Download ist durch eine Code-Signatur geschützt: Nur mit dem privaten Schlüssel signierte Firmware wird akzeptiert. Der Public Key ist in die Firmware einkompiliert (`ota_pubkey`); die `.bin` wird beim Build mit `tools/signing.py` des ESP8266-Cores signiert. Der **private Schlüssel wird niemals ausgeliefert oder ins Repo eingecheckt**.
+
+Die Verify-Objekte (`BearSSL::PublicKey` + `SigningVerifier`) werden **transient** nur um den Download herum angelegt und sofort wieder freigegeben (`Update.installSignature(nullptr,nullptr)` + `delete`) – dauerhaft würden sie ~6,5 KB Heap belegen und den WiFi-Stack zum Absturz bringen (Exception 29, behoben in v2.3.0.53).
+
+**Geltungsbereich:** Die Prüfung greift nur beim **Auto-OTA-Firmware-Download** – dem über das Internet exponierten Weg. **Browser-Upload** (`/update`) und **USB-Flash** prüfen *keine* Signatur; sie erfordern lokalen bzw. physischen Zugriff auf die Uhr.
+
+**Verhalten bei fremder oder unsignierter Firmware:** Das Image wird zwar heruntergeladen, die Prüfung schlägt aber fehl, das Update wird verworfen und der Boot-Slot *nicht* aktiviert – die Uhr bleibt auf der laufenden Version:
+
+```
+[OTA] FEHLER: Firmware-Update fehlgeschlagen (12): Update error: ERROR[12]: Signature verification failed
+```
+
+**Signatur-Test (verifiziert):** Eine unsignierte `.bin` mit höherer Versionsnummer in `/updates/` ablegen, `version.json` (beta) darauf zeigen lassen – dabei den Update-Cron vorher pausieren, sonst überschreibt er die Teständerung von GitHub. Uhr neu starten. Erwartetes Ergebnis: `ERROR[12]: Signature verification failed`, die Uhr bootet unverändert mit der signierten Version weiter. Getestet am 26.10.2026 gegen v2.3.0.53.
 
 ## EEPROM-Belegung
 
