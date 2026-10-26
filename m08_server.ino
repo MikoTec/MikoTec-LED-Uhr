@@ -88,30 +88,16 @@ void setUpServerHandle() {
 
   // Callback: Log sichern bevor Browser-FW-Update startet
   Update.onStart([]() {
-    logTS(); dualOut.println("[UPDATE] Browser-Update startet, sichere Log...");
+    logTS(); dualOut.println("[UPDATE] Browser-Update startet...");
+    // getLogContent() + /last_fw_update.txt + MQTT-Log-Versand ENTFERNT:
+    // drueckten den ohnehin knappen Heap beim Update-Start zu stark -> Crash
+    // mitten im Flash -> korruptes Image -> Bootschleife (siehe m04_ota.ino,
+    // dort aus demselben Grund entfernt). Beim FW-Update bleibt LittleFS
+    // erhalten, eine Log-Sicherung ist hier unnoetig.
     if (logFSready && logFile) {
       logFile.flush();
       logFile.close();
       logFSready = false;
-    }
-    // Log als last_fw_update.txt speichern (LittleFS ueberlebt FW-Update)
-    String fullLog = getLogContent();
-    if (LittleFS.exists("/last_fw_update.txt")) LittleFS.remove("/last_fw_update.txt");
-    File fwLog = LittleFS.open("/last_fw_update.txt", "w");
-    if (fwLog) {
-      fwLog.print(fullLog);
-      fwLog.close();
-    }
-    // Log per MQTT publishen
-    if (mqttEnabled && mqttClient.connected()) {
-      String base = mqttBaseTopic() + "/log_backup";
-      int chunks = (fullLog.length() + 1023) / 1024;
-      for (int i = 0; i < chunks && i < 10; i++) {
-        String chunk = fullLog.substring(i * 1024, _min((int)fullLog.length(), (i + 1) * 1024));
-        mqttClient.publish((base + "/" + String(i)).c_str(), chunk.c_str(), true);
-        mqttClient.loop();
-        delay(50);
-      }
     }
   });
 

@@ -43,17 +43,11 @@ void checkForUpdate() {
   delay(50);
 
   // --- version.json-Check in eigenem Scope ---
-  // Der BearSSL-Client fuer den Check wird am Blockende zerstoert und sein
-  // TLS-Kontext (~12KB) freigegeben, BEVOR unten der Download-Client erstellt
-  // wird. Vorher lebten Check- und Download-Client gleichzeitig -> Heap vor
-  // dem Download nur ~5.7KB -> TLS-Handshake scheiterte (HTTP error -1).
+  // Reiner HTTP-Client (Port 80, kein TLS): kein BearSSL-Handshake, daher kein
+  // Heap-Engpass. Der Client wird am Blockende freigegeben.
   String payload;
   {
-    BearSSL::WiFiClientSecure client;
-    client.setInsecure();
-    // Kleine TLS-Puffer (minimaler Heap-Bedarf). Der Check laeuft in initWiFi()
-    // vor mDNS/SSDP/WebServer, wo der Heap maximal frei ist. Server: TLS 1.2.
-    client.setBufferSizes(512, 512);
+    WiFiClient client;
     HTTPClient http;
     http.begin(client, update_version_url);
     http.setTimeout(15000);
@@ -64,13 +58,9 @@ void checkForUpdate() {
     logTS(); dualOut.print("[OTA] HTTP-Antwort: ");
     dualOut.println(httpCode);
 
-    // Diagnose bei Verbindungsfehler: genauen BearSSL-Fehler + Heap ausgeben
+    // Diagnose bei Verbindungsfehler: Heap ausgeben
     if (httpCode < 0) {
-      char sslErr[128];
-      int errCode = client.getLastSSLError(sslErr, sizeof(sslErr));
-      logTS(); dualOut.print("[OTA] SSL-Fehler "); dualOut.print(errCode);
-      dualOut.print(": "); dualOut.println(sslErr);
-      logTS(); dualOut.print("[OTA] Freier Heap nach Fehler: ");
+      logTS(); dualOut.print("[OTA] Verbindungsfehler, freier Heap: ");
       dualOut.println(ESP.getFreeHeap());
     }
 
@@ -192,9 +182,7 @@ void checkForUpdate() {
     }
     delay(50);
 
-    BearSSL::WiFiClientSecure updateClient;
-    updateClient.setInsecure();
-    updateClient.setBufferSizes(512, 512);
+    WiFiClient updateClient;
     ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
     t_httpUpdate_return ret = ESPhttpUpdate.update(updateClient, binUrl);
     
@@ -252,9 +240,7 @@ void checkForUpdate() {
     }
     delay(50);
 
-    BearSSL::WiFiClientSecure fsClient;
-    fsClient.setInsecure();
-    fsClient.setBufferSizes(512, 512);
+    WiFiClient fsClient;
     ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
     t_httpUpdate_return ret = ESPhttpUpdate.updateFS(fsClient, fsUrl);
     

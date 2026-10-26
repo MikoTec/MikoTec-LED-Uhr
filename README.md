@@ -165,8 +165,8 @@ Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isV
   "stable_file": "MikoTec-LED-Uhr_v2.3.0.22.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.51",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.51.bin",
+  "beta_version": "2.3.0.52",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.52.bin",
   "beta_fs_version": "2.3.0.50",
   "beta_fs_file": "littlefs_v2.3.0.50.bin"
 }
@@ -232,6 +232,13 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 - **Minor/Major** nur nach Absprache
 
 ## Changelog
+
+### v2.3.0.52 – OTA über HTTP Port 80 + Code-Signatur, Browser-Upload-Fix (26.10.2026)
+- **Bootschleifen-Fix (Browser-Firmware-Upload):** Der `Update.onStart`-Callback in `m08_server.ino` sicherte beim Upload-Start den Log per `getLogContent()` + `/last_fw_update.txt` + MQTT-Chunks. Das drueckte den knappen Heap (~6,5 KB) so stark, dass der Flash-Vorgang mittendrin abbrach → korruptes Image → Bootschleife. Nur per USB geflashte .51 bootete sauber. Die Log-Sicherung im onStart ist jetzt entfernt (LittleFS ueberlebt das FW-Update ohnehin).
+- **OTA über HTTP Port 80 statt HTTPS/8443:** `update_version_url`/`update_bin_base_url` auf `http://…/updates/`, in `m04_ota.ino` durchgaengig `WiFiClient` statt `BearSSL::WiFiClientSecure`. Kein TLS-Handshake mehr → kein Heap-Engpass beim Download (war die Ursache fuer `-1 connection failed`). Server liefert `/updates/` auf Port 80 nativ aus.
+- **Code-Signatur (RSA-2048 + SHA256):** Public Key einkompiliert, `Update.installSignature()` aktiv fuer Auto-OTA UND Browser-Upload. Nur mit dem privaten Schluessel signierte Firmware wird akzeptiert → HTTP ohne TLS ist gegen Manipulation (MITM) abgesichert. Die `.bin` wird mit `signing.py` signiert. USB-Flash prueft keine Signatur.
+- Hinweis: Ab dieser Version muessen auch kuenftige LittleFS-Images signiert werden (Auto-OTA-FS-Weg). FS hier unveraendert (2.3.0.50).
+- FW 2.3.0.52, FS bleibt 2.3.0.50.
 
 ### v2.3.0.51 – OTA-Download-Heap-Fix (Scope-Kapselung) (25.10.2026)
 - OTA-Firmware-Download scheiterte weiterhin mit `-1` (connection failed): Beim automatischen Neustart um 03:30 erkannte der Check die neue Version 2.3.0.50 korrekt (`HTTP 200`, version.json geladen), der anschliessende Download brach aber ab. Ursache: Der BearSSL-Client des `version.json`-Checks war eine lokale Variable in `checkForUpdate()` und lebte bis zum Funktionsende - sein TLS-Kontext (~12 KB) blieb belegt, waehrend darunter der Download-Client erstellt wurde. Dadurch standen vor dem Download nur noch ~5,7 KB Heap statt der ~15-18 KB fuer den TLS-Handshake.

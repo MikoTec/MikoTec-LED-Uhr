@@ -265,7 +265,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.51";
+const char* firmware_version = "2.3.0.52";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -328,8 +328,8 @@ Ticker dawntick;//a ticker to establish how far through dawn we are
 int dawnprogress = 0;
 
 // Auto-Update Konfiguration
-const char* update_version_url = "https://yzdlcru01ktmqlzy.myfritz.net:8443/updates/version.json";
-const char* update_bin_base_url = "https://yzdlcru01ktmqlzy.myfritz.net:8443/updates/";
+const char* update_version_url = "http://yzdlcru01ktmqlzy.myfritz.net/updates/version.json";
+const char* update_bin_base_url = "http://yzdlcru01ktmqlzy.myfritz.net/updates/";
 unsigned long lastUpdateCheck = 0;
 int lastUpdateCheckHour = -1; // Letzte Stunde in der ein Check lief
 // OTA aktiv. Der Boot-Check laeuft in setup() VOR der MQTT-Init (viel Heap),
@@ -338,6 +338,25 @@ bool otaEnabled = true;
 // Taegliche Neustart-Zeit (vom Nutzer einstellbar, EEPROM 368/369). Default 3:30.
 int rebootHour = 3;    // EEPROM 368
 int rebootMinute = 30; // EEPROM 369
+
+// --- OTA-Code-Signatur (RSA-2048 + SHA256) ---
+// Nur mit dem passenden privaten Schluessel signierte Firmware wird per
+// Auto-OTA UND Browser-Upload akzeptiert. Der private Schluessel wird NIE
+// mit ausgeliefert. Hinweis: USB-Flash (esptool) prueft keine Signatur.
+static const char ota_pubkey[] PROGMEM = R"PUBKEY(
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnLKPzdPgglDIWea+vYnG
+1PjzsZqlLTLj/dN9ysPDIXR0jGzj5E8NQDecSOL769+VH0i8jURG8rCGyUBDGqAc
+UbwqaVBrr5/ksIfQx52BrlHnI/ln/hSzb2sFO3l2/MTWKFsQt6LRG5BTxAhhh4wI
+diST3WSotEIQgnAGFdBkoV59yN9PPHFQPjf5GyiMtTrdpP/Dtuf/3Jt63d6E8K8b
+7JMTlFnkApGjUJS7BoSYRFJiX4xEDDgmdOXxiC+FKamO1483Y211ftpelDXWg+yE
+yKD6iTWaiNWJS6RQ7jnA9f9/JcVo+4ttdtAkhBweTw3232a1cxkcXTuIB00fLnAI
+KQIDAQAB
+-----END PUBLIC KEY-----
+)PUBKEY";
+BearSSL::PublicKey* otaSignPubKey = nullptr;
+BearSSL::HashSHA256* otaSignHash = nullptr;
+BearSSL::SigningVerifier* otaSignVerifier = nullptr;
 
 // ---- Wecker/Alarm-System (EEPROM ab 370, 6 Bytes je Alarm) ----
 #define MAX_ALARMS 8
@@ -473,6 +492,12 @@ void setup() {
   // 5. Anzeige starten (nightCheck erst nach NTP, sonst falsches Datum)
   updateface();
   if(clockleds) clockleds->Show();
+  // OTA-Signaturpruefung aktivieren (gilt fuer Auto-OTA und Browser-Upload)
+  otaSignPubKey = new BearSSL::PublicKey(ota_pubkey);
+  otaSignHash = new BearSSL::HashSHA256();
+  otaSignVerifier = new BearSSL::SigningVerifier(otaSignPubKey);
+  Update.installSignature(otaSignHash, otaSignVerifier);
+  logTS(); dualOut.println("[OTA] Signaturpruefung aktiv");
   initWiFi();
   lastInteraction = millis();
   //adjustTime(36600);
