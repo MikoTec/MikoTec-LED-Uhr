@@ -165,8 +165,8 @@ Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isV
   "stable_file": "MikoTec-LED-Uhr_v2.3.0.22.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.52",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.52.bin",
+  "beta_version": "2.3.0.53",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.53.bin",
   "beta_fs_version": "2.3.0.50",
   "beta_fs_file": "littlefs_v2.3.0.50.bin"
 }
@@ -232,6 +232,12 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 - **Minor/Major** nur nach Absprache
 
 ## Changelog
+
+### v2.3.0.53 – Signatur-Heap-Fix: Verify-Objekte nur transient (26.10.2026)
+- Fix fuer den WiFi-Stack-Crash (Exception 29, StoreProhibited) aus 2.3.0.52: Die BearSSL-Signatur-Objekte (`PublicKey` + `SigningVerifier`) wurden dauerhaft im `setup()` angelegt und belegten ~6,5 KB Heap. Dadurch fehlte dem WiFi-Stack im MQTT-Discovery-Pfad der Speicher → Absturz im `sys`-Context → Bootschleife. Boot, Port 80 und Signatur selbst liefen korrekt – es war reiner Heap-Mangel (Heap beim OTA-Check 11,5 KB statt 18 KB).
+- Lösung: Die Verify-Objekte werden jetzt **nur transient** in `checkForUpdate()` um den Auto-OTA-Download herum angelegt und direkt danach freigegeben (`Update.installSignature(nullptr,nullptr)` + `delete`). Im Normalbetrieb kein Heap-Verbrauch → voller Heap fuer WiFi/MQTT.
+- Signaturpruefung damit **nur beim Auto-OTA-Firmware-Download** (MITM-Schutz ueber HTTP). Browser-Upload (lokal) und Auto-OTA-FS-Update bleiben ungeprueft. Volle Abdeckung inkl. Browser-Upload ist fuer spaeter vorgemerkt.
+- FW 2.3.0.53, FS bleibt 2.3.0.50.
 
 ### v2.3.0.52 – OTA über HTTP Port 80 + Code-Signatur, Browser-Upload-Fix (26.10.2026)
 - **Bootschleifen-Fix (Browser-Firmware-Upload):** Der `Update.onStart`-Callback in `m08_server.ino` sicherte beim Upload-Start den Log per `getLogContent()` + `/last_fw_update.txt` + MQTT-Chunks. Das drueckte den knappen Heap (~6,5 KB) so stark, dass der Flash-Vorgang mittendrin abbrach → korruptes Image → Bootschleife. Nur per USB geflashte .51 bootete sauber. Die Log-Sicherung im onStart ist jetzt entfernt (LittleFS ueberlebt das FW-Update ohnehin).

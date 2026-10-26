@@ -184,7 +184,17 @@ void checkForUpdate() {
 
     WiFiClient updateClient;
     ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
+    // Signaturpruefung NUR fuer diesen Auto-OTA-Download (MITM-Schutz ueber
+    // HTTP). Objekte transient angelegt -> im Normalbetrieb kein Heap-Verbrauch.
+    BearSSL::PublicKey* otaPubKey = new BearSSL::PublicKey(ota_pubkey);
+    BearSSL::HashSHA256* otaHash = new BearSSL::HashSHA256();
+    BearSSL::SigningVerifier* otaVerifier = new BearSSL::SigningVerifier(otaPubKey);
+    Update.installSignature(otaHash, otaVerifier);
+    logTS(); dualOut.print("[OTA] Signaturpruefung aktiv, freier Heap: ");
+    dualOut.println(ESP.getFreeHeap());
     t_httpUpdate_return ret = ESPhttpUpdate.update(updateClient, binUrl);
+    Update.installSignature(nullptr, nullptr);
+    delete otaVerifier; delete otaHash; delete otaPubKey;
     
     switch (ret) {
       case HTTP_UPDATE_FAILED:

@@ -265,7 +265,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.52";
+const char* firmware_version = "2.3.0.53";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -340,9 +340,11 @@ int rebootHour = 3;    // EEPROM 368
 int rebootMinute = 30; // EEPROM 369
 
 // --- OTA-Code-Signatur (RSA-2048 + SHA256) ---
-// Nur mit dem passenden privaten Schluessel signierte Firmware wird per
-// Auto-OTA UND Browser-Upload akzeptiert. Der private Schluessel wird NIE
-// mit ausgeliefert. Hinweis: USB-Flash (esptool) prueft keine Signatur.
+// Nur signierte Firmware wird beim Auto-OTA-Download akzeptiert (MITM-Schutz
+// ueber HTTP). Die Verify-Objekte werden TRANSIENT in checkForUpdate()
+// angelegt (m04_ota.ino), nicht dauerhaft - dauerhaft fehlten ~6,5KB Heap und
+// der WiFi-Stack crashte (Exception 29). Browser-Upload bleibt lokal
+// ungeprueft; USB-Flash prueft nie.
 static const char ota_pubkey[] PROGMEM = R"PUBKEY(
 -----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnLKPzdPgglDIWea+vYnG
@@ -354,9 +356,6 @@ yKD6iTWaiNWJS6RQ7jnA9f9/JcVo+4ttdtAkhBweTw3232a1cxkcXTuIB00fLnAI
 KQIDAQAB
 -----END PUBLIC KEY-----
 )PUBKEY";
-BearSSL::PublicKey* otaSignPubKey = nullptr;
-BearSSL::HashSHA256* otaSignHash = nullptr;
-BearSSL::SigningVerifier* otaSignVerifier = nullptr;
 
 // ---- Wecker/Alarm-System (EEPROM ab 370, 6 Bytes je Alarm) ----
 #define MAX_ALARMS 8
@@ -492,12 +491,6 @@ void setup() {
   // 5. Anzeige starten (nightCheck erst nach NTP, sonst falsches Datum)
   updateface();
   if(clockleds) clockleds->Show();
-  // OTA-Signaturpruefung aktivieren (gilt fuer Auto-OTA und Browser-Upload)
-  otaSignPubKey = new BearSSL::PublicKey(ota_pubkey);
-  otaSignHash = new BearSSL::HashSHA256();
-  otaSignVerifier = new BearSSL::SigningVerifier(otaSignPubKey);
-  Update.installSignature(otaSignHash, otaSignVerifier);
-  logTS(); dualOut.println("[OTA] Signaturpruefung aktiv");
   initWiFi();
   lastInteraction = millis();
   //adjustTime(36600);
