@@ -165,10 +165,10 @@ Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isV
   "stable_file": "MikoTec-LED-Uhr_v2.3.0.22.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.56",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.56.bin",
-  "beta_fs_version": "2.3.0.56",
-  "beta_fs_file": "littlefs_v2.3.0.56.bin"
+  "beta_version": "2.3.0.57",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.57.bin",
+  "beta_fs_version": "2.3.0.57",
+  "beta_fs_file": "littlefs_v2.3.0.57.bin"
 }
 ```
 
@@ -182,7 +182,14 @@ Der automatische OTA-Firmware-Download ist durch eine Code-Signatur geschützt: 
 
 Die Verify-Objekte (`BearSSL::PublicKey` + `SigningVerifier`) werden **transient** nur um den Download herum angelegt und sofort wieder freigegeben (`Update.installSignature(nullptr,nullptr)` + `delete`) – dauerhaft würden sie ~6,5 KB Heap belegen und den WiFi-Stack zum Absturz bringen (Exception 29, behoben in v2.3.0.53).
 
-**Geltungsbereich:** Die Prüfung greift beim **Auto-OTA** – sowohl beim **Firmware-** als auch beim **LittleFS-Download** (jeweils beim Boot mit ~18 KB freiem Heap; FS-Signatur seit v2.3.0.56). **Browser-Upload** (`/update`) und **USB-Flash** prüfen *keine* Signatur; sie erfordern lokalen bzw. physischen Zugriff auf die Uhr. (Eine Signaturprüfung auch beim Browser-Upload wurde in v2.3.0.54 versucht, scheiterte aber am Heap – siehe Changelog v2.3.0.55.) Ab v2.3.0.56 müssen auch LittleFS-Images signiert sein – ein unsigniertes FS-Image wird vom Auto-OTA abgelehnt.
+**Geltungsbereich:** Die Prüfung greift nur beim **Auto-OTA-Firmware-Download** – dem über das Internet exponierten Weg (beim Boot mit ~18 KB freiem Heap). **LittleFS-Images, Browser-Upload** (`/update`) und **USB-Flash** prüfen *keine* Signatur. Das FS enthält nur HTML/CSS/JS (kein ausführbarer Code); signierte FS-Images sind auf dem ESP8266 nicht praktikabel – Platz-Check und Mount-Größe hängen am selben Linker-Symbol, die Signatur sprengt die randvolle Partition (siehe Changelog v2.3.0.56/.57). (Eine Signaturprüfung auch beim Browser-Upload wurde in v2.3.0.54 versucht, scheiterte am Heap – siehe v2.3.0.55.)
+
+### Kombiniertes USB-Image (Erstauslieferung)
+Für neue Uhren gibt es ein kombiniertes Image `MikoTec-LED-Uhr_combined_v<version>.bin` (signierte FW @ `0x0` + LittleFS-Image @ `0x200000`, ~4 MB). Einmal per USB flashen und FW + Dateisystem sind komplett drauf:
+```
+esptool --chip esp8266 --port COM4 --baud 460800 write-flash 0x0 MikoTec-LED-Uhr_combined_v2.3.0.57.bin
+```
+USB prüft keine Signatur, daher darf das enthaltene FS-Image unsigniert und randvoll sein. Spätere Updates laufen per Auto-OTA (FW signaturgeschützt).
 
 **Verhalten bei fremder oder unsignierter Firmware:** Das Image wird zwar heruntergeladen, die Prüfung schlägt aber fehl, das Update wird verworfen und der Boot-Slot *nicht* aktiviert – die Uhr bleibt auf der laufenden Version:
 
@@ -247,6 +254,12 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 - **Minor/Major** nur nach Absprache
 
 ## Changelog
+
+### v2.3.0.57 – FS-Signatur verworfen (ESP8266-Grenze) + kombiniertes USB-Image (26.10.2026)
+- Signierte LittleFS-Images sind auf dem ESP8266 nicht praktikabel: Der Platz-Check (`FS_start + roundedSize > FS_end`) und die LittleFS-Mount-Größe (`block_count = (FS_end − FS_start)/blockSize`) hängen **beide** am selben Linker-Symbol `_FS_end`. Die Signatur sprengt die randvolle Partition; ein kleiner gebautes Image würde nicht mehr mounten (block_count-Mismatch). Eine saubere Trennung bräuchte eine eigene LittleFS-Instanz mit reduzierter Größe – für ein FS ohne ausführbaren Code nicht verhältnismäßig.
+- FS-Signaturprüfung aus `updateFS` wieder entfernt (Stand wie v2.3.0.55); der OTA-FS-Update läuft wieder unsigniert. FW bleibt signaturgeschützt.
+- **Neu: kombiniertes USB-Image** `MikoTec-LED-Uhr_combined_v2.3.0.57.bin` (signierte FW @ `0x0` + FS-Image @ `0x200000`, 4 MB) für die Erstauslieferung neuer Uhren – einmal per USB flashen, FW + FS komplett drauf. USB prüft keine Signatur → FS darf unsigniert/randvoll sein.
+- FW 2.3.0.57, FS 2.3.0.57.
 
 ### v2.3.0.56 – Signiertes LittleFS-Image + FS-Update-Signaturprüfung (26.10.2026)
 - Der Auto-OTA-FS-Update-Pfad (`updateFS`) prüft jetzt ebenfalls die Signatur (transiente Verify-Objekte um den Download, läuft beim Boot mit ~18 KB Heap). Vorher war nur der FW-Download signaturgeschützt.

@@ -252,17 +252,12 @@ void checkForUpdate() {
 
     WiFiClient fsClient;
     ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
-    // Signaturpruefung auch fuer das FS-Image (laeuft beim Boot, ~18KB Heap,
-    // daher unkritisch). Objekte transient -> im Normalbetrieb kein Verbrauch.
-    BearSSL::PublicKey* fsPubKey = new BearSSL::PublicKey(ota_pubkey);
-    BearSSL::HashSHA256* fsHash = new BearSSL::HashSHA256();
-    BearSSL::SigningVerifier* fsVerifier = new BearSSL::SigningVerifier(fsPubKey);
-    Update.installSignature(fsHash, fsVerifier);
-    logTS(); dualOut.print("[OTA] FS-Signaturpruefung aktiv, freier Heap: ");
-    dualOut.println(ESP.getFreeHeap());
+    // Hinweis: FS-Image wird NICHT signaturgeprueft. Signierte FS-Images
+    // passen auf dem ESP8266 nicht sauber (Signatur sprengt die randvolle
+    // Partition, Mount-Groesse == Partitionsgroesse). FS enthaelt nur
+    // HTML/CSS/JS (kein Code). Erstauslieferung neuer Uhren erfolgt per
+    // kombiniertem USB-Image (FW signiert + FS), OTA-FS-Update laeuft unsigniert.
     t_httpUpdate_return ret = ESPhttpUpdate.updateFS(fsClient, fsUrl);
-    Update.installSignature(nullptr, nullptr);
-    delete fsVerifier; delete fsHash; delete fsPubKey;
     
     switch (ret) {
       case HTTP_UPDATE_FAILED:
