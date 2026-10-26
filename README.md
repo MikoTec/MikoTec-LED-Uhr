@@ -165,10 +165,10 @@ Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isV
   "stable_file": "MikoTec-LED-Uhr_v2.3.0.22.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.55",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.55.bin",
-  "beta_fs_version": "2.3.0.50",
-  "beta_fs_file": "littlefs_v2.3.0.50.bin"
+  "beta_version": "2.3.0.56",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.56.bin",
+  "beta_fs_version": "2.3.0.56",
+  "beta_fs_file": "littlefs_v2.3.0.56.bin"
 }
 ```
 
@@ -182,7 +182,7 @@ Der automatische OTA-Firmware-Download ist durch eine Code-Signatur geschützt: 
 
 Die Verify-Objekte (`BearSSL::PublicKey` + `SigningVerifier`) werden **transient** nur um den Download herum angelegt und sofort wieder freigegeben (`Update.installSignature(nullptr,nullptr)` + `delete`) – dauerhaft würden sie ~6,5 KB Heap belegen und den WiFi-Stack zum Absturz bringen (Exception 29, behoben in v2.3.0.53).
 
-**Geltungsbereich:** Die Prüfung greift nur beim **Auto-OTA-Firmware-Download** – dem über das Internet exponierten Weg (beim Boot mit ~18 KB freiem Heap). **Browser-Upload** (`/update`) und **USB-Flash** prüfen *keine* Signatur; sie erfordern lokalen bzw. physischen Zugriff auf die Uhr. (Eine Signaturprüfung auch beim Browser-Upload wurde in v2.3.0.54 versucht, scheiterte aber am Heap – siehe Changelog v2.3.0.55.)
+**Geltungsbereich:** Die Prüfung greift beim **Auto-OTA** – sowohl beim **Firmware-** als auch beim **LittleFS-Download** (jeweils beim Boot mit ~18 KB freiem Heap; FS-Signatur seit v2.3.0.56). **Browser-Upload** (`/update`) und **USB-Flash** prüfen *keine* Signatur; sie erfordern lokalen bzw. physischen Zugriff auf die Uhr. (Eine Signaturprüfung auch beim Browser-Upload wurde in v2.3.0.54 versucht, scheiterte aber am Heap – siehe Changelog v2.3.0.55.) Ab v2.3.0.56 müssen auch LittleFS-Images signiert sein – ein unsigniertes FS-Image wird vom Auto-OTA abgelehnt.
 
 **Verhalten bei fremder oder unsignierter Firmware:** Das Image wird zwar heruntergeladen, die Prüfung schlägt aber fehl, das Update wird verworfen und der Boot-Slot *nicht* aktiviert – die Uhr bleibt auf der laufenden Version:
 
@@ -247,6 +247,12 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 - **Minor/Major** nur nach Absprache
 
 ## Changelog
+
+### v2.3.0.56 – Signiertes LittleFS-Image + FS-Update-Signaturprüfung (26.10.2026)
+- Der Auto-OTA-FS-Update-Pfad (`updateFS`) prüft jetzt ebenfalls die Signatur (transiente Verify-Objekte um den Download, läuft beim Boot mit ~18 KB Heap). Vorher war nur der FW-Download signaturgeschützt.
+- Neues **signiertes** LittleFS-Image auf Versionsstand 2.3.0.56 (Inhalt unverändert, nur Versionsnummer + Signatur), `data/fs_version.txt` auf 2.3.0.56.
+- **Wichtig:** Ab jetzt müssen LittleFS-Images signiert sein, sonst lehnt der Auto-OTA sie ab (ein unsigniertes Image würde als korrupt behandelt, da die Signatur-Bytes sonst als FS-Inhalt landeten).
+- FW 2.3.0.56, FS 2.3.0.56.
 
 ### v2.3.0.55 – Variante A zurückgenommen: Browser-Upload-Signatur am Heap gescheitert (26.10.2026)
 - Die in v2.3.0.54 eingebaute Signaturprüfung für den Browser-Upload ist an der ESP8266-Heap-Grenze gescheitert: Der Browser-Upload läuft im **Normalbetrieb** mit nur ~6,5 KB freiem Heap, und schon das Anlegen der BearSSL-Verify-Objekte (~6,5 KB) sprengte das – die Uhr crashte bereits im `Update.onStart`, **vor** dem eigentlichen Verify (Verbindung reset, kein Upload möglich). MQTT-Trennen reichte nicht aus.
