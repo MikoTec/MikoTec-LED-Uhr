@@ -242,6 +242,11 @@ void launchWeb(int webtype) {
       logFile.print(buf);
       logFile.flush();
       logTS(); dualOut.println("[LittleFS] Log-Datei geoeffnet: /log.txt");
+      // Crash-Diagnose: Reset-Grund des letzten Boots ins Live-Log schreiben.
+      // Bei einer Exception enthaelt Reset-Info exccause + epc1 (Programmzaehler),
+      // womit sich die genaue Absturzstelle im Code aufloesen laesst.
+      logTS(); dualOut.print("[BOOT] Reset-Grund: "); dualOut.println(ESP.getResetReason());
+      logTS(); dualOut.print("[BOOT] Reset-Info: "); dualOut.println(ESP.getResetInfo());
     } else {
       logTS(); dualOut.println("[LittleFS] WARN: Log-Datei konnte nicht geoeffnet werden");
     }

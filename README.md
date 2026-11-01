@@ -165,8 +165,8 @@ Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isV
   "stable_file": "MikoTec-LED-Uhr_v2.3.0.22.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.58",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.58.bin",
+  "beta_version": "2.3.0.59",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.59.bin",
   "beta_fs_version": "2.3.0.57",
   "beta_fs_file": "littlefs_v2.3.0.57.bin"
 }
@@ -254,6 +254,11 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 - **Minor/Major** nur nach Absprache
 
 ## Changelog
+
+### v2.3.0.59 – Diagnose: Reset-Grund im Live-Log (01.11.2026)
+- Der Diagnoselog aus 2.3.0.58 zeigte: Der Wecker-Effekt läuft **gesund** (Schritte/10s ~180, Loops/10s ~190, Heap stabil 7,3–8,2 KB, Phasen schreiten voran) – dann endet der Log bei ~t+71s und die Uhr bootet neu. Also kein Einfrieren und kein Heap-Leck, sondern ein **harter Reboot** nach ~75 s Weckerlauf, vermutlich eine Exception.
+- Neu: Beim Boot werden `ESP.getResetReason()` und `ESP.getResetInfo()` ins Live-Log geschrieben (`[BOOT] Reset-Grund:` / `[BOOT] Reset-Info:`). Nach einem Absturz steht dort der Exception-Code samt Programmzähler (`epc1`) – an der Wand ablesbar, ohne seriellen Monitor. Damit lässt sich die genaue Absturzstelle im Code auflösen.
+- Reine Messung, noch kein Funktions-Fix. FW 2.3.0.59, FS bleibt 2.3.0.57.
 
 ### v2.3.0.58 – Diagnose: Wecker-Effekt-Logging (01.11.2026)
 - Diagnose-Version für einen gemeldeten Fehler: Der strandtest-Wecker läuft ~1 Minute flüssig und friert dann ein. Neue Funktion `alarmDebugTick()` loggt während eines laufenden Alarms alle 10 s Durchschnittswerte ins Log (Serial **und** Live-Log): ausgeführte Effekt-Schritte (`Schritte/10s`), loop-Durchläufe (`Loops/10s`), aktuelle `Phase`/`Step`, `clockmode` und mittlerer freier Heap. Damit lässt sich eingrenzen, ob der Effekt-Code, die Hauptschleife oder der Heap kippt.
