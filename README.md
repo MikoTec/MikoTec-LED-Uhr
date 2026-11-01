@@ -165,8 +165,8 @@ Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isV
   "stable_file": "MikoTec-LED-Uhr_v2.3.0.22.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.57",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.57.bin",
+  "beta_version": "2.3.0.58",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.58.bin",
   "beta_fs_version": "2.3.0.57",
   "beta_fs_file": "littlefs_v2.3.0.57.bin"
 }
@@ -254,6 +254,10 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 - **Minor/Major** nur nach Absprache
 
 ## Changelog
+
+### v2.3.0.58 – Diagnose: Wecker-Effekt-Logging (01.11.2026)
+- Diagnose-Version für einen gemeldeten Fehler: Der strandtest-Wecker läuft ~1 Minute flüssig und friert dann ein. Neue Funktion `alarmDebugTick()` loggt während eines laufenden Alarms alle 10 s Durchschnittswerte ins Log (Serial **und** Live-Log): ausgeführte Effekt-Schritte (`Schritte/10s`), loop-Durchläufe (`Loops/10s`), aktuelle `Phase`/`Step`, `clockmode` und mittlerer freier Heap. Damit lässt sich eingrenzen, ob der Effekt-Code, die Hauptschleife oder der Heap kippt.
+- Reine Messung, noch kein Funktions-Fix. FW 2.3.0.58, FS bleibt 2.3.0.57.
 
 ### v2.3.0.57 – FS-Signatur verworfen (ESP8266-Grenze) + kombiniertes USB-Image (26.10.2026)
 - Signierte LittleFS-Images sind auf dem ESP8266 nicht praktikabel: Der Platz-Check (`FS_start + roundedSize > FS_end`) und die LittleFS-Mount-Größe (`block_count = (FS_end − FS_start)/blockSize`) hängen **beide** am selben Linker-Symbol `_FS_end`. Die Signatur sprengt die randvolle Partition; ein kleiner gebautes Image würde nicht mehr mounten (block_count-Mismatch). Eine saubere Trennung bräuchte eine eigene LittleFS-Instanz mit reduzierter Größe – für ein FS ohne ausführbaren Code nicht verhältnismäßig.

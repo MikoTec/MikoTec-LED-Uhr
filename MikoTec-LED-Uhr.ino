@@ -170,6 +170,7 @@ void checkAlarms();
 bool alarmRunning();
 void alarmShow();
 void alarmEffectShow(uint8_t effect);
+void alarmDebugTick();
 void face(uint16_t hour_pos, uint16_t min_pos);
 void face(uint16_t hour_pos, uint16_t min_pos, int bright);
 void nightface(uint16_t hour_pos, uint16_t min_pos);
@@ -265,7 +266,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.57";
+const char* firmware_version = "2.3.0.58";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -372,6 +373,12 @@ int activeAlarm = -1;           // Index des laufenden Alarms, -1 = keiner
 unsigned long alarmStartMs = 0;
 uint8_t alarmEffectPhase = 0;
 uint16_t alarmEffectStep = 0;
+// Alarm-Diagnose (Durchschnittswerte alle 10s im Log: Serial + Live-Log)
+uint32_t alarmDbgSteps = 0;      // ausgefuehrte Effekt-Schritte (Show) im Fenster
+uint32_t alarmDbgLoops = 0;      // loop-Durchlaeufe im Fenster
+uint32_t alarmDbgHeapSum = 0;
+uint16_t alarmDbgHeapSamples = 0;
+unsigned long alarmDbgWindowStart = 0;
 
 bool DSTchecked = 0;
 
@@ -660,6 +667,7 @@ void loop() {
   checkAlarms();
   if (alarmRunning()) {
     alarmShow();
+    alarmDebugTick();
   }
   loopcounter++;
 

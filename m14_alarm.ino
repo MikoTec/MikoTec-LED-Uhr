@@ -75,6 +75,9 @@ void checkAlarms() {
       alarmStartMs = millis();
       alarmEffectPhase = 0;
       alarmEffectStep = 0;
+      alarmDbgSteps = 0; alarmDbgLoops = 0;
+      alarmDbgHeapSum = 0; alarmDbgHeapSamples = 0;
+      alarmDbgWindowStart = millis();
       logTS(); dualOut.print("[ALARM] gestartet: #"); dualOut.print(i);
       dualOut.print(" Effekt "); dualOut.print(alarms[i].effect);
       dualOut.print(" Dauer "); dualOut.print(alarms[i].duration); dualOut.println(" min");
@@ -107,6 +110,7 @@ void alarmEffectShow(uint8_t effect) {
 
   if (millis() - lastStep < stepDelay) return;
   lastStep = millis();
+  alarmDbgSteps++;
 
   // Effekt-Phasen je nach gewaehltem Effekt eingrenzen:
   //  strandtest(0): Phasen 0..6 (alles)
@@ -212,4 +216,28 @@ void alarmEffectShow(uint8_t effect) {
 void alarmShow() {
   if (activeAlarm < 0) return;
   alarmEffectShow(alarms[activeAlarm].effect);
+}
+
+// Diagnose: alle 10s Durchschnittswerte ins Log (Serial + Live-Log an der Wand).
+// Schritte/10s zeigt, ob der Effekt voranschreitet oder einfriert; Loops/10s die
+// loop-Rate; dazu aktuelle Phase/Step, clockmode und mittlerer freier Heap.
+void alarmDebugTick() {
+  alarmDbgLoops++;
+  alarmDbgHeapSum += ESP.getFreeHeap();
+  alarmDbgHeapSamples++;
+  if (millis() - alarmDbgWindowStart >= 10000) {
+    unsigned long elapsed = (activeAlarm >= 0) ? (millis() - alarmStartMs) / 1000UL : 0;
+    uint32_t avgHeap = alarmDbgHeapSamples ? (alarmDbgHeapSum / alarmDbgHeapSamples) : 0;
+    logTS();
+    dualOut.print("[ALARM-DBG] t+"); dualOut.print(elapsed);
+    dualOut.print("s Schritte/10s="); dualOut.print(alarmDbgSteps);
+    dualOut.print(" Loops/10s="); dualOut.print(alarmDbgLoops);
+    dualOut.print(" Phase="); dualOut.print(alarmEffectPhase);
+    dualOut.print(" Step="); dualOut.print(alarmEffectStep);
+    dualOut.print(" clockmode="); dualOut.print(clockmode);
+    dualOut.print(" HeapAvg="); dualOut.println(avgHeap);
+    alarmDbgSteps = 0; alarmDbgLoops = 0;
+    alarmDbgHeapSum = 0; alarmDbgHeapSamples = 0;
+    alarmDbgWindowStart = millis();
+  }
 }
