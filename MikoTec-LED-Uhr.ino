@@ -266,7 +266,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.59";
+const char* firmware_version = "2.3.0.60";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -664,11 +664,20 @@ void loop() {
     }
   }
   // Wecker/Alarm pruefen und ggf. Effekt fluessig zeigen (non-blocking)
+  static bool wasAlarmRunning = false;
   checkAlarms();
-  if (alarmRunning()) {
+  bool nowAlarmRunning = alarmRunning();
+  if (nowAlarmRunning) {
     alarmShow();
     alarmDebugTick();
+  } else if (wasAlarmRunning) {
+    // Wecker gerade beendet: sofort das erwartete Uhrbild zeichnen.
+    // Im Nachtmodus wird sonst nur minuetlich aktualisiert, dadurch bliebe
+    // das letzte Effekt-Frame bis zum naechsten Minutentakt stehen.
+    updateface();
+    if (clockleds) clockleds->Show();
   }
+  wasAlarmRunning = nowAlarmRunning;
   loopcounter++;
 
 

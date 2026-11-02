@@ -165,8 +165,8 @@ Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isV
   "stable_file": "MikoTec-LED-Uhr_v2.3.0.22.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.59",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.59.bin",
+  "beta_version": "2.3.0.60",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.60.bin",
   "beta_fs_version": "2.3.0.57",
   "beta_fs_file": "littlefs_v2.3.0.57.bin"
 }
@@ -254,6 +254,12 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 - **Minor/Major** nur nach Absprache
 
 ## Changelog
+
+### v2.3.0.60 – Fix: Uhrbild sofort nach Weckerende (02.11.2026)
+- **Behobener Fehler:** Nach einem Wecker im Nachtmodus blieb bis zu ~60 s das letzte Effekt-Frame (z. B. der gelb-orange Regenbogen-Kranz) stehen, weil die Uhr im Nachtmodus (`sleeptype == moonphase`) die Anzeige nur minütlich bei `second()==0` neu zeichnet. Das war die Ursache für das gemeldete „stehenbleibende Bild" an der Wand.
+- **Fix:** Erkennt die `loop()` den Übergang „Wecker läuft → beendet", zeichnet sie sofort einmal `updateface()` + `Show()`. Dadurch erscheint direkt das erwartete Uhrbild (Mondphase + aktuelle Zeit), unabhängig vom Minutentakt.
+- Diagnoselog aus 2.3.0.59 zeigte: Der Wecker-Effekt läuft gesund, der Reboot von zuvor war sporadisch. Das Reset-Grund-Logging (`[BOOT]`-Zeilen) bleibt zur Beobachtung drin.
+- FW 2.3.0.60, FS bleibt 2.3.0.57.
 
 ### v2.3.0.59 – Diagnose: Reset-Grund im Live-Log (01.11.2026)
 - Der Diagnoselog aus 2.3.0.58 zeigte: Der Wecker-Effekt läuft **gesund** (Schritte/10s ~180, Loops/10s ~190, Heap stabil 7,3–8,2 KB, Phasen schreiten voran) – dann endet der Log bei ~t+71s und die Uhr bootet neu. Also kein Einfrieren und kein Heap-Leck, sondern ein **harter Reboot** nach ~75 s Weckerlauf, vermutlich eine Exception.
