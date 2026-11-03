@@ -165,10 +165,10 @@ Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isV
   "stable_file": "MikoTec-LED-Uhr_v2.3.0.22.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.61",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.61.bin",
-  "beta_fs_version": "2.3.0.57",
-  "beta_fs_file": "littlefs_v2.3.0.57.bin"
+  "beta_version": "2.3.0.62",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.62.bin",
+  "beta_fs_version": "2.3.0.62",
+  "beta_fs_file": "littlefs_v2.3.0.62.bin"
 }
 ```
 
@@ -254,6 +254,12 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 - **Minor/Major** nur nach Absprache
 
 ## Changelog
+
+### v2.3.0.62 – Heap-Entlastung: kleinerer Log-Puffer + gzip-Assets (03.11.2026)
+- **Ziel:** Mehr freier Heap als Reserve gegen den generellen Speicherdruck (im Betrieb nur ~7–8 KB frei), damit das Webinterface auch bei langer Laufzeit und offenem Live-Log stabil bleibt.
+- **Log-Ringpuffer `LOG_BUFFER_SIZE` 4 KB → 2 KB:** gibt ~2 KB Heap dauerhaft frei. Der vollständige Log bleibt verlustfrei verfügbar über `/log.txt` (aktueller Boot, direkt aus dem FS gestreamt), `/log_prev.txt` (letzter Boot, überlebt auch OTA-Updates) und den MQTT-Stream (`<base>/log`, jede Zeile). Der RAM-Puffer ist nur die Live-Kurzansicht in `/getlog`.
+- **gzip-Auslieferung der großen Assets (FS-Update):** `clock.js` (12 KB → 3,5 KB), `style.css` (10,8 KB → 2,7 KB), `settings.js` (6,8 KB → 1,7 KB), `colour.js` (3,5 KB → 1,2 KB), `timezone.js` (2,2 KB → 0,8 KB) liegen jetzt gzip-komprimiert im LittleFS. Die Hauptseite lädt dadurch statt ~22 KB nur noch ~6 KB → deutlich weniger Sende-Last und Heap-Druck. `serveStatic` liefert `.gz` automatisch mit `Content-Encoding: gzip`; die Sonderfälle `clock.js` (`handleclockjs`) und `style.css` (`handleCSS`) wurden entsprechend `.gz`-fähig gemacht.
+- FW 2.3.0.62, **FS 2.3.0.62** (neues littlefs-Image, unsigniert wie seit 2.3.0.57).
 
 ### v2.3.0.61 – Fix: Webinterface-Crash durch Live-Log (03.11.2026)
 - **Behobener Fehler:** Das Webinterface war „zerschossen" (kein Menü, Seiten bauten nicht auf, „Version --"), und das Öffnen der Support-Seite ließ die Uhr abstürzen (`Exception 29`, Schreibzugriff auf NULL). Der `.59`-Reset-Grund-Log hat die Ursache direkt nachgewiesen: Heap-Mangel. Die Uhr hat im Betrieb nur noch ~8 KB freien Heap.

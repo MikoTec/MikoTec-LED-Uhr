@@ -98,7 +98,7 @@ String mqttAvailableFile = "";
 #endif
 
 // Serial-Ringpuffer fuer Support-Seite
-#define LOG_BUFFER_SIZE 4096
+#define LOG_BUFFER_SIZE 2048
 char logBuffer[LOG_BUFFER_SIZE];
 int logWritePos = 0;
 bool logWrapped = false;
@@ -266,7 +266,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.61";
+const char* firmware_version = "2.3.0.62";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 

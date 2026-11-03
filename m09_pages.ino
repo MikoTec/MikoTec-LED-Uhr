@@ -8,7 +8,12 @@ void handleNotFound() {
 }
 
 void handleCSS() {
-  if (LittleFS.exists("/style.css")) {
+  if (LittleFS.exists("/style.css.gz")) {
+    File f = LittleFS.open("/style.css.gz", "r");
+    server.sendHeader("Cache-Control", "max-age=3600");
+    server.sendHeader("Content-Encoding", "gzip");
+    server.streamFile(f, "text/css"); f.close();
+  } else if (LittleFS.exists("/style.css")) {
     File f = LittleFS.open("/style.css", "r");
     server.sendHeader("Cache-Control", "max-age=3600");
     server.streamFile(f, "text/css"); f.close();
@@ -30,7 +35,12 @@ void handlespectrumjs() {
   logTS(); dualOut.println("Sending spectrumjs");
 }
 void handleclockjs() {
-  if (LittleFS.exists("/clock.js")) {
+  if (LittleFS.exists("/clock.js.gz")) {
+    File f = LittleFS.open("/clock.js.gz", "r");
+    server.sendHeader("Cache-Control", "max-age=3600");
+    server.sendHeader("Content-Encoding", "gzip");
+    server.streamFile(f, "text/javascript"); f.close();
+  } else if (LittleFS.exists("/clock.js")) {
     File f = LittleFS.open("/clock.js", "r");
     server.sendHeader("Cache-Control", "max-age=3600");
     server.streamFile(f, "text/javascript"); f.close();
