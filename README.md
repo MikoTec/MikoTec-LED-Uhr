@@ -165,8 +165,8 @@ Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isV
   "stable_file": "MikoTec-LED-Uhr_v2.3.0.22.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.60",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.60.bin",
+  "beta_version": "2.3.0.61",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.61.bin",
   "beta_fs_version": "2.3.0.57",
   "beta_fs_file": "littlefs_v2.3.0.57.bin"
 }
@@ -254,6 +254,12 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 - **Minor/Major** nur nach Absprache
 
 ## Changelog
+
+### v2.3.0.61 – Fix: Webinterface-Crash durch Live-Log (03.11.2026)
+- **Behobener Fehler:** Das Webinterface war „zerschossen" (kein Menü, Seiten bauten nicht auf, „Version --"), und das Öffnen der Support-Seite ließ die Uhr abstürzen (`Exception 29`, Schreibzugriff auf NULL). Der `.59`-Reset-Grund-Log hat die Ursache direkt nachgewiesen: Heap-Mangel. Die Uhr hat im Betrieb nur noch ~8 KB freien Heap.
+- **Ursache:** Der Live-Log-Abruf `/getlog` baute per `getLogContent()` einen bis zu 4 KB großen String (`LOG_BUFFER_SIZE`) im Heap. `support.js` ruft das sofort beim Öffnen der Support-Seite auf. Bei knappem, fragmentiertem Heap scheiterte die Allokation → NULL → Crash.
+- **Fix:** `/getlog` sendet den Log-Ringpuffer jetzt **gechunkt** (512-Byte-Blöcke per `server.sendContent`, HTTP Chunked Transfer) statt als einen großen String. Damit entfällt der 4-KB-Heap-Spike komplett; die Support-Seite crasht die Uhr nicht mehr. `getlog?prev=1` (kompletter letzter Boot aus `/log_prev.txt`) streamt unverändert direkt aus der Datei.
+- Reine Firmware-Änderung, FS bleibt 2.3.0.57. FW 2.3.0.61.
 
 ### v2.3.0.60 – Fix: Uhrbild sofort nach Weckerende (02.11.2026)
 - **Behobener Fehler:** Nach einem Wecker im Nachtmodus blieb bis zu ~60 s das letzte Effekt-Frame (z. B. der gelb-orange Regenbogen-Kranz) stehen, weil die Uhr im Nachtmodus (`sleeptype == moonphase`) die Anzeige nur minütlich bei `second()==0` neu zeichnet. Das war die Ursache für das gemeldete „stehenbleibende Bild" an der Wand.

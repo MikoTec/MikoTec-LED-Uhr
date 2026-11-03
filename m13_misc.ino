@@ -124,7 +124,25 @@ void handleGetLog() {
       server.send(404, "text/plain", "Kein vorheriger Log vorhanden.");
     }
   } else {
-    server.send(200, "text/plain", getLogContent());
+    // Gechunkt direkt aus dem Ringpuffer senden, statt einen bis zu
+    // LOG_BUFFER_SIZE (4 KB) grossen String im Heap zu allozieren.
+    // Die grosse Allokation scheiterte bei knappem Heap -> NULL -> Crash.
+    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(200, "text/plain", "");
+    char buf[513];
+    size_t pos = 0;
+    if (logWrapped) {
+      for (int i = logWritePos; i < LOG_BUFFER_SIZE; i++) {
+        if (logBuffer[i] != 0) buf[pos++] = logBuffer[i];
+        if (pos >= 512) { buf[pos] = '\0'; server.sendContent(buf); pos = 0; }
+      }
+    }
+    for (int i = 0; i < logWritePos; i++) {
+      if (logBuffer[i] != 0) buf[pos++] = logBuffer[i];
+      if (pos >= 512) { buf[pos] = '\0'; server.sendContent(buf); pos = 0; }
+    }
+    if (pos > 0) { buf[pos] = '\0'; server.sendContent(buf); }
+    server.sendContent("");
   }
 }
 
