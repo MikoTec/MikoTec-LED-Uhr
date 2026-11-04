@@ -11,7 +11,7 @@ void handleCSS() {
   if (LittleFS.exists("/style.css.gz")) {
     File f = LittleFS.open("/style.css.gz", "r");
     server.sendHeader("Cache-Control", "max-age=3600");
-    server.sendHeader("Content-Encoding", "gzip");
+    // Content-Encoding: gzip setzt streamFile bei .gz-Dateien selbst -> keinen manuellen Header (sonst doppelt)
     server.streamFile(f, "text/css"); f.close();
   } else if (LittleFS.exists("/style.css")) {
     File f = LittleFS.open("/style.css", "r");
@@ -38,7 +38,7 @@ void handleclockjs() {
   if (LittleFS.exists("/clock.js.gz")) {
     File f = LittleFS.open("/clock.js.gz", "r");
     server.sendHeader("Cache-Control", "max-age=3600");
-    server.sendHeader("Content-Encoding", "gzip");
+    // Content-Encoding: gzip setzt streamFile bei .gz-Dateien selbst -> keinen manuellen Header (sonst doppelt)
     server.streamFile(f, "text/javascript"); f.close();
   } else if (LittleFS.exists("/clock.js")) {
     File f = LittleFS.open("/clock.js", "r");

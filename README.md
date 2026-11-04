@@ -165,8 +165,8 @@ Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isV
   "stable_file": "MikoTec-LED-Uhr_v2.3.0.22.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.62",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.62.bin",
+  "beta_version": "2.3.0.63",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.63.bin",
   "beta_fs_version": "2.3.0.62",
   "beta_fs_file": "littlefs_v2.3.0.62.bin"
 }
@@ -254,6 +254,10 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 - **Minor/Major** nur nach Absprache
 
 ## Changelog
+
+### v2.3.0.63 – Fix: doppelter gzip-Header (Live-Uhr fehlte auf Hauptseite) (04.11.2026)
+- **Behobener Fehler:** Nach dem gzip-Update (.62) lud die Hauptseite fast vollständig, aber die Canvas-Live-Uhr fehlte. Ursache: In `handleclockjs` und `handleCSS` wurde `Content-Encoding: gzip` **manuell** gesetzt – `server.streamFile()` setzt diesen Header bei `.gz`-Dateien aber bereits selbst. Dadurch kam der Header **doppelt**, der Browser versuchte doppelt zu dekomprimieren und `clock.js` lud nicht (→ leere Canvas). `style.css` war nicht betroffen, weil es auf der Hauptseite über `serveStatic` (einmaliger, korrekter Header) läuft.
+- **Fix:** Manuellen `Content-Encoding`-Header in beiden Handlern entfernt; `streamFile` setzt ihn allein. Reine Firmware-Änderung, FS bleibt 2.3.0.62. FW 2.3.0.63.
 
 ### v2.3.0.62 – Heap-Entlastung: kleinerer Log-Puffer + gzip-Assets (03.11.2026)
 - **Ziel:** Mehr freier Heap als Reserve gegen den generellen Speicherdruck (im Betrieb nur ~7–8 KB frei), damit das Webinterface auch bei langer Laufzeit und offenem Live-Log stabil bleibt.
