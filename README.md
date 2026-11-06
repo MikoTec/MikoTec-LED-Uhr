@@ -165,8 +165,8 @@ Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isV
   "stable_file": "MikoTec-LED-Uhr_v2.3.0.22.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.63",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.63.bin",
+  "beta_version": "2.3.0.64",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.64.bin",
   "beta_fs_version": "2.3.0.62",
   "beta_fs_file": "littlefs_v2.3.0.62.bin"
 }
@@ -254,6 +254,14 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 - **Minor/Major** nur nach Absprache
 
 ## Changelog
+
+### v2.3.0.64 – Fleet-Telemetrie: HTTP-Heartbeat (07.11.2026)
+- **Neu:** Die Uhr sendet einen schlanken HTTP-Heartbeat an den zentralen Telemetrie-Endpunkt (`http://yzdlcru01ktmqlzy.myfritz.net/telemetry`, Port 80, kein TLS). Erster Heartbeat ~30 s nach Boot, danach alle 15 min, non-blocking (`m15_telemetry.ino`, Aufruf in `loop()`).
+- **Identität:** `device_id = ESP.getChipId()` (hex) – unveränderlich, eindeutig pro Chip, nicht konfigurierbar. Dadurch ist jede Uhr in der DB dauerhaft genau ein Gerät. Die ID wird beim Boot ins Log geschrieben (`[TELEMETRY] device_id: …`).
+- **Auth:** geteilter Schlüssel aus `secrets.h` (Header `X-Device-Key`) – sagt dem Server nur „echte MikoTec-FW". `secrets.h` ist per `.gitignore` **nicht** im Repo; Vorlage: `secrets.h.example`. Die eigentliche Zugriffskontrolle macht die Allow-/Blocklist der ESP-IDs serverseitig.
+- **Gesendete Felder:** `device_id`, `fw_version`, `uptime` (s), `free_heap`, `reset_reason` (`getResetReason()`), `crash_info` (`getResetInfo()`, nur bei Exception). Keine WLAN-/Standortdaten.
+- Reine Firmware-Änderung, FS bleibt 2.3.0.62. FW 2.3.0.64.
+- **Build-Hinweis:** `secrets.h` muss vor dem Kompilieren vorhanden sein (aus `secrets.h.example` erzeugen, geteilten Key eintragen – identisch zu `SHARED_KEY` in `/etc/uhr-telemetry/config.env`).
 
 ### v2.3.0.63 – Fix: doppelter gzip-Header (Live-Uhr fehlte auf Hauptseite) (04.11.2026)
 - **Behobener Fehler:** Nach dem gzip-Update (.62) lud die Hauptseite fast vollständig, aber die Canvas-Live-Uhr fehlte. Ursache: In `handleclockjs` und `handleCSS` wurde `Content-Encoding: gzip` **manuell** gesetzt – `server.streamFile()` setzt diesen Header bei `.gz`-Dateien aber bereits selbst. Dadurch kam der Header **doppelt**, der Browser versuchte doppelt zu dekomprimieren und `clock.js` lud nicht (→ leere Canvas). `style.css` war nicht betroffen, weil es auf der Hauptseite über `serveStatic` (einmaliger, korrekter Header) läuft.
