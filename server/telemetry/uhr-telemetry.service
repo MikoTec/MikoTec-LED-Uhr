@@ -1,0 +1,17 @@
+[Unit]
+Description=MikoTec Uhr Telemetrie-Endpunkt
+After=network.target
+
+[Service]
+User=uhrtel
+Group=uhrtel
+ExecStart=/usr/bin/python3 /opt/uhr-telemetry/server.py
+Restart=on-failure
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadOnlyPaths=/etc/uhr-telemetry
+
+[Install]
+WantedBy=multi-user.target
