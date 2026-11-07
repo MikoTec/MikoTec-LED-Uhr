@@ -225,6 +225,7 @@ USB prüft keine Signatur, daher darf das enthaltene FS-Image unsigniert und ran
 | **368** | **rebootHour** (täglicher Neustart, Default 3) |
 | **369** | **rebootMinute** (Default 30) |
 | **370–417** | **Alarme** (8 × 6 Bytes: enabled, hour, minute, days, effect, duration) |
+| **418** | **Geräte-Sperre** (Kill-Switch: `1` = gesperrt, `0` = frei) |
 | 500 | Magic Byte (0xC4 = eingerichtet) |
 
 ## Wecker/Alarm-System
