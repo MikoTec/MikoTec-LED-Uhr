@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Anmelden{% endblock %}
+{% block body %}
+<div class="panel" style="max-width:360px;margin:40px auto;padding:22px">
+  <h2 style="margin:0 0 14px">Anmelden</h2>
+  <form method="post">
+    <label>Passwort</label>
+    <input type="password" name="password" autofocus
+           style="width:100%;background:#10141b;border:1px solid var(--line);color:var(--fg);border-radius:9px;padding:9px 11px">
+    <div style="margin-top:14px"><button class="btn acc">Anmelden</button></div>
+  </form>
+</div>
+{% endblock %}

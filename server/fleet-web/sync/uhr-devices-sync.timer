@@ -1,0 +1,10 @@
+[Unit]
+Description=MikoTec Uhren - devices.json alle 60 s von Fleet-Web (.25) holen
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=60
+AccuracySec=5
+
+[Install]
+WantedBy=timers.target

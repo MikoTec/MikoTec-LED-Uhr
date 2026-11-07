@@ -1,0 +1,22 @@
+[Unit]
+Description=MikoTec Uhren-Flotte - Verwaltungs-Weboberflaeche (lokal)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=uhrfleet
+Group=uhrfleet
+WorkingDirectory=/opt/uhr-fleet
+# waitress bindet an die in config.env gesetzte LAN-IP (LISTEN_ADDR).
+ExecStart=/usr/bin/python3 /opt/uhr-fleet/run.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/uhr-fleet
+ReadOnlyPaths=/etc/uhr-fleet
+
+[Install]
+WantedBy=multi-user.target

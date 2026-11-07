@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}MikoTec Uhren{% endblock %} · Fleet</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#171b22; --panel2:#1e2330; --line:#2a303c;
+    --fg:#e6e9ef; --muted:#8b93a3; --accent:#ff9e2c; --accent2:#4aa8ff;
+    --ok:#3ecf8e; --warn:#ffcc49; --bad:#ff5d5d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  a{color:var(--accent2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:14px 18px;
+    background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+  header .brand{font-weight:700;letter-spacing:.3px}
+  header .brand b{color:var(--accent)}
+  header .spacer{flex:1}
+  main{max-width:1100px;margin:0 auto;padding:18px}
+  .flash{background:#23311f;border:1px solid #2f6b35;color:#bdeccf;
+    padding:9px 13px;border-radius:9px;margin:0 0 14px}
+  .err{background:#331f1f;border:1px solid #6b2f2f;color:#f3c6c6;
+    padding:9px 13px;border-radius:9px;margin:0 0 14px}
+  .cards{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:12px 16px;min-width:110px}
+  .card .n{font-size:26px;font-weight:700}
+  .card .l{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.6px}
+  .card.bad .n{color:var(--bad)} .card.warn .n{color:var(--warn)} .card.ok .n{color:var(--ok)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+  th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;background:var(--panel2)}
+  tr:last-child td{border-bottom:0}
+  tr:hover td{background:#1b2029}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}
+  .dot.on{background:var(--ok);box-shadow:0 0 7px var(--ok)}
+  .dot.off{background:#44464d}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--muted)}
+  .name{font-weight:600}
+  .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600}
+  .b-approved{background:#15321f;color:#6ee7a3;border:1px solid #2f6b45}
+  .b-blocked{background:#3a1717;color:#ff9b9b;border:1px solid #6b2f2f}
+  .b-pending{background:#32280f;color:#ffce73;border:1px solid #6b5125}
+  .crash{color:var(--bad);font-weight:600}
+  .muted{color:var(--muted)}
+  .btn{display:inline-block;background:var(--panel2);color:var(--fg);border:1px solid var(--line);
+    padding:7px 13px;border-radius:9px;cursor:pointer;font-size:14px}
+  .btn:hover{border-color:#3a4252;text-decoration:none}
+  .btn.acc{background:var(--accent);color:#1a1200;border-color:var(--accent);font-weight:600}
+  .btn.danger{background:#2a1515;border-color:#6b2f2f;color:#ff9b9b}
+  .btn.ok{background:#15321f;border-color:#2f6b45;color:#8ff0b6}
+  .btn.sm{padding:5px 10px;font-size:13px}
+  form.inline{display:inline}
+  input[type=text],textarea,select{width:100%;background:#10141b;border:1px solid var(--line);
+    color:var(--fg);border-radius:9px;padding:9px 11px;font:inherit}
+  textarea{min-height:70px;resize:vertical}
+  label{display:block;color:var(--muted);font-size:13px;margin:12px 0 5px}
+  .row{display:flex;gap:16px;flex-wrap:wrap}
+  .col{flex:1;min-width:240px}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 14px}
+  .toolbar .spacer{flex:1}
+  @media(max-width:720px){
+    th.hide,td.hide{display:none}
+    main{padding:12px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><b>MikoTec</b> · Uhren-Flotte</div>
+  <div class="spacer"></div>
+  <a href="{{ url_for('index') }}">Übersicht</a>
+  {% if login_enabled %}
+  <form class="inline" method="post" action="{{ url_for('logout') }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button class="btn sm">Abmelden</button>
+  </form>
+  {% endif %}
+</header>
+<main>
+  {% with msgs = get_flashed_messages() %}
+    {% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}
+  {% endwith %}
+  {% block body %}{% endblock %}
+</main>
+</body>
+</html>

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}{{ d.name or d.device_id }}{% endblock %}
+{% block body %}
+
+<p><a href="{{ url_for('index') }}">← Übersicht</a></p>
+
+<div class="row">
+  <div class="col">
+    <div class="panel" style="padding:16px">
+      <h2 style="margin:0 0 4px">
+        <span class="dot {{ 'on' if online else 'off' }}"></span>
+        {{ d.name or '(ohne Namen)' }}
+      </h2>
+      <div class="mono" style="margin-bottom:12px">{{ d.device_id }}</div>
+
+      <table>
+        <tr><th>Status</th><td>
+          <span class="badge b-{{ d.state }}">
+          {{ {'approved':'freigegeben','blocked':'gesperrt','pending':'neu/offen'}[d.state] }}</span>
+        </td></tr>
+        <tr><th>Firmware</th><td class="mono">{{ latest.fw_version or '–' }}</td></tr>
+        <tr><th>Uptime</th><td>{{ latest.uptime|humauptime if latest else '–' }}</td></tr>
+        <tr><th>Freier Heap</th><td>{{ latest.free_heap|humasize if latest else '–' }}</td></tr>
+        <tr><th>Letzter Reset</th><td class="muted">{{ latest.reset_reason or '–' }}</td></tr>
+        <tr><th>Crash-Info</th><td>
+          {% if latest.crash_info %}<span class="crash">{{ latest.crash_info }}</span>
+          {% else %}<span class="muted">keine</span>{% endif %}
+        </td></tr>
+        <tr><th>Zuletzt gesehen</th><td class="muted">
+          {{ latest.time|humasince if latest and latest.time else 'nie' }}</td></tr>
+      </table>
+
+      <div class="toolbar" style="margin-top:16px">
+        {% if d.state != 'approved' %}
+        <form class="inline" method="post" action="{{ url_for('device_state', device_id=d.device_id) }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <input type="hidden" name="state" value="approved">
+          <input type="hidden" name="next" value="{{ url_for('device', device_id=d.device_id) }}">
+          <button class="btn ok">Freigeben</button>
+        </form>
+        {% endif %}
+        {% if d.state != 'blocked' %}
+        <form class="inline" method="post" action="{{ url_for('device_state', device_id=d.device_id) }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <input type="hidden" name="state" value="blocked">
+          <input type="hidden" name="next" value="{{ url_for('device', device_id=d.device_id) }}">
+          <button class="btn danger">Sperren</button>
+        </form>
+        {% else %}
+        <form class="inline" method="post" action="{{ url_for('device_state', device_id=d.device_id) }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <input type="hidden" name="state" value="approved">
+          <input type="hidden" name="next" value="{{ url_for('device', device_id=d.device_id) }}">
+          <button class="btn ok">Entsperren</button>
+        </form>
+        {% endif %}
+        <form class="inline" method="post" action="{{ url_for('device_delete', device_id=d.device_id) }}"
+              onsubmit="return confirm('Eintrag wirklich entfernen? Er kommt wieder, sobald die Uhr erneut sendet.')">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <button class="btn sm">Eintrag entfernen</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="panel" style="padding:16px">
+      <h3 style="margin:0 0 10px">Stammdaten bearbeiten</h3>
+      <form method="post" action="{{ url_for('device_save', device_id=d.device_id) }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ url_for('device', device_id=d.device_id) }}">
+        <label>Name</label>
+        <input type="text" name="name" value="{{ d.name }}" maxlength="80" placeholder="z. B. Wohnzimmer Eltern">
+        <label>Standort</label>
+        <input type="text" name="location" value="{{ d.location }}" maxlength="80" placeholder="z. B. Eltern oben">
+        <label>Notiz</label>
+        <textarea name="notes" maxlength="500" placeholder="frei">{{ d.notes }}</textarea>
+        <div style="margin-top:12px"><button class="btn acc">Speichern</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="panel" style="margin-top:16px">
+  <table>
+    <thead><tr>
+      <th>Zeit</th><th class="hide">FW</th><th>Uptime</th><th>Heap</th>
+      <th class="hide">Reset</th><th>Crash</th>
+    </tr></thead>
+    <tbody>
+    {% for h in hist %}
+      <tr>
+        <td class="mono">{{ h.time|humasince }}</td>
+        <td class="hide mono">{{ h.fw_version or '–' }}</td>
+        <td>{{ h.uptime|humauptime }}</td>
+        <td>{{ h.free_heap|humasize }}</td>
+        <td class="hide muted">{{ h.reset_reason or '–' }}</td>
+        <td>{% if h.crash_info %}<span class="crash">{{ h.crash_info }}</span>{% else %}<span class="muted">–</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    {% if not hist %}
+      <tr><td colspan="6" class="muted" style="text-align:center;padding:20px">Keine Heartbeats im Zeitfenster.</td></tr>
+    {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

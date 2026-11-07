@@ -1,0 +1,8 @@
+[Unit]
+Description=MikoTec Uhren - Allow-/Blocklist von Fleet-Web (.25) holen
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/uhr-devices-sync/uhr-devices-sync.sh

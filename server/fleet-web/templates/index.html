@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Übersicht{% endblock %}
+{% block body %}
+
+{% if err %}
+<div class="err">InfluxDB nicht erreichbar / Live-Daten fehlen: {{ err }}</div>
+{% endif %}
+
+<div class="cards">
+  <div class="card"><div class="n">{{ stats.total }}</div><div class="l">Uhren</div></div>
+  <div class="card ok"><div class="n">{{ stats.online }}</div><div class="l">Online</div></div>
+  <div class="card warn"><div class="n">{{ stats.pending }}</div><div class="l">Neu/offen</div></div>
+  <div class="card bad"><div class="n">{{ stats.blocked }}</div><div class="l">Gesperrt</div></div>
+  <div class="card {{ 'bad' if stats.crashes else '' }}"><div class="n">{{ stats.crashes }}</div><div class="l">Crashes</div></div>
+</div>
+
+<div class="toolbar">
+  <span class="muted">Zugriffs-Modus:</span>
+  <form class="inline" method="post" action="{{ url_for('settings_mode') }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <select name="mode" onchange="this.form.submit()">
+      <option value="blacklist" {{ 'selected' if mode=='blacklist' }}>Blacklist – alle außer Gesperrte</option>
+      <option value="whitelist" {{ 'selected' if mode=='whitelist' }}>Whitelist – nur Freigegebene</option>
+    </select>
+  </form>
+  <span class="spacer"></span>
+  <span class="muted" id="refreshed">aktualisiert gerade</span>
+</div>
+
+<div class="panel">
+<table>
+  <thead>
+    <tr>
+      <th>Uhr</th>
+      <th>Status</th>
+      <th class="hide">FW</th>
+      <th class="hide">Uptime</th>
+      <th class="hide">Heap</th>
+      <th class="hide">Letzter Reset</th>
+      <th>Zuletzt</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr data-id="{{ r.device_id }}">
+      <td>
+        <div class="name">{{ r.name or '(ohne Namen)' }}</div>
+        <div class="mono">{{ r.device_id }}{% if r.location %} · {{ r.location }}{% endif %}</div>
+      </td>
+      <td>
+        <span class="dot {{ 'on' if r.online else 'off' }}" data-dot></span>
+        <span class="badge b-{{ r.state }}">
+          {{ {'approved':'frei','blocked':'gesperrt','pending':'neu'}[r.state] }}</span>
+        {% if r.crash_info %}<div class="crash" data-crash>⚠ Crash</div>{% endif %}
+      </td>
+      <td class="hide mono" data-fw>{{ r.fw_version or '–' }}</td>
+      <td class="hide" data-uptime>{{ r.uptime|humauptime }}</td>
+      <td class="hide" data-heap>{{ r.free_heap|humasize }}</td>
+      <td class="hide muted" data-reset>{{ r.reset_reason or '–' }}</td>
+      <td class="muted" data-seen>{{ r.last_seen|humasince if r.last_seen else 'nie' }}</td>
+      <td style="white-space:nowrap">
+        <a class="btn sm" href="{{ url_for('device', device_id=r.device_id) }}">Details</a>
+        {% if r.state != 'blocked' %}
+        <form class="inline" method="post" action="{{ url_for('device_state', device_id=r.device_id) }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <input type="hidden" name="state" value="blocked">
+          <input type="hidden" name="next" value="{{ url_for('index') }}">
+          <button class="btn sm danger">Sperren</button>
+        </form>
+        {% else %}
+        <form class="inline" method="post" action="{{ url_for('device_state', device_id=r.device_id) }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <input type="hidden" name="state" value="approved">
+          <input type="hidden" name="next" value="{{ url_for('index') }}">
+          <button class="btn sm ok">Entsperren</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    {% if not rows %}
+    <tr><td colspan="8" class="muted" style="padding:24px;text-align:center">
+      Noch keine Uhr hat einen Heartbeat gesendet.
+    </td></tr>
+    {% endif %}
+  </tbody>
+</table>
+</div>
+
+<p class="muted" style="margin-top:14px;font-size:13px">
+  Online = Heartbeat jünger als {{ (config.ONLINE_WINDOW_S or 1200) }} s. Neue Uhren tauchen
+  automatisch als „neu" auf, sobald sie senden – dann benennen und (im Whitelist-Modus) freigeben.
+</p>
+
+<script>
+// sanftes Auto-Refresh der Live-Werte ohne Seiten-Reload
+async function refresh(){
+  try{
+    const res = await fetch("{{ url_for('api_status') }}", {headers:{'X-Requested-With':'fetch'}});
+    if(!res.ok) return;
+    const data = await res.json();
+    const by = {};
+    data.rows.forEach(r => by[r.device_id] = r);
+    document.querySelectorAll('tr[data-id]').forEach(tr => {
+      const r = by[tr.dataset.id]; if(!r) return;
+      const dot = tr.querySelector('[data-dot]');
+      if(dot) dot.className = 'dot ' + (r.online ? 'on' : 'off');
+      const set = (sel,val)=>{const e=tr.querySelector(sel); if(e) e.textContent=val;};
+      set('[data-fw]', r.fw_version || '–');
+      set('[data-uptime]', r.uptime);
+      set('[data-heap]', r.free_heap);
+      set('[data-reset]', r.reset_reason || '–');
+      set('[data-seen]', r.last_seen);
+    });
+    document.getElementById('refreshed').textContent =
+      'aktualisiert ' + new Date().toLocaleTimeString('de-DE');
+  }catch(e){}
+}
+setInterval(refresh, 20000);
+</script>
+{% endblock %}
