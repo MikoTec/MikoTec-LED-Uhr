@@ -1,12 +1,17 @@
 // m15_telemetry.ino
-// Schlanker HTTP-Heartbeat an den zentralen Telemetrie-Endpunkt (Variante B).
+// Schlanker HTTP-Heartbeat an den zentralen Telemetrie-Endpunkt (Variante B)
+// UND Geraete-Sperre (Kill-Switch), gesteuert ueber den HTTP-Status der Antwort.
 //
-// device_id = unveraenderliche ESP-Chip-ID (ESP.getChipId(), eindeutig pro Chip)
-//             -> stabile Zuordnung der Messwerte in der DB, nicht konfigurierbar.
-// Auth       = geteilter Schluessel aus secrets.h (sagt dem Server nur
-//             "echte MikoTec-FW"). secrets.h ist per .gitignore nicht im Repo.
+// device_id = unveraenderliche ESP-Chip-ID (ESP.getChipId(), eindeutig pro Chip).
+// Auth       = geteilter Schluessel aus secrets.h (Header X-Device-Key).
 // Transport  = HTTP Port 80 (kein TLS -> kein BearSSL-Heap), kurzlebiger Request.
 // Rhythmus   = erster Heartbeat ~30 s nach Boot, danach alle 15 min. Non-blocking.
+//
+// Kill-Switch (FAIL-OPEN):
+//   HTTP 403 -> sperren (deviceLocked = true)
+//   HTTP 204 -> entsperren (deviceLocked = false)
+//   alles andere (401, Timeout/-1, 5xx, DNS-Fehler) -> Zustand UNVERAENDERT.
+// deviceLocked wird persistent in EEPROM-Byte DEVICELOCK_EEPROM_ADDR gehalten.
 
 #include "secrets.h"
 
@@ -26,6 +31,17 @@ static String telemetryJsonEscape(String s) {
   s.replace("\r", " ");
   s.replace("\n", " ");
   return s;
+}
+
+// Setzt den Sperrzustand und persistiert ihn (nur bei echter Aenderung -> schont Flash).
+void setDeviceLocked(bool locked) {
+  if (locked == deviceLocked) return;
+  deviceLocked = locked;
+  EEPROM.begin(512);
+  EEPROM.write(DEVICELOCK_EEPROM_ADDR, locked ? 1 : 0);
+  EEPROM.commit();
+  logTS(); dualOut.print("[LOCK] Zustand geaendert: ");
+  dualOut.println(locked ? "GESPERRT" : "entsperrt");
 }
 
 void sendHeartbeat() {
@@ -54,8 +70,18 @@ void sendHeartbeat() {
     int code = http.POST(body);
     logTS(); dualOut.print("[TELEMETRY] POST "); dualOut.print(code);
     dualOut.print(" dev="); dualOut.println(dev);
+    // Kill-Switch, FAIL-OPEN: nur echtes 403 sperrt, nur 204 entsperrt.
+    // Jeder andere Code (401, -1/Timeout, 5xx, DNS) laesst den Zustand unveraendert
+    // -> eine Uhr wird NIE wegen Server-Ausfall gesperrt.
+    if (code == 403) setDeviceLocked(true);
+    else if (code == 204) setDeviceLocked(false);
     http.end();
   } // Scope-Ende: Client hier freigegeben
+}
+
+// Frueher Status-Check beim Boot (max. Heap), aktualisiert deviceLocked schnell.
+void telemetryBootCheck() {
+  sendHeartbeat();
 }
 
 void sendHeartbeatIfDue() {
@@ -76,5 +102,20 @@ void sendHeartbeatIfDue() {
   if (now - telemetryLast >= TELEMETRY_INTERVAL) {
     sendHeartbeat();
     telemetryLast = now;
+  }
+}
+
+// Sperr-Anzeige: alle LEDs ~1 Hz rot blinken (500 ms an / 500 ms aus).
+// Gedaempftes Rot (150) schont das Netzteil, bleibt aber deutlich sichtbar.
+void lockBlink() {
+  if (!clockleds) return;
+  static unsigned long lastBlink = 0;
+  static bool on = false;
+  if (millis() - lastBlink >= 500) {
+    lastBlink = millis();
+    on = !on;
+    RgbColor col = on ? RgbColor(150, 0, 0) : RgbColor(0, 0, 0);
+    for (int i = 0; i < pixelCount; i++) clockleds->SetPixelColor(i, col);
+    clockleds->Show();
   }
 }

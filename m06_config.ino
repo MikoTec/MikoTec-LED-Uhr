@@ -131,6 +131,12 @@ void loadConfig() {
   rebootMinute = EEPROM.read(369);
   if (rebootMinute > 59) rebootMinute = 30;
   logTS(); dualOut.println("Neustart-Zeit: " + String(rebootHour) + ":" + (rebootMinute < 10 ? "0" : "") + String(rebootMinute));
+
+  // Kill-Switch: Sperr-Flag aus EEPROM laden (Byte 418). Gilt bis zur ersten
+  // gueltigen Heartbeat-Antwort -> eine gesperrte Uhr blinkt auch offline nach
+  // einem Neustart weiter rot.
+  deviceLocked = (EEPROM.read(DEVICELOCK_EEPROM_ADDR) == 1);
+  logTS(); dualOut.println("[LOCK] Startzustand (EEPROM): " + String(deviceLocked ? "GESPERRT" : "entsperrt"));
 }
 
 void writeInitalConfig() {

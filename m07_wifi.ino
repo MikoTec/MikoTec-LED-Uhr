@@ -168,6 +168,10 @@ void launchWeb(int webtype) {
         checkForUpdate();
         lastUpdateCheckHour = -2; // Boot-Check erledigt
       }
+      // Kill-Switch: frueher Status-Check (noch im max. Heap-Fenster, vor den
+      // Diensten), damit deviceLocked nach einem Neustart schnell aktualisiert wird.
+      // FAIL-OPEN: nur echtes 403 sperrt, 204 entsperrt, alles andere unveraendert.
+      telemetryBootCheck();
 
       clockname.toCharArray(clocknamechar, clockname_len);
       if (!mdns.begin(clocknamechar)) {

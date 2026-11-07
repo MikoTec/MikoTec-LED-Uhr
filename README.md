@@ -165,8 +165,8 @@ Firmware- und FS-Update lösen nur bei **echt neuerer** Remote-Version aus (`isV
   "stable_file": "MikoTec-LED-Uhr_v2.3.0.22.bin",
   "stable_fs_version": "2.3.0.0",
   "stable_fs_file": "littlefs_v2.3.0.0.bin",
-  "beta_version": "2.3.0.64",
-  "beta_file": "MikoTec-LED-Uhr_v2.3.0.64.bin",
+  "beta_version": "2.3.0.65",
+  "beta_file": "MikoTec-LED-Uhr_v2.3.0.65.bin",
   "beta_fs_version": "2.3.0.62",
   "beta_fs_file": "littlefs_v2.3.0.62.bin"
 }
@@ -254,6 +254,14 @@ Schema: `Major.Minor.Patch.Build` (z.B. `2.3.0.21`)
 - **Minor/Major** nur nach Absprache
 
 ## Changelog
+
+### v2.3.0.65 – Geräte-Sperre (Kill-Switch) über Telemetrie-Antwort (07.11.2026)
+- **Neu:** Zentral steuerbare Geräte-Sperre. Gesteuert wird sie über den HTTP-Status der Heartbeat-Antwort (keine Server-Änderung nötig – die serverseitige Allow-/Blocklist liefert bereits `403` für gesperrte Uhren).
+- **Fail-Open (wichtigste Regel):** `deviceLocked` wird **nur bei echtem HTTP 403** auf `true` gesetzt, bei `204` auf `false`. Bei allem anderen (401, Timeout/`-1`, 5xx, DNS-Fehler, keine Verbindung) bleibt der letzte Zustand **unverändert** – eine Uhr wird nie wegen Server-Ausfall gesperrt.
+- **Boot-Check:** Direkt nach dem WLAN-Connect (im Max-Heap-Fenster, vor mDNS/SSDP/WebServer, analog OTA-Check) wird ein früher Status-Check gesendet, damit der Sperrzustand nach einem Neustart schnell aktualisiert wird.
+- **Persistenz:** `deviceLocked` liegt in EEPROM-Byte **418** (die ursprünglich genannte 370 ist belegt: dort beginnt die Alarm-Config, 370–417). Dadurch blinkt eine gesperrte Uhr auch offline nach einem Neustart weiter rot, bis sie wieder online einen Status holt. Bei `204` wird das Flag gelöscht.
+- **Verhalten bei Sperre:** Alle normalen Funktionen (Uhr, Mond, Sonne, Effekte, Wecker) werden unterdrückt; alle LEDs blinken ~1 Hz rot. WiFi, Telemetrie-Heartbeat, WebServer und OTA **laufen weiter**, damit die Uhr aus der Ferne wieder entsperrt bzw. per OTA aktualisiert werden kann. Beim Übergang `403 → 204` wird der Normalbetrieb wieder aufgenommen.
+- Latenz der Sperre im Normalbetrieb ~15 min (Heartbeat-Intervall), beim Neustart durch den Boot-Check abgemildert. Reine Firmware-Änderung, FS bleibt 2.3.0.62. FW 2.3.0.65.
 
 ### v2.3.0.64 – Fleet-Telemetrie: HTTP-Heartbeat (07.11.2026)
 - **Neu:** Die Uhr sendet einen schlanken HTTP-Heartbeat an den zentralen Telemetrie-Endpunkt (`http://yzdlcru01ktmqlzy.myfritz.net/telemetry`, Port 80, kein TLS). Erster Heartbeat ~30 s nach Boot, danach alle 15 min, non-blocking (`m15_telemetry.ino`, Aufruf in `loop()`).

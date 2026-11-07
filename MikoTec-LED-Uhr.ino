@@ -105,6 +105,12 @@ bool logWrapped = false;
 bool logFSready = false;  // true sobald LittleFS bereit und Log-Datei offen
 File logFile;             // globales Handle fuer /log.txt in LittleFS
 
+// Kill-Switch (Geraete-Sperre), gesteuert ueber die HTTP-Antwort des Telemetrie-
+// Heartbeats (403 = sperren, 204 = entsperren, alles andere FAIL-OPEN = unveraendert).
+// Persistent in EEPROM-Byte 418 (FREI: 0-369 belegt, 370-417 = Alarme, 500 belegt).
+#define DEVICELOCK_EEPROM_ADDR 418
+bool deviceLocked = false;
+
 
 // Eigene Print-Klasse die Serial UND Ringpuffer beschreibt
 // MQTT Log Zeilenpuffer
@@ -172,6 +178,9 @@ void alarmShow();
 void alarmEffectShow(uint8_t effect);
 void alarmDebugTick();
 void sendHeartbeatIfDue();
+void telemetryBootCheck();
+void setDeviceLocked(bool locked);
+void lockBlink();
 void face(uint16_t hour_pos, uint16_t min_pos);
 void face(uint16_t hour_pos, uint16_t min_pos, int bright);
 void nightface(uint16_t hour_pos, uint16_t min_pos);
@@ -267,7 +276,7 @@ int tsLastSecond = -1;
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1Ws2812xMethod> NeoPixelBusType;
 
 #define clockPin 4                //GPIO pin that the LED strip is on
-const char* firmware_version = "2.3.0.64";
+const char* firmware_version = "2.3.0.65";
 int pixelCount = 120;            //number of pixels in RGB clock
 
 
@@ -618,6 +627,12 @@ void loop() {
     logFile.flush();
     lastLogFlush = millis();
   }
+  if (deviceLocked) {
+    // GESPERRT (Kill-Switch): alle normalen Funktionen unterdrueckt (Uhr/Mond/Sonne/
+    // Effekte/Wecker), nur rotes Sperr-Blinken. WiFi/Telemetrie/WebServer/OTA laufen
+    // weiter (Rest der loop), damit die Uhr fern wieder entsperrt/geflasht werden kann.
+    lockBlink();
+  } else {
   if (second() != prevsecond) {
     updateTimestampCache();
     if (webMode != 0 && second() == 0 && minute() % 10 == 0) { //only record "time of death" if we're in normal running mode.
@@ -679,7 +694,8 @@ void loop() {
     if (clockleds) clockleds->Show();
   }
   wasAlarmRunning = nowAlarmRunning;
-  sendHeartbeatIfDue();
+  }  // Ende else: Normalbetrieb (nur wenn nicht gesperrt)
+  sendHeartbeatIfDue();  // laeuft immer - auch gesperrt, damit Fern-Entsperrung/OTA greift
   loopcounter++;
 
 
